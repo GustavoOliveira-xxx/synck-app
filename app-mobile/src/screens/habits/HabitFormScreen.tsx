@@ -1,6 +1,6 @@
 // Criar e editar hábitos: frequência (todo dia, dias da semana, um dia do
 // mês), de quem é a rotina (só minha ou de uma agenda) e sequência opcional.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -19,6 +19,7 @@ import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useItems } from '@/hooks/useItems';
 import { strings, t } from '@/i18n';
 import { createHabit, updateHabit } from '@/services/itemActions';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { spacing } from '@/theme/tokens';
 import { todayKey } from '@/utils/dates';
@@ -91,7 +92,7 @@ export default function HabitFormScreen() {
     if (habit) await updateHabit(habit, fields);
     else await createHabit({ ...fields, calendar_id: calendarId, start_date: todayKey(display.timezone) });
     toast(t('habits.saved'));
-    router.back();
+    goBack();
   };
 
   return (

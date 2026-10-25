@@ -3,7 +3,7 @@
 // deixa escrever o que mais vai fazer e sugere o que a pessoa costuma fazer.
 // As escolhas entram no "Meu dia" (task_plans): pessoal, não muda prazos.
 import { router, Stack } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +28,7 @@ import { useTaskActions } from '@/hooks/useTaskActions';
 import { strings, t } from '@/i18n';
 import type { Task } from '@/models/types';
 import { createTask, logHabit, markCheckin, setTaskPlan } from '@/services/itemActions';
+import { goBack } from '@/services/navigation';
 import { useAuthStore, useUserId } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -136,6 +137,17 @@ export default function PlanDayScreen() {
   const [burst, setBurst] = useState(0);
   const { toggle } = useTaskActions();
 
+  // Já apareceu hoje: a tela Hoje não reabre a pergunta sozinha (também quando aberta pelo endereço).
+  useEffect(() => {
+    useUiStore.getState().setPlanShownOn(today);
+  }, [today]);
+
+  const openTask = (task: Task) => router.push({ pathname: '/task/[id]', params: { id: task.id } });
+  const newItem = (kind: 'task' | 'event' | 'reminder') =>
+    kind === 'event'
+      ? router.push({ pathname: '/event/new', params: { date: today } })
+      : router.push({ pathname: '/task/new', params: { type: kind, date: today, plan: today } });
+
   const events = occurrences
     .filter((o) => o.event.status !== 'cancelled')
     .sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -165,12 +177,12 @@ export default function PlanDayScreen() {
     await markCheckin(today);
     setDismissed(null);
     toast(t('planDay.done'), 'success');
-    router.back();
+    goBack();
   };
 
   const later = () => {
     setDismissed(today);
-    router.back();
+    goBack();
   };
 
   const hour = new Date().getHours();
@@ -246,7 +258,15 @@ export default function PlanDayScreen() {
       ) : (
         <Card style={styles.gapSm}>
           {events.map((o) => (
-            <View key={o.key} style={styles.agendaRow}>
+            <PressableScale
+              key={o.key}
+              style={styles.agendaRow}
+              accessibilityRole="button"
+              accessibilityLabel={o.event.is_masked ? t('events.maskedTitle') : (o.title ?? '')}
+              onPress={() =>
+                router.push({ pathname: '/event/[id]', params: { id: o.event.id, date: o.originalDate } })
+              }
+            >
               <AppText variant="time" style={[styles.time, { color: colors.primaryInk }]}>
                 {o.allDay
                   ? t('calendarGrid.allDay')
@@ -255,10 +275,16 @@ export default function PlanDayScreen() {
               <AppText style={styles.flex} numberOfLines={1}>
                 {o.event.is_masked ? t('events.maskedTitle') : o.title}
               </AppText>
-            </View>
+            </PressableScale>
           ))}
           {dueToday.map((task) => (
-            <View key={task.id} style={styles.agendaRow}>
+            <PressableScale
+              key={task.id}
+              style={styles.agendaRow}
+              accessibilityRole="button"
+              accessibilityLabel={task.title}
+              onPress={() => openTask(task)}
+            >
               <TaskCheck
                 done={false}
                 priority={task.priority}
@@ -272,7 +298,7 @@ export default function PlanDayScreen() {
               <AppText variant="caption" tone="muted">
                 {describeDue(task, today, display.timeFormat)}
               </AppText>
-            </View>
+            </PressableScale>
           ))}
         </Card>
       )}
@@ -307,6 +333,32 @@ export default function PlanDayScreen() {
         placeholder={t('planDay.addPlaceholder')}
         onSaved={() => setBurst((b) => b + 1)}
       />
+      <AppText variant="small" tone="muted">
+        {t('planDay.detailedHint')}
+      </AppText>
+      <View style={styles.newRow}>
+        <Button
+          title={t('create.task')}
+          icon="task-outline"
+          variant="secondary"
+          compact
+          onPress={() => newItem('task')}
+        />
+        <Button
+          title={t('create.event')}
+          icon="calendar-outline"
+          variant="secondary"
+          compact
+          onPress={() => newItem('event')}
+        />
+        <Button
+          title={t('create.reminder')}
+          icon="notifications-outline"
+          variant="secondary"
+          compact
+          onPress={() => newItem('reminder')}
+        />
+      </View>
       {planned.map((task) => (
         <Animated.View
           key={task.id}
@@ -314,10 +366,22 @@ export default function PlanDayScreen() {
           layout={LinearTransition.springify()}
         >
           <View style={[styles.plannedRow, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
-            <Icon name="sunny-outline" size={18} color={colors.primaryInk} />
-            <AppText style={styles.flex} numberOfLines={2}>
-              {task.title}
-            </AppText>
+            <PressableScale
+              style={styles.plannedMain}
+              accessibilityRole="button"
+              accessibilityLabel={`${task.title}. ${t('planDay.editHint')}`}
+              onPress={() => openTask(task)}
+            >
+              <Icon name="sunny-outline" size={18} color={colors.primaryInk} />
+              <View style={styles.flex}>
+                <AppText numberOfLines={2}>{task.title}</AppText>
+                {describeDue(task, today, display.timeFormat) ? (
+                  <AppText variant="caption" tone="muted">
+                    {describeDue(task, today, display.timeFormat)}
+                  </AppText>
+                ) : null}
+              </View>
+            </PressableScale>
             <IconButton
               icon="close"
               label={`${t('tasks.planRemove')}: ${task.title}`}
@@ -379,6 +443,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   gapSm: { gap: spacing.sm },
   footer: { flexDirection: 'row', gap: spacing.md },
+  newRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  plannedMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
   hero: {
     flexDirection: 'row',
     gap: spacing.md,

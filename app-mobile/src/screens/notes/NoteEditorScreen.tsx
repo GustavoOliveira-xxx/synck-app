@@ -1,6 +1,6 @@
 // Editar uma anotação: título, texto, fixar e, ao criar, onde guardar.
 // Links (https://) no texto aparecem como botões para abrir.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -16,6 +16,7 @@ import { TextField } from '@/components/TextField';
 import { useItems } from '@/hooks/useItems';
 import { strings, t } from '@/i18n';
 import { createNote, deleteNote, updateNote } from '@/services/itemActions';
+import { goBack } from '@/services/navigation';
 import { useUserId } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { spacing } from '@/theme/tokens';
@@ -71,7 +72,7 @@ export default function NoteEditorScreen() {
       await createNote({ title: title.trim() || null, body, calendar_id: where, pinned });
     }
     toast(t('notes.saved'));
-    router.back();
+    goBack();
   };
 
   const remove = async () => {
@@ -84,7 +85,7 @@ export default function NoteEditorScreen() {
     if (!ok) return;
     await deleteNote(note);
     toast(t('notes.deleted'));
-    router.back();
+    goBack();
   };
 
   return (

@@ -35,6 +35,9 @@ interface UiState {
   /** Dia em que a pessoa tocou "Agora não" na pergunta do dia. */
   planDismissedOn: DateKey | null;
   setPlanDismissedOn: (day: DateKey | null) => void;
+  /** Dia em que a pergunta já apareceu nesta sessão (não é guardado: não reabre sozinha em seguida). */
+  planShownOn: DateKey | null;
+  setPlanShownOn: (day: DateKey) => void;
   setOnboardingDone: () => void;
   setTaskView: (view: TaskViewKey) => void;
   setTaskSort: (sort: TaskSort) => void;
@@ -63,6 +66,8 @@ export const useUiStore = create<UiState>()(
       collapsed: [],
       planDismissedOn: null,
       setPlanDismissedOn: (planDismissedOn) => set({ planDismissedOn }),
+      planShownOn: null,
+      setPlanShownOn: (planShownOn) => set({ planShownOn }),
       setOnboardingDone: () => set({ onboardingDone: true }),
       setTaskView: (taskView) => set({ taskView }),
       setTaskSort: (taskSort) => set({ taskSort }),

@@ -14,6 +14,7 @@ import { useAction } from '@/hooks/useAction';
 import { useCalendar } from '@/hooks/useCalendar';
 import { strings, t } from '@/i18n';
 import { syncNow } from '@/offline/syncEngine';
+import { goBack } from '@/services/navigation';
 import { saveTextFile } from '@/services/share';
 import * as api from '@/services/api';
 import { useUserId } from '@/stores/authStore';
@@ -64,7 +65,7 @@ export default function CalendarDetailScreen() {
     if (!result.ok) return;
     if (action === 'purge') {
       useDataStore.getState().removeCalendar(calendar.id);
-      router.back();
+      goBack();
     }
     await syncNow();
   };
@@ -90,7 +91,7 @@ export default function CalendarDetailScreen() {
     if (result.ok) {
       useDataStore.getState().removeCalendar(calendar.id);
       await syncNow();
-      router.back();
+      goBack();
     }
   };
 

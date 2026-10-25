@@ -13,6 +13,7 @@ import { strings, t } from '@/i18n';
 import type { InvitationPreview } from '@/models/types';
 import { syncNow } from '@/offline/syncEngine';
 import * as api from '@/services/api';
+import { goBack } from '@/services/navigation';
 import { radius, spacing } from '@/theme/tokens';
 import { formatDateTime } from '@/utils/dates';
 import { toFriendlyError } from '@/utils/errors';
@@ -116,7 +117,7 @@ export default function AcceptInviteScreen() {
           ) : (
             <Button title={t('invites.accept')} onPress={accept} loading={busy} testID="invite-accept" />
           )}
-          <Button title={t('invites.notNow')} variant="ghost" onPress={() => router.back()} />
+          <Button title={t('invites.notNow')} variant="ghost" onPress={() => goBack()} />
         </Card>
       )}
     </Screen>

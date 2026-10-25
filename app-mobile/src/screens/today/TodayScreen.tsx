@@ -311,9 +311,6 @@ function NextUp({ occ, now, timezone }: { occ: Occurrence; now: number; timezone
   );
 }
 
-/** Pergunta do dia: aparece sozinha uma vez por dia (se a pessoa não desligou). */
-let askedOn: DateKey | null = null;
-
 export default function TodayScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -335,6 +332,8 @@ export default function TodayScreen() {
   const calendarsMap = useCalendarsMap();
   const syncing = useSyncStore((s) => s.syncing);
   const dismissedOn = useUiStore((s) => s.planDismissedOn);
+  // Pergunta do dia: aparece sozinha uma vez por dia (se a pessoa não desligou).
+  const shownOn = useUiStore((s) => s.planShownOn);
   const items = useItems();
   const people = usePeople();
   useSharedMembers();
@@ -361,12 +360,12 @@ export default function TodayScreen() {
   });
   const opened = useRef(false);
   useEffect(() => {
-    if (!hydrated || !focused || !ask || askedOn === today || opened.current) return;
+    if (!hydrated || !focused || !ask || shownOn === today || opened.current) return;
     opened.current = true;
-    askedOn = today;
+    useUiStore.getState().setPlanShownOn(today);
     const timer = setTimeout(() => router.push('/plan-day'), 500);
     return () => clearTimeout(timer);
-  }, [hydrated, focused, ask, today]);
+  }, [hydrated, focused, ask, today, shownOn]);
 
   const byDay = useMemo(() => {
     const map = new Map<DateKey, Occurrence[]>();

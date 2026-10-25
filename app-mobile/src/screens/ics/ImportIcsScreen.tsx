@@ -1,6 +1,6 @@
 // Importa eventos de um arquivo .ics para uma agenda. Mostra a prévia antes,
 // marca o que já foi importado (mesmo UID) e não duplica.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -17,6 +17,7 @@ import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useEventsMap } from '@/hooks/useEventsView';
 import { t } from '@/i18n';
 import { createEvent } from '@/services/eventActions';
+import { goBack } from '@/services/navigation';
 import { pickTextFile } from '@/services/share';
 import { spacing } from '@/theme/tokens';
 import { formatDateKey } from '@/utils/dates';
@@ -84,7 +85,7 @@ export default function ImportIcsScreen() {
         );
       }
       toast(t('ics.imported', { n: fresh.length }));
-      router.back();
+      goBack();
     } finally {
       setSaving(false);
     }

@@ -24,6 +24,7 @@ import { useRemoteData } from '@/hooks/useRemoteData';
 import { strings, t } from '@/i18n';
 import type { CalendarEvent, EventStatus, Member, Occurrence } from '@/models/types';
 import * as api from '@/services/api';
+import { goBack } from '@/services/navigation';
 import { shareMessage } from '@/services/share';
 import {
   deleteEvent,
@@ -428,7 +429,7 @@ export default function EventDetailScreen() {
       'success',
       canUndo ? { label: t('events.undo'), onPress: () => void restoreEvent(event) } : undefined,
     );
-    router.back();
+    goBack();
   };
 
   const changeStatus = async (status: EventStatus, message: string) => {

@@ -21,6 +21,7 @@ import { useNow } from '@/hooks/useNow';
 import { useFreeSlots } from '@/hooks/usePlanning';
 import { strings, t } from '@/i18n';
 import { createEvent, deleteEventsById } from '@/services/eventActions';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { spacing } from '@/theme/tokens';
@@ -131,7 +132,7 @@ export default function PlannerScreen() {
         label: t('planner.undo'),
         onPress: () => void deleteEventsById(created).then(() => toast(t('planner.undone'))),
       });
-      router.back();
+      goBack();
     } finally {
       setSaving(false);
     }

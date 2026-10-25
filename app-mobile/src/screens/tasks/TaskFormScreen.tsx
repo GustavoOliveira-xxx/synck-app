@@ -1,6 +1,6 @@
 // Criar e editar tarefas e lembretes. Uma tarefa simples só precisa do título;
 // o resto fica em "Mais opções".
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -25,6 +25,7 @@ import type { ItemType, RecurrenceMode, TaskPriority, TaskPrivacy, TaskStatus } 
 import { newId } from '@/offline/storage';
 import { createTask, updateTask } from '@/services/itemActions';
 import { requestPermission } from '@/services/localNotifications';
+import { goBack } from '@/services/navigation';
 import { useUserId } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
@@ -101,7 +102,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
               ? t('tasks.reminderCreated')
               : t('tasks.created'),
       );
-      router.back();
+      goBack();
     } catch {
       toast(t('errors.generic'), 'error');
     } finally {

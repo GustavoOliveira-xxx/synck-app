@@ -1,5 +1,5 @@
 // Criar ou renomear uma lista de tarefas (pessoal ou de uma agenda).
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { Button } from '@/components/Button';
@@ -12,6 +12,7 @@ import { TextField } from '@/components/TextField';
 import { useLists } from '@/hooks/useItems';
 import { strings, t } from '@/i18n';
 import { createList, updateList } from '@/services/itemActions';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { useUiStore } from '@/stores/uiStore';
 import { canCreateEvents } from '@/utils/permissions';
@@ -51,7 +52,7 @@ export default function ListFormScreen() {
       setView(`list:${newId}`);
       toast(t('tasks.listCreated'));
     }
-    router.back();
+    goBack();
   };
 
   return (

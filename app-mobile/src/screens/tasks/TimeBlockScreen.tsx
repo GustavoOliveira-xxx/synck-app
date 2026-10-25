@@ -1,6 +1,6 @@
 // Reservar horário para uma tarefa: cria um bloco no calendário ligado à
 // tarefa. A tarefa continua existindo; o bloco pode ser movido ou excluído.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -18,6 +18,7 @@ import { useTask } from '@/hooks/useItems';
 import { useFreeSlots } from '@/hooks/usePlanning';
 import { strings, t } from '@/i18n';
 import { createEvent } from '@/services/eventActions';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { spacing } from '@/theme/tokens';
 import { addDaysToKey, formatTime, instantToLocal, todayKey } from '@/utils/dates';
@@ -83,7 +84,7 @@ export default function TimeBlockScreen() {
         { task_id: task.id },
       );
       toast(t('tasks.blockCreated'));
-      router.back();
+      goBack();
     } finally {
       setSaving(false);
     }

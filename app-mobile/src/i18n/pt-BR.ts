@@ -1113,6 +1113,8 @@ export const ptBR = {
     remindersToday: 'Lembretes de hoje',
     addLabel: 'Vou fazer também',
     addPlaceholder: 'Ex.: Ligar para o banco às 15h',
+    detailedHint: 'Quer escolher horário, lembrete, repetição e outros detalhes? Cadastre por aqui:',
+    editHint: 'Toque para ver ou editar os detalhes.',
     added: 'Adicionado ao seu dia.',
     suggestions: 'Você costuma fazer',
     suggestionsHint: 'Sugestões a partir das suas tarefas, hábitos e repetições.',

@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -16,6 +16,7 @@ import { strings, t } from '@/i18n';
 import type { Role } from '@/models/types';
 import { syncNow } from '@/offline/syncEngine';
 import * as api from '@/services/api';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { spacing } from '@/theme/tokens';
 import { formatDateTime } from '@/utils/dates';
@@ -63,7 +64,7 @@ export default function MemberScreen() {
     const result = await run(() => api.removeMember(member.member_id), { success: t('members.removed') });
     if (result.ok) {
       await refreshMembers();
-      router.back();
+      goBack();
     }
   };
 
@@ -80,7 +81,7 @@ export default function MemberScreen() {
     });
     if (result.ok) {
       await refreshMembers();
-      router.back();
+      goBack();
     }
   };
 

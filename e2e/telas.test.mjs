@@ -291,6 +291,35 @@ test('3.0: tarefas, criação universal, planejamento, horário em comum e busca
   await page.context().close();
 });
 
+test('"Seu dia" aberto pelo endereço: cadastro completo e sair sem a pergunta voltar', async () => {
+  const page = await abrirSessao();
+  await entrar(page, 'bruno.demo@exemplo.test');
+
+  // Sem tela anterior (recarregou ou abriu pelo link): os botões precisam funcionar.
+  await ir(page, '/plan-day');
+  await visivel(page, 'Cadastre por aqui');
+  await foto(page, '30-seu-dia');
+  await page.getByRole('button', { name: 'Tarefa', exact: true }).click();
+  await visivel(page, 'Data do prazo');
+  await visivel(page, 'Definir horário');
+  await foto(page, '31-seu-dia-tarefa-completa');
+
+  await ir(page, '/plan-day');
+  await page.getByText('Agora não', { exact: true }).first().click();
+  await page.getByText(/^(Bom dia|Boa tarde|Boa noite),/).first().waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(1_500);
+  assert.ok(!page.url().includes('/plan-day'), `a pergunta abriu de novo: ${page.url()}`);
+  assert.equal(await page.getByText('Agora não', { exact: true }).count(), 0, 'a pergunta abriu de novo');
+
+  await ir(page, '/plan-day');
+  await page.getByText('Começar o dia', { exact: true }).first().click();
+  await page.getByText(/^(Bom dia|Boa tarde|Boa noite),/).first().waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(1_500);
+  assert.ok(!page.url().includes('/plan-day'), `a pergunta abriu de novo: ${page.url()}`);
+  assert.equal(await page.getByText('Agora não', { exact: true }).count(), 0, 'a pergunta abriu de novo');
+  await page.context().close();
+});
+
 test('nenhum erro de JavaScript em nenhuma tela', () => {
   assert.deepEqual(erros, []);
   const falhas = servidor.registro.filter((r) => r.includes('ERRO'));

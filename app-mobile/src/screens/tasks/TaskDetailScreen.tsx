@@ -41,6 +41,7 @@ import {
   setTaskPlan,
   toggleStep,
 } from '@/services/itemActions';
+import { goBack } from '@/services/navigation';
 import { useUserId } from '@/stores/authStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -363,7 +364,7 @@ export default function TaskDetailScreen() {
     if (!ok) return;
     await deleteTask(task);
     toast(t('tasks.deleted'));
-    router.back();
+    goBack();
   };
 
   const postpone = async (choice: 'tomorrow' | 'nextWeek' | 'pick') => {

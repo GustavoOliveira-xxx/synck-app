@@ -24,6 +24,7 @@ import { strings, t } from '@/i18n';
 import type { CalendarEvent } from '@/models/types';
 import * as api from '@/services/api';
 import { createEvent } from '@/services/eventActions';
+import { goBack } from '@/services/navigation';
 import { useUserId } from '@/stores/authStore';
 import { spacing } from '@/theme/tokens';
 import {
@@ -159,7 +160,7 @@ export default function FindTimeScreen() {
       attendeeIds: people,
     });
     toast(t('findTime.created'));
-    router.back();
+    goBack();
   };
 
   const poll = async () => {

@@ -1,6 +1,6 @@
 // Filtros da aba Tarefas (prazo, prioridade, andamento, tipo, responsável,
 // agenda, lista, repetição e etiquetas). Uma tela só para todas as visões.
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -12,6 +12,7 @@ import { useLists, useTasks } from '@/hooks/useItems';
 import { usePeople } from '@/hooks/usePeople';
 import { strings, t } from '@/i18n';
 import type { ItemType, TaskPriority, TaskStatus } from '@/models/types';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { useUiStore } from '@/stores/uiStore';
 import { spacing } from '@/theme/tokens';
@@ -57,7 +58,7 @@ export default function TaskFiltersScreen() {
             />
           </View>
           <View style={styles.flex}>
-            <Button title={t('common.apply')} onPress={() => router.back()} />
+            <Button title={t('common.apply')} onPress={() => goBack()} />
           </View>
         </View>
       }

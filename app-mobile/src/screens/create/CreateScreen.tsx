@@ -17,6 +17,7 @@ import { TextField } from '@/components/TextField';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useLayout } from '@/hooks/useLayout';
 import { t } from '@/i18n';
+import { goBack } from '@/services/navigation';
 import { defaultEventCalendar, saveQuick } from '@/services/quickCreate';
 import { useAuthStore } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
@@ -127,7 +128,7 @@ export default function CreateScreen() {
             ? t('tasks.reminderCreated')
             : t('tasks.created');
       toast(online ? message : t('events.savedOffline'));
-      router.back();
+      goBack();
     } finally {
       setSaving(false);
     }

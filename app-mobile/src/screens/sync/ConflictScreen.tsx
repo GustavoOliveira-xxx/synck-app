@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -11,6 +11,7 @@ import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { strings, t, tDynamic } from '@/i18n';
 import type { EventPrivacy, EventStatus, EventType } from '@/models/types';
 import { resolveConflict, type ConflictChoice } from '@/services/eventActions';
+import { goBack } from '@/services/navigation';
 import { useSyncStore } from '@/stores/syncStore';
 import { spacing } from '@/theme/tokens';
 import { formatDateTime } from '@/utils/dates';
@@ -84,7 +85,7 @@ export default function ConflictScreen() {
   const choose = async (choice: ConflictChoice) => {
     await resolveConflict(op, choice);
     toast(t('sync.resolved'));
-    router.back();
+    goBack();
   };
 
   const deleted = op.conflict.reason === 'deleted';

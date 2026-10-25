@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useState } from 'react';
 
 import { Button } from '@/components/Button';
@@ -7,6 +7,7 @@ import { TextField } from '@/components/TextField';
 import { useAction } from '@/hooks/useAction';
 import { t } from '@/i18n';
 import { changePassword } from '@/services/auth';
+import { goBack } from '@/services/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { validatePassword } from '@/validation/auth';
 
@@ -27,7 +28,7 @@ export default function ChangePasswordScreen() {
     setErrors(v);
     if (v.current || v.next || v.confirm) return;
     const result = await run(() => changePassword(email, current, next), { success: t('password.changed') });
-    if (result.ok) router.back();
+    if (result.ok) goBack();
   };
 
   return (

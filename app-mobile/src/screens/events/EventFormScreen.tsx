@@ -1,5 +1,5 @@
 // Criação e edição de eventos (inclusive "só esta ocorrência" e "esta e as próximas").
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -30,6 +30,7 @@ import type {
 } from '@/models/types';
 import { createEvent, updateEvent, type RecurrenceScope } from '@/services/eventActions';
 import { requestPermission } from '@/services/localNotifications';
+import { goBack } from '@/services/navigation';
 import { useAuthStore, useUserId } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
@@ -124,7 +125,7 @@ function Form({
       if (event) await updateEvent(event, form, scope, occurrence);
       else await createEvent(form);
       toast(online ? (event ? t('events.updated') : t('events.created')) : t('events.savedOffline'));
-      router.back();
+      goBack();
     } catch {
       toast(t('errors.generic'), 'error');
     } finally {

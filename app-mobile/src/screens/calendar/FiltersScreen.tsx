@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,6 +12,7 @@ import { SwitchRow } from '@/components/SwitchRow';
 import { strings, t } from '@/i18n';
 import type { EventStatus, EventType, Member } from '@/models/types';
 import * as api from '@/services/api';
+import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -74,7 +74,7 @@ export default function FiltersScreen() {
 
   const apply = () => {
     useUiStore.getState().setFilters(filters);
-    router.back();
+    goBack();
   };
 
   return (

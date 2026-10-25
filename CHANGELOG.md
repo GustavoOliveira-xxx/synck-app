@@ -12,6 +12,17 @@ O número da compilação (build) cresce a cada APK gerado e aparece em **Perfil
 
 Nada ainda.
 
+## [3.0.1] (2026-10-25)
+
+### Corrigido
+
+- **Não dava para sair de "Seu dia"** quando a tela era aberta direto pelo endereço (recarregar a página, link ou ícone da Tela de Início): "Agora não" e "Começar o dia" não faziam nada e o ícone de casa reabria a pergunta. Agora, sem tela anterior, o app vai para a tela Hoje, e a pergunta não reabre sozinha no mesmo dia. A mesma correção vale para todos os botões de voltar, salvar e cancelar do app.
+
+### Adicionado
+
+- Em "Seu dia", botões **Tarefa**, **Evento** e **Lembrete** abrem o formulário completo (data, horário, avisos, repetição, prioridade, agenda e demais detalhes), já com a data de hoje; a tarefa criada entra no seu dia.
+- Tocar num item do seu dia, numa tarefa ou num compromisso de hoje abre os detalhes para ver ou editar.
+
 ## [3.0.0] (2026-10-24)
 
 O SynCK deixa de ser só calendário e passa a organizar o dia: tarefas, lembretes, planejamento e colaboração. Nada da 2.0 foi apagado; quem atualiza o APK mantém tudo.

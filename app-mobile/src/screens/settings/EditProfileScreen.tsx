@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useState } from 'react';
 
 import { Avatar } from '@/components/Avatar';
@@ -9,6 +9,7 @@ import { TextField } from '@/components/TextField';
 import { useAction } from '@/hooks/useAction';
 import { saveProfile } from '@/services/account';
 import { t } from '@/i18n';
+import { goBack } from '@/services/navigation';
 import { CALENDAR_COLORS } from '@/theme/tokens';
 import { useAuthStore } from '@/stores/authStore';
 import { validateDisplayName } from '@/validation/auth';
@@ -27,7 +28,7 @@ export default function EditProfileScreen() {
     const result = await run(() => saveProfile({ display_name: name.trim(), avatar_color: color }), {
       success: t('profile.saved'),
     });
-    if (result.ok) router.back();
+    if (result.ok) goBack();
   };
 
   return (
