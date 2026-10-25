@@ -2,7 +2,7 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, SectionList, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInLeft, SlideInRight } from 'react-native-reanimated';
+import { FadeIn, FadeOut, SlideInLeft, SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -10,7 +10,7 @@ import { Chip } from '@/components/Chip';
 import { EventRow } from '@/components/EventRow';
 import { FAB } from '@/components/FAB';
 import { IconButton } from '@/components/IconButton';
-import { EnterItem } from '@/components/motion';
+import { EnterItem, MotionView } from '@/components/motion';
 import { MonthGrid, type DayInfo } from '@/components/MonthGrid';
 import { TaskRow } from '@/components/TaskRow';
 import { TimeGrid } from '@/components/TimeGrid';
@@ -389,7 +389,7 @@ export default function CalendarScreen() {
     ? FadeIn.duration(150)
     : (direction > 0 ? SlideInRight : SlideInLeft).duration(220);
   const grid = (
-    <Animated.View key={`${year}-${month}`} entering={monthEntering} exiting={FadeOut.duration(80)}>
+    <MotionView key={`${year}-${month}`} entering={monthEntering} exiting={FadeOut.duration(80)}>
       <MonthGrid
         year={year}
         month={month}
@@ -399,7 +399,7 @@ export default function CalendarScreen() {
         days={monthDays}
         onSelect={setSelected}
       />
-    </Animated.View>
+    </MotionView>
   );
   const dayCount = (byDay.get(selected) ?? []).length;
   const dayHeader = t('calendarView.dayHeader', { day: capitalize(formatLongDate(selected)), n: dayCount });

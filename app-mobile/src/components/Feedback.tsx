@@ -9,7 +9,9 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+
+import { MotionView } from './motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
@@ -156,7 +158,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         </View>
       </Modal>
       {toastState && (
-        <Animated.View
+        <MotionView
           key={toastState.message}
           entering={
             reduceMotion
@@ -217,7 +219,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
               </AppText>
             </Pressable>
           ) : null}
-        </Animated.View>
+        </MotionView>
       )}
     </FeedbackContext.Provider>
   );

@@ -12,6 +12,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { MotionView } from '../motion';
+
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { marca } from '@/theme/marca';
@@ -43,7 +45,7 @@ export function BrandSplash() {
   }));
 
   return (
-    <Animated.View
+    <MotionView
       exiting={FadeOut.duration(240)}
       style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: colors.background }]}
       accessibilityRole="progressbar"
@@ -66,7 +68,7 @@ export function BrandSplash() {
           </AppText>
         </AppText>
       </View>
-    </Animated.View>
+    </MotionView>
   );
 }
 

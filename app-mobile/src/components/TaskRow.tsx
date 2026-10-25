@@ -137,6 +137,7 @@ export const TaskRow = memo(function TaskRow({
   if (progress.total) meta.push(t('tasks.checklistProgress', { done: progress.done, total: progress.total }));
   if (!hideList && listName) meta.push(listName);
   if (calendarName) meta.push(calendarName);
+  const hasMeta = meta.length > 0 || !!task.recurrence_rule || task.tags.length > 0;
   const a11y = [
     task.item_type === 'reminder' ? strings.create.reminder : strings.create.task,
     task.title,
@@ -166,6 +167,7 @@ export const TaskRow = memo(function TaskRow({
       onAccessibilityAction={onLongPress ? () => onLongPress(task) : undefined}
       style={[
         styles.row,
+        !hasMeta && styles.centered,
         compact && styles.compact,
         { backgroundColor: colors.surface, borderColor: colors.border },
       ]}
@@ -190,7 +192,7 @@ export const TaskRow = memo(function TaskRow({
             {task.title}
           </AppText>
         </View>
-        {(meta.length > 0 || task.recurrence_rule || task.tags.length > 0) && (
+        {hasMeta && (
           <View style={styles.meta}>
             {due && (
               <View style={styles.metaItem}>
@@ -263,6 +265,8 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH + 8,
   },
   compact: { paddingVertical: spacing.sm },
+  // Só o título: centraliza na altura da linha em vez de ficar colado no alto.
+  centered: { alignItems: 'center' },
   checkTouch: { width: 44, minHeight: 32, alignItems: 'center', paddingTop: 1 },
   check: {
     width: 24,

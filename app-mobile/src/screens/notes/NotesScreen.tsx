@@ -87,7 +87,7 @@ export default function NotesScreen() {
 
   return (
     <View style={styles.flex}>
-      <Screen>
+      <Screen withFab>
         <Stack.Screen
           options={{
             title: params.calendarId

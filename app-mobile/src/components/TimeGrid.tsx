@@ -119,6 +119,7 @@ const EventBox = memo(function EventBox({
   const title = occ.event.is_masked ? t('events.maskedTitle') : (occ.title ?? '');
   const time = `${formatTime(occ.start, timezone, timeFormat)} a ${formatTime(occ.end, timezone, timeFormat)}`;
   const height = Math.max(20, (box.height / 60) * HOUR - 2);
+  const narrow = width / box.lanes < 90;
   return (
     <Animated.View
       {...(active ? responder.panHandlers : {})}
@@ -146,12 +147,16 @@ const EventBox = memo(function EventBox({
         accessibilityHint={t('calendarGrid.moveHint')}
         style={styles.boxInner}
       >
-        <AppText numberOfLines={height > 36 ? 2 : 1} style={[styles.boxTitle, { color: colors.text }]}>
+        {/* Coluna estreita (semana no celular): uma linha com reticências, sem quebrar a palavra no meio. */}
+        <AppText
+          numberOfLines={narrow || height <= 36 ? 1 : 2}
+          style={[styles.boxTitle, { color: colors.text }]}
+        >
           {title}
         </AppText>
         {height > 40 && (
           <AppText variant="caption" tone="muted" numberOfLines={1}>
-            {time}
+            {narrow ? formatTime(occ.start, timezone, timeFormat) : time}
           </AppText>
         )}
       </Pressable>

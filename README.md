@@ -160,7 +160,7 @@ npm ci && npm run preparar && CHROMIUM_PATH=/caminho/do/chrome npm test
 npm run preparar:site && CHROMIUM_PATH=/caminho/do/chrome npm run test:site
 ```
 
-São 298 testes automáticos (92 do banco, 190 do app, 9 de tela e 7 da versão instalável). Os mesmos rodam sozinhos no GitHub a cada envio (workflow **Qualidade**). Estratégia, números e roteiro de teste manual em [docs/TESTES.md](docs/TESTES.md).
+São 299 testes automáticos (92 do banco, 190 do app, 10 de tela e 7 da versão instalável). Os mesmos rodam sozinhos no GitHub a cada envio (workflow **Qualidade**). Estratégia, números e roteiro de teste manual em [docs/TESTES.md](docs/TESTES.md).
 
 ## Build, APK e AAB
 

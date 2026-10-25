@@ -509,7 +509,9 @@ export default function TaskDetailScreen() {
         {task.my_alerts.length > 0 && task.due_date && (
           <View style={styles.infoRow}>
             <Icon name="notifications-outline" size={18} color={colors.textMuted} />
-            <AppText style={styles.flex}>{task.my_alerts.map(reminderLabel).join(', ')}</AppText>
+            <AppText style={styles.flex}>
+              {task.my_alerts.map((m) => (m === 0 ? t('tasks.alertAtDue') : reminderLabel(m))).join(', ')}
+            </AppText>
           </View>
         )}
         {task.estimated_minutes ? (

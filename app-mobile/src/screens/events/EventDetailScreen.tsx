@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Avatar } from '@/components/Avatar';
@@ -40,6 +40,7 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { agendaColor, fonte, radius, SCREEN_MARGIN, spacing } from '@/theme/tokens';
 import { describeActivity } from '@/utils/activity';
 import { capitalize, formatDateTime, formatLongDate, formatOccurrenceTime, toDateKey } from '@/utils/dates';
+import { CONTENT_MAX_WIDTH } from '@/utils/layout';
 import { canComment, canEditEvent } from '@/utils/permissions';
 import { describeRule, expandEvent, parseRule } from '@/utils/recurrence';
 
@@ -343,6 +344,7 @@ function EventHistory({ event }: { event: CalendarEvent }) {
 }
 
 export default function EventDetailScreen() {
+  const { width } = useWindowDimensions();
   const { id, date } = useLocalSearchParams<{ id: string; date?: string }>();
   const { colors, dark } = useAppTheme();
   const display = useDisplaySettings();
@@ -461,6 +463,9 @@ export default function EventDetailScreen() {
   const isNow = !occurrence.allDay && event.status !== 'cancelled' && startMs <= now && endMs > now;
   const soon = !occurrence.allDay && startMs > now && startMs - now < 24 * 3600_000;
   const amAttendee = !!userId && event.attendee_ids.includes(userId);
+  // Em telas largas o conteúdo é uma coluna centralizada: o topo vira um cartão
+  // em vez de continuar a barra de título (que ocupa a largura toda).
+  const floating = width > CONTENT_MAX_WIDTH;
 
   return (
     <Screen>
@@ -468,10 +473,16 @@ export default function EventDetailScreen() {
         options={{
           title: t('events.details'),
           headerTitle: '',
-          headerStyle: { backgroundColor: colors.surface },
+          headerStyle: { backgroundColor: floating ? colors.background : colors.surface },
         }}
       />
-      <View style={[styles.hero, { backgroundColor: colors.surface }]}>
+      <View
+        style={[
+          styles.hero,
+          { backgroundColor: colors.surface },
+          floating && [styles.heroCard, { borderColor: colors.border }],
+        ]}
+      >
         <View style={styles.chips}>
           <View style={[styles.calChip, { borderColor: colors.border }]}>
             <View style={[styles.dot, { backgroundColor: color }]} />
@@ -682,6 +693,14 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
     gap: spacing.md,
+  },
+  heroCard: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    borderRadius: radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   heroTitle: { marginBottom: spacing.xs },
   chips: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },

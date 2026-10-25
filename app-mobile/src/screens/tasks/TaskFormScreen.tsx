@@ -271,6 +271,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
           error={errors.alerts}
           label={t('tasks.alerts')}
           hint={t('tasks.alertsHint')}
+          atTimeLabel={t('tasks.alertAtDue')}
         />
       ) : (
         <AppText variant="small" tone="muted">

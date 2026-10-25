@@ -918,6 +918,7 @@ export const ptBR = {
     due: 'Prazo',
     dueDate: 'Data do prazo',
     dueTime: 'Horário (opcional)',
+    alertAtDue: 'Na hora do prazo',
     reminderDate: 'Data',
     reminderTime: 'Horário',
     noDue: 'Sem prazo',

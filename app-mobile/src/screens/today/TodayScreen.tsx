@@ -25,7 +25,7 @@ import { EventRow } from '@/components/EventRow';
 import { FAB } from '@/components/FAB';
 import { Icon, type IconName } from '@/components/Icon';
 import { IconButton } from '@/components/IconButton';
-import { EnterItem, PressableScale, tapFeedback } from '@/components/motion';
+import { EnterItem, MotionView, PressableScale, tapFeedback } from '@/components/motion';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { EmptyState, LoadingState } from '@/components/StateViews';
 import { TaskRow } from '@/components/TaskRow';
@@ -257,9 +257,9 @@ function Section({
         <Icon name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={colors.textMuted} />
       </Pressable>
       {!collapsed && (
-        <Animated.View entering={FadeIn.duration(160)} style={styles.sectionBody}>
+        <MotionView entering={FadeIn.duration(160)} style={styles.sectionBody}>
           {children}
-        </Animated.View>
+        </MotionView>
       )}
     </View>
   );

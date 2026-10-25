@@ -12,6 +12,18 @@ O número da compilação (build) cresce a cada APK gerado e aparece em **Perfil
 
 Nada ainda.
 
+## [3.0.2] (2026-10-25)
+
+### Corrigido
+
+- **Itens por cima de outros no navegador:** na tela Hoje, a tarefa do dia ficava embaixo do título da seção seguinte. A causa eram as animações de entrada, que no navegador às vezes deixavam o item fora do fluxo da página. Agora, no navegador, todas as entradas usam um esmaecer que não mexe no layout (no Android nada muda), e os testes de tela conferem isso em todas as telas fotografadas.
+- Detalhes do evento no computador: o topo virou um cartão inteiro, em vez de ficar cortado pela barra de título.
+- Semana no celular: o nome do evento não quebra mais no meio da palavra ("Cons / ulta"); aparece numa linha com reticências.
+- Tarefas só com título ficam centralizadas na linha.
+- Planejar minha semana e horários livres começam no próximo quarto de hora (13:30, e não 13:26).
+- Aviso de tarefa "Na hora do prazo" (antes dizia "No horário do evento"); "prazo amanhã" com letra minúscula.
+- Anotações e Hábitos deixam espaço no fim para o botão "+" não cobrir o último item.
+
 ## [3.0.1] (2026-10-25)
 
 ### Corrigido

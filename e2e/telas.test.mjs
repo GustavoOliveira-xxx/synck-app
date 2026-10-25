@@ -96,7 +96,26 @@ async function ir(page, caminho) {
   await semAbertura(page);
 }
 
-const foto = (page, nome) => page.screenshot({ path: join(SAIDA, `${nome}.png`) });
+/**
+ * No navegador, as animações de entrada e de layout do Reanimated podem deixar
+ * um elemento com posição absoluta: ele sai do fluxo e o que vem depois sobe
+ * por cima dele. O app não usa mais essas animações na web (MotionView); esta
+ * conferência roda antes de cada captura para pegar qualquer volta delas.
+ */
+async function semAnimacaoPresa(page, tela) {
+  await page.waitForTimeout(900);
+  const presos = await page.evaluate(() =>
+    [...document.querySelectorAll('[style*="animation-name"]')]
+      .filter((el) => /^(REA-|Fade|Slide|Zoom|Bounce|Flip|Stretch|LightSpeed|Pinwheel|Roll|Rotate)/.test(el.style.animationName))
+      .map((el) => `${el.style.animationName} (${getComputedStyle(el).position}): ${el.textContent.slice(0, 60)}`),
+  );
+  assert.deepEqual(presos, [], `animação de layout presa na tela ${tela}`);
+}
+
+const foto = async (page, nome) => {
+  await semAnimacaoPresa(page, nome);
+  await page.screenshot({ path: join(SAIDA, `${nome}.png`) });
+};
 const visivel = (page, texto) => page.getByText(texto, { exact: false }).first().waitFor({ timeout: 15_000 });
 
 before(async () => {
@@ -317,6 +336,41 @@ test('"Seu dia" aberto pelo endereço: cadastro completo e sair sem a pergunta v
   await page.waitForTimeout(1_500);
   assert.ok(!page.url().includes('/plan-day'), `a pergunta abriu de novo: ${page.url()}`);
   assert.equal(await page.getByText('Agora não', { exact: true }).count(), 0, 'a pergunta abriu de novo');
+  await page.context().close();
+});
+
+test('tela Hoje no computador: seções não ficam umas por cima das outras', async () => {
+  const page = await abrirSessao('dark', { width: 1917, height: 875 });
+  await entrar(page, 'carla.demo@exemplo.test');
+  await ir(page, '/tasks');
+  const rapida = page.getByPlaceholder('Adicionar tarefa (ex.: Comprar pão amanhã)');
+  await rapida.fill('1 hora de curso de java');
+  await rapida.press('Enter');
+  await visivel(page, '1 hora de curso de java');
+  await ir(page, '/');
+  await visivel(page, '1 hora de curso de java');
+  await foto(page, '32-hoje-computador-com-tarefa');
+  const caixas = await page.evaluate(() => {
+    const ret = (el) => {
+      const b = el.getBoundingClientRect();
+      return { top: b.top, bottom: b.bottom, texto: el.textContent.slice(0, 40) };
+    };
+    // Cabeçalhos das seções recolhíveis: o rótulo termina em "Recolher" ou "Mostrar".
+    const ehCabecalho = (el) => /\. (Recolher|Mostrar)$/.test(el.getAttribute('aria-label') ?? '');
+    const todos = [...document.querySelectorAll('[role="button"], [role="checkbox"]')];
+    const cabecalhos = todos.filter(ehCabecalho).map(ret);
+    const itens = todos
+      .filter((el) => !ehCabecalho(el) && el.getBoundingClientRect().height > 30)
+      .map(ret);
+    return { cabecalhos, itens };
+  });
+  assert.ok(caixas.cabecalhos.length >= 2, 'a tela Hoje deveria ter seções');
+  for (const c of caixas.cabecalhos) {
+    for (const i of caixas.itens) {
+      const sobrepoe = c.top < i.bottom - 1 && i.top < c.bottom - 1;
+      assert.ok(!sobrepoe, `"${c.texto}" está por cima de "${i.texto}"`);
+    }
+  }
   await page.context().close();
 });
 

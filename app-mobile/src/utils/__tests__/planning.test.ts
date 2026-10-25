@@ -47,6 +47,13 @@ describe('horários livres', () => {
       now: new Date('2026-10-28T22:30:00Z'),
     });
     expect(later.map((s) => s.minutes)).toEqual([150]);
+    // Agora quebrado (19:26 em Brasília): o livre começa no próximo quarto de hora.
+    const quebrado = freeSlots(busy, ['2026-10-28'], tz, '08:00', '22:00', {
+      now: new Date('2026-10-28T22:26:00Z'),
+    });
+    expect(quebrado.map((s) => [s.start.toISOString(), s.minutes])).toEqual([
+      ['2026-10-28T22:30:00.000Z', 150],
+    ]);
   });
 
   it('eventos de dia inteiro e cancelados não ocupam horário', () => {

@@ -14,11 +14,11 @@ Resultado conferido em 24/10/2026 (versão 3.0.0), rodando os comandos abaixo ne
 | Lint (ESLint) | `app-mobile`: `npm run lint` | | | sem erros | |
 | Formatação (Prettier) | `app-mobile`: `npm run format:check` | | | "All matched files use Prettier code style!" | |
 | Segredos no repositório | raiz: `bash scripts/verificar-segredos.sh` | | | "OK: nenhum segredo encontrado nos arquivos versionados." | |
-| Testes de tela (versão web: celular, tablet e computador) | `e2e`: `npm run preparar` e `npm test` | 1 | **9** | 9 passaram, 0 falharam | cerca de 40 s (mais 1 a 2 min para gerar a versão web) |
+| Testes de tela (versão web: celular, tablet e computador) | `e2e`: `npm run preparar` e `npm test` | 1 | **10** | 10 passaram, 0 falharam | cerca de 40 s (mais 1 a 2 min para gerar a versão web) |
 | Versão instalável (PWA) | `e2e`: `npm run preparar:site` e `npm run test:site` | 1 | **7** | 7 passaram, 0 falharam | cerca de 20 s (mais 1 a 2 min para gerar o site) |
 | Testes de interface no Android (emulador ou celular) | | 0 | **0** | não automatizados; use o [roteiro manual](#roteiro-de-teste-manual) | |
 
-**Total automatizado: 298 testes** (92 do banco + 190 do app + 9 de tela + 7 da versão instalável). A função de notificações do navegador também passa pela verificação de tipos do Deno (`deno check`) e por uma conferência de que usa a mesma lógica de datas do app.
+**Total automatizado: 299 testes** (92 do banco + 190 do app + 10 de tela + 7 da versão instalável). Antes de cada captura, os testes de tela conferem que nenhum elemento ficou com animação de layout presa (o defeito que fazia itens ficarem por cima de outros no navegador). A função de notificações do navegador também passa pela verificação de tipos do Deno (`deno check`) e por uma conferência de que usa a mesma lógica de datas do app.
 
 > **Importante:** os testes de tela abrem a **versão web** do app (o mesmo código do APK) num navegador com tamanho de celular, ligada a um "Supabase de mentira" que usa o **banco real** do projeto (PGlite com as migrations e os dados de demonstração). Eles não usam um celular Android de verdade, nem o Supabase Auth real, nem as notificações do Android. Isso continua no roteiro manual deste documento.
 
@@ -572,7 +572,7 @@ Copie esta tabela para cada rodada de testes.
 
 | Critério | Evidência automática | Evidência manual |
 |---|---|---|
-| Testes principais passarem | 92 testes do banco, 190 do app, 9 de tela e 7 da versão instalável passando (resumo no topo) | |
+| Testes principais passarem | 92 testes do banco, 190 do app, 10 de tela e 7 da versão instalável passando (resumo no topo) | |
 | Permissões funcionarem | `02`, `03`, `04`, `06` e `permissions.test.ts` | M07 (passo 4), M14 |
 | Usuário removido perder acesso | `02_agendas_membros.test.mjs`, `07_avisos_lgpd.test.mjs` | M13 |
 | Eventos recorrentes conforme escopo | `recurrence.test.ts`, `05_sincronizacao.test.mjs` | M09 |

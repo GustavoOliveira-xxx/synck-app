@@ -68,7 +68,9 @@ export function freeSlots(
   options: { minMinutes?: number; now?: Date } = {},
 ): FreeSlot[] {
   const min = (options.minMinutes ?? 30) * 60_000;
-  const now = options.now?.getTime() ?? 0;
+  // O que sobra de hoje começa no próximo quarto de hora (13:26 vira 13:30).
+  const QUARTER = 15 * 60_000;
+  const now = options.now ? Math.ceil(options.now.getTime() / QUARTER) * QUARTER : 0;
   const merged = mergeIntervals(busy);
   const out: FreeSlot[] = [];
   for (const day of days) {

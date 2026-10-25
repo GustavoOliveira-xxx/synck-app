@@ -21,7 +21,12 @@ interface ScreenProps {
   maxWidth?: number;
   /** Respeitar a área do topo (telas sem barra de título). */
   safeTop?: boolean;
+  /** A tela tem o botão flutuante "+": deixa espaço no fim para ele não cobrir o último item. */
+  withFab?: boolean;
 }
+
+/** Altura livre no fim da rolagem quando há botão flutuante (56 do botão + margens). */
+const FAB_CLEARANCE = 120;
 
 /** Estrutura padrão de tela: fundo, margens, rolagem e aviso de sem internet. */
 export function Screen({
@@ -34,6 +39,7 @@ export function Screen({
   showOfflineBanner = true,
   maxWidth = CONTENT_MAX_WIDTH,
   safeTop,
+  withFab,
 }: ScreenProps) {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -44,7 +50,7 @@ export function Screen({
       contentContainerStyle={[
         column,
         padded && styles.padded,
-        { paddingBottom: spacing.huge + insets.bottom },
+        { paddingBottom: (withFab ? FAB_CLEARANCE : spacing.huge) + insets.bottom },
         safeTop && { paddingTop: insets.top + spacing.lg },
       ]}
       keyboardShouldPersistTaps="handled"

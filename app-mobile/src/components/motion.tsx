@@ -2,7 +2,7 @@
 // saída suave. Com "reduzir movimento" ligado, escalas e deslocamentos viram
 // um fade curto.
 import * as Haptics from 'expo-haptics';
-import { forwardRef, useEffect, type ComponentRef, type ReactNode } from 'react';
+import { forwardRef, useEffect, type ComponentProps, type ComponentRef, type ReactNode } from 'react';
 import { Platform, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
@@ -10,6 +10,7 @@ import Animated, {
   FadeInDown,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -107,10 +108,48 @@ export function EnterItem({
         .easing(EASE_OUT)
         .withInitialValues({ transform: [{ translateY: 10 }] });
   return (
-    <Animated.View entering={entering} style={style}>
+    <MotionView entering={entering} enterDelay={delay} style={style}>
       {children}
-    </Animated.View>
+    </MotionView>
   );
+}
+
+type MotionViewProps = ComponentProps<typeof Animated.View> & {
+  /** Atraso da entrada no navegador (no celular vale o da própria animação). */
+  enterDelay?: number;
+};
+
+/**
+ * Animated.View com entrada, saída e mudança de layout. No navegador, essas
+ * animações do Reanimated podem deixar o elemento com posição absoluta (fora
+ * do fluxo), e ele passa a ficar por cima do que vem depois. Lá a entrada vira
+ * um esmaecer simples, que não mexe no layout; saída e reposicionamento são
+ * imediatos.
+ */
+export function MotionView({ entering, exiting, layout, enterDelay = 0, ...rest }: MotionViewProps) {
+  if (Platform.OS !== 'web') {
+    return <Animated.View entering={entering} exiting={exiting} layout={layout} {...rest} />;
+  }
+  return <WebFadeIn animate={!!entering} delay={enterDelay} {...rest} />;
+}
+
+function WebFadeIn({
+  animate,
+  delay,
+  style,
+  ...rest
+}: ComponentProps<typeof Animated.View> & { animate: boolean; delay: number }) {
+  const { reduceMotion } = useAppTheme();
+  const progress = useSharedValue(animate && !reduceMotion ? 0 : 1);
+  useEffect(() => {
+    if (progress.get() < 1)
+      progress.set(withDelay(delay, withTiming(1, { duration: 220, easing: EASE_OUT })));
+  }, [progress, delay]);
+  const fade = useAnimatedStyle(() => ({
+    opacity: progress.get(),
+    transform: [{ translateY: (1 - progress.get()) * 8 }],
+  }));
+  return <Animated.View style={[style, fade]} {...rest} />;
 }
 
 /** Valor 0 → 1 que acompanha `on` com mola (chips, alternadores, check). */

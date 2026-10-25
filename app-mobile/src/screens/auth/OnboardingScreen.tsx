@@ -21,7 +21,7 @@ import { Avatar } from '@/components/Avatar';
 import { GlassSphere, OrbitSymbol, useDecorSize } from '@/components/brand/Decor';
 import { Button } from '@/components/Button';
 import { IconButton } from '@/components/IconButton';
-import { EASE_OUT } from '@/components/motion';
+import { EASE_OUT, MotionView } from '@/components/motion';
 import { t } from '@/i18n';
 import { useUiStore } from '@/stores/uiStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -159,7 +159,7 @@ export default function OnboardingScreen() {
         )}
         <Button title={t('onboarding.skip')} variant="ghost" onPress={finish} compact />
       </View>
-      <Animated.View key={index} entering={entering} exiting={exiting} style={styles.body}>
+      <MotionView key={index} entering={entering} exiting={exiting} style={styles.body}>
         <View style={[styles.art, { height: artHeight }]}>
           {index === 0 && (
             <>
@@ -183,7 +183,7 @@ export default function OnboardingScreen() {
           </AppText>
           <AppText tone="muted">{slide.text}</AppText>
         </View>
-      </Animated.View>
+      </MotionView>
       <View style={styles.footer}>
         <Dots index={index} total={slides.length} />
         <Button

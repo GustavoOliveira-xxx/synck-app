@@ -144,7 +144,7 @@ export default function HabitsScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <Screen>
+      <Screen withFab>
         <Stack.Screen options={{ title: t('habits.title') }} />
         {habits.length === 0 ? (
           <EmptyState

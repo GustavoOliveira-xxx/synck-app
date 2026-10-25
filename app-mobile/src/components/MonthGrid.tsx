@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import { ZoomIn } from 'react-native-reanimated';
+
+import { MotionView } from './motion';
 
 import { strings, t } from '@/i18n';
 import type { DateKey } from '@/models/types';
@@ -86,7 +88,7 @@ export const MonthGrid = memo(function MonthGrid({
                   ]}
                 >
                   {isSelected && (
-                    <Animated.View
+                    <MotionView
                       entering={reduceMotion ? undefined : ZoomIn.springify().stiffness(400).damping(28)}
                       style={[StyleSheet.absoluteFill, styles.fill, { backgroundColor: colors.primary }]}
                     />

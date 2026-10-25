@@ -17,12 +17,15 @@ export function ReminderPicker({
   error,
   label,
   hint,
+  atTimeLabel,
 }: {
   value: number[];
   onChange: (value: number[]) => void;
   error?: string;
   label?: string;
   hint?: string;
+  /** Texto da opção "0 minutos" (em tarefas, a hora do prazo em vez da hora do evento). */
+  atTimeLabel?: string;
 }) {
   const [custom, setCustom] = useState('');
   const toggle = (minutes: number) =>
@@ -48,7 +51,7 @@ export function ReminderPicker({
         {[...REMINDER_PRESETS, ...customValues].map((m) => (
           <Chip
             key={m}
-            label={reminderLabel(m)}
+            label={m === 0 && atTimeLabel ? atTimeLabel : reminderLabel(m)}
             selected={value.includes(m)}
             onPress={() => (value.includes(m) || value.length < 5 ? toggle(m) : undefined)}
           />

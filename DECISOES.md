@@ -41,6 +41,7 @@ Cada decisão segue o formato: **contexto**, **opções**, **decisão**, **motiv
 - [D36 Disponibilidade e enquetes de horário](#d36-disponibilidade-e-enquetes-de-horário)
 - [D37 Adição rápida sem inteligência artificial](#d37-adição-rápida-sem-inteligência-artificial)
 - [D38 Arquivos .ics](#d38-arquivos-ics)
+- [D39 Animações no navegador](#d39-animações-no-navegador)
 
 ---
 
@@ -444,4 +445,14 @@ Formulários e listas têm largura máxima de 720 (leitura confortável) e diál
 - Repetições que o SynCK não representa (como "segunda terça do mês") entram como evento único, e a prévia avisa quantos foram.
 
 **Motivo.** Funciona sem pedir nenhuma permissão nova no Android e sem bibliotecas nativas novas.
+
+## D39 Animações no navegador
+
+**Contexto.** Na versão web, as animações de entrada e de layout da biblioteca Reanimated às vezes deixavam o elemento com posição absoluta depois de entrar (principalmente uma animação dentro de outra). O item saía do fluxo da página e o que vinha depois ficava por cima dele.
+
+**Decisão.** Todo componente com entrada, saída ou mudança de layout usa `MotionView` (`components/motion.tsx`). No celular ele é o `Animated.View` de sempre. No navegador, a entrada vira um esmaecer feito só com opacidade e deslocamento visual, que não mexe no layout, e saída e reposicionamento são imediatos.
+
+**Garantia.** Os testes de tela conferem, antes de cada captura, que não há animação de layout presa, e um teste mede na tela Hoje do computador que nenhum título de seção fica por cima de um item.
+
+**Também na web.** Voltar sem tela anterior (página aberta pelo endereço) leva para a tela Hoje (`services/navigation.ts`), em vez de não fazer nada.
 

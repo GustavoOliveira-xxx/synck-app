@@ -5,7 +5,7 @@
 import { router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
+import { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -15,7 +15,7 @@ import { Card } from '@/components/Card';
 import { useFeedback } from '@/components/Feedback';
 import { Icon, type IconName } from '@/components/Icon';
 import { IconButton } from '@/components/IconButton';
-import { EnterItem, PressableScale, tapFeedback } from '@/components/motion';
+import { EnterItem, MotionView, PressableScale, tapFeedback } from '@/components/motion';
 import { QuickAddBar } from '@/components/QuickAddBar';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -84,7 +84,7 @@ function PlanRow({
 }) {
   const { colors } = useAppTheme();
   return (
-    <Animated.View
+    <MotionView
       layout={LinearTransition.springify()}
       style={[styles.planRow, { borderColor: colors.border, backgroundColor: colors.surface }]}
     >
@@ -116,7 +116,7 @@ function PlanRow({
         }}
         accessibilityHint={title}
       />
-    </Animated.View>
+    </MotionView>
   );
 }
 
@@ -213,7 +213,7 @@ export default function PlanDayScreen() {
       }
     >
       <Stack.Screen options={{ title: t('planDay.title'), headerShown: true }} />
-      <Animated.View
+      <MotionView
         entering={FadeIn.duration(260)}
         style={[styles.hero, { backgroundColor: colors.primarySoft, marginTop: insets.top ? 0 : spacing.xs }]}
       >
@@ -239,7 +239,7 @@ export default function PlanDayScreen() {
           <Kairo size={92} paused={!focused} />
           <StarBurst trigger={burst} size={70} />
         </View>
-      </Animated.View>
+      </MotionView>
 
       <View style={styles.stats}>
         <View style={[styles.stat, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -360,11 +360,7 @@ export default function PlanDayScreen() {
         />
       </View>
       {planned.map((task) => (
-        <Animated.View
-          key={task.id}
-          entering={FadeInDown.duration(220)}
-          layout={LinearTransition.springify()}
-        >
+        <MotionView key={task.id} entering={FadeInDown.duration(220)} layout={LinearTransition.springify()}>
           <View style={[styles.plannedRow, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
             <PressableScale
               style={styles.plannedMain}
@@ -388,7 +384,7 @@ export default function PlanDayScreen() {
               onPress={() => togglePlan(task)}
             />
           </View>
-        </Animated.View>
+        </MotionView>
       ))}
 
       {habitsToday.length > 0 && (

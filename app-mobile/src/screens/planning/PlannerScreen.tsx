@@ -49,7 +49,7 @@ function reasonText(r: PlanReason, today: string): string {
           describeDue(
             { due_date: String(r.value), due_time: null, status: 'pending', timezone: 'UTC' },
             today,
-          ) ?? formatShortDate(String(r.value)),
+          )?.toLowerCase() ?? formatShortDate(String(r.value)),
       });
     case 'overdue':
       return t('tasks.overdue').toLowerCase();

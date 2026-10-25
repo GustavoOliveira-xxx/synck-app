@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { FadeIn, FadeOut } from 'react-native-reanimated';
+
+import { MotionView } from './motion';
 
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { strings, t } from '@/i18n';
@@ -61,7 +63,7 @@ export function ParsePreview({ parse, today }: { parse: QuickParse; today: DateK
   return (
     <View style={styles.preview} accessibilityLiveRegion="polite">
       {items.map((item, i) => (
-        <Animated.View
+        <MotionView
           key={`${item.icon}-${item.text}`}
           entering={FadeIn.duration(140).delay(i * 30)}
           exiting={FadeOut.duration(80)}
@@ -71,7 +73,7 @@ export function ParsePreview({ parse, today }: { parse: QuickParse; today: DateK
           <AppText variant="caption" style={{ color: colors.primaryInk }}>
             {item.text}
           </AppText>
-        </Animated.View>
+        </MotionView>
       ))}
     </View>
   );
