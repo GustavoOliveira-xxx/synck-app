@@ -4,7 +4,7 @@
 import type { Tabs } from 'expo-router/js-tabs';
 import type { ComponentProps } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -20,7 +20,7 @@ import { marca } from '@/theme/marca';
 import { AppText } from './AppText';
 import { Logo } from './brand/Logo';
 import { Icon, type IconName } from './Icon';
-import { tapFeedback } from './motion';
+import { PressableScale, tapFeedback } from './motion';
 
 export interface TabItem {
   name: string;
@@ -82,7 +82,7 @@ export function SynckTabBar({
       pos.value = target;
       return;
     }
-    pos.value = reduceMotion ? withTiming(target, { duration: 150 }) : withSpring(target, motion.mola);
+    pos.value = reduceMotion ? target : withSpring(target, motion.mola);
   }, [target, reduceMotion, pos, side, itemWidth]);
   const pillStyle = useAnimatedStyle(() =>
     side ? { transform: [{ translateY: pos.value }] } : { transform: [{ translateX: pos.value }] },
@@ -119,7 +119,7 @@ export function SynckTabBar({
             const focused = index === activeIndex;
             const color = focused ? colors.primaryInk : colors.textMuted;
             return (
-              <Pressable
+              <PressableScale
                 key={route.key}
                 role="tab"
                 accessibilityRole="tab"
@@ -133,7 +133,7 @@ export function SynckTabBar({
                 <AppText style={{ color, fontSize: 15, ...fonte(focused ? 'negrito' : 'semi') }}>
                   {item.label}
                 </AppText>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -168,7 +168,7 @@ export function SynckTabBar({
         const focused = index === activeIndex;
         const color = focused ? colors.primaryInk : colors.textMuted;
         return (
-          <Pressable
+          <PressableScale
             key={route.key}
             role="tab"
             accessibilityRole="tab"
@@ -188,7 +188,7 @@ export function SynckTabBar({
             >
               {item.label}
             </AppText>
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>

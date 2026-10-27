@@ -1,6 +1,10 @@
 import { forwardRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
+import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
+
+import { useToggleProgress } from './motion';
+
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { radius, spacing, typography } from '@/theme/tokens';
@@ -19,23 +23,29 @@ export interface TextFieldProps extends TextInputProps {
 }
 
 export const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldProps>(function TextField(
-  { label, error, hint, secure, icon, style, multiline, ...rest },
+  { label, error, hint, secure, icon, style, multiline, onFocus, onBlur, ...rest },
   ref,
 ) {
   const { colors } = useAppTheme();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(true);
-  const borderColor = error ? colors.danger : focused ? colors.primary : colors.inputBorder;
+  const focus = useToggleProgress(focused, 140);
+  const focusStyle = useAnimatedStyle(() => ({
+    borderColor: error
+      ? colors.danger
+      : interpolateColor(focus.value, [0, 1], [colors.inputBorder, colors.primary]),
+  }));
 
   return (
     <View style={styles.wrapper}>
       <AppText variant="label" nativeID={`${label}-label`}>
         {label}
       </AppText>
-      <View
+      <Animated.View
         style={[
           styles.inputRow,
-          { borderColor, backgroundColor: colors.surface, borderWidth: focused || error ? 2 : 1.5 },
+          { backgroundColor: colors.surface, borderWidth: 1.5 },
+          focusStyle,
           !!icon && { paddingLeft: spacing.md },
           multiline && { alignItems: 'flex-start' },
         ]}
@@ -50,11 +60,11 @@ export const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldPro
           multiline={multiline}
           onFocus={(e) => {
             setFocused(true);
-            rest.onFocus?.(e);
+            onFocus?.(e);
           }}
           onBlur={(e) => {
             setFocused(false);
-            rest.onBlur?.(e);
+            onBlur?.(e);
           }}
           style={[
             styles.input,
@@ -78,7 +88,7 @@ export const TextField = forwardRef<ComponentRef<typeof TextInput>, TextFieldPro
             color={colors.textMuted}
           />
         )}
-      </View>
+      </Animated.View>
       {error ? (
         <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
           {error}

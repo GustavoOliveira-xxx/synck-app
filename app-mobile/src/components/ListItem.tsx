@@ -1,5 +1,6 @@
+import { PressableScale } from '@/components/motion';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { fonte, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
@@ -41,7 +42,8 @@ export function ListItem({
   const textColor = danger ? colors.danger : colors.text;
   const tint = iconColor ?? (danger ? colors.danger : colors.primaryInk);
   return (
-    <Pressable
+    <PressableScale
+      scaleTo={0.99}
       testID={testID}
       onPress={onPress}
       disabled={!onPress || disabled}
@@ -50,10 +52,7 @@ export function ListItem({
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: !!disabled }}
       android_ripple={onPress ? { color: colors.surfaceAlt } : undefined}
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: pressed ? colors.surfaceAlt : 'transparent', opacity: disabled ? 0.5 : 1 },
-      ]}
+      style={[styles.row, { backgroundColor: 'transparent', opacity: disabled ? 0.5 : 1 }]}
     >
       {left}
       {icon && (
@@ -73,7 +72,7 @@ export function ListItem({
       </View>
       {right}
       {chevron && <Icon name="chevron-forward" size={18} color={colors.textMuted} />}
-    </Pressable>
+    </PressableScale>
   );
 }
 

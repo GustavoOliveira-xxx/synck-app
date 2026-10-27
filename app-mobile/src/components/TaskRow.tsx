@@ -1,5 +1,5 @@
 import { memo, useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -76,10 +76,10 @@ export function TaskCheck({
   }));
   const checkStyle = useAnimatedStyle(() => ({
     opacity: fill.value,
-    transform: [{ scale: 0.5 + 0.5 * fill.value }],
+    transform: [{ scale: reduceMotion ? 1 : 0.5 + 0.5 * fill.value }],
   }));
   return (
-    <Pressable
+    <PressableScale
       onPress={() => {
         if (disabled) return;
         tapFeedback(done ? 'light' : 'success');
@@ -87,6 +87,7 @@ export function TaskCheck({
           pop.set(withSequence(withTiming(0.86, { duration: 80 }), withSpring(1, motion.mola)));
         onPress();
       }}
+      disabled={disabled}
       hitSlop={8}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: done, disabled }}
@@ -105,7 +106,7 @@ export function TaskCheck({
           <Icon name="checkmark" size={16} color={colors.primaryText} strokeWidth={2.6} />
         </Animated.View>
       </Animated.View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

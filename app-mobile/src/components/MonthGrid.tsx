@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ZoomIn } from 'react-native-reanimated';
 
-import { MotionView } from './motion';
+import { PressableScale, MotionView } from './motion';
 
 import { strings, t } from '@/i18n';
 import type { DateKey } from '@/models/types';
@@ -73,7 +73,7 @@ export const MonthGrid = memo(function MonthGrid({
               .filter(Boolean)
               .join(', ');
             return (
-              <Pressable
+              <PressableScale
                 key={day}
                 onPress={() => onSelect(day)}
                 accessibilityRole="button"
@@ -134,7 +134,7 @@ export const MonthGrid = memo(function MonthGrid({
                     <View style={[styles.reminderMark, { borderColor: colors.coral }]} />
                   ) : null}
                 </View>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>

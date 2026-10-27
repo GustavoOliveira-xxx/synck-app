@@ -78,7 +78,7 @@ function useUpdateNotice() {
 }
 
 export default function AppLayout() {
-  const { colors } = useAppTheme();
+  const { colors, reduceMotion } = useAppTheme();
   useOpenEventFromNotification();
   useUpdateNotice();
   return (
@@ -89,12 +89,16 @@ export default function AppLayout() {
         headerTintColor: colors.text,
         headerTitleStyle: { ...fonte('titulo'), fontSize: 19 },
         headerBackButtonDisplayMode: 'minimal',
+        headerBackVisible: false,
         contentStyle: { backgroundColor: colors.background },
-        animation: 'slide_from_right',
+        animation: reduceMotion ? 'none' : 'slide_from_right',
         // No navegador, uma tela aberta direto por link (ou após recarregar) não tem
         // "voltar": mostra um botão para o início.
-        headerLeft:
-          Platform.OS === 'web' && !navigation.canGoBack()
+        headerLeft: navigation.canGoBack()
+          ? () => (
+              <IconButton icon="chevron-back" label={t('common.back')} onPress={() => navigation.goBack()} />
+            )
+          : Platform.OS === 'web'
             ? () => (
                 <IconButton
                   icon="home-outline"
@@ -108,24 +112,44 @@ export default function AppLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="notifications" options={{ title: t('notificationsInbox.title') }} />
       {/* Criar e editar evento sobem de baixo, como uma folha. */}
-      <Stack.Screen name="event/new" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="event/[id]/edit" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="calendar/new" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="create" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="plan-day" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="task/new" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="task/[id]/edit" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="task/[id]/block" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="list/new" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="notes/new" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="habits/new" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="event/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
+      <Stack.Screen
+        name="event/[id]/edit"
+        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
+      />
+      <Stack.Screen
+        name="calendar/new"
+        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
+      />
+      <Stack.Screen name="create" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
+      <Stack.Screen name="plan-day" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
+      <Stack.Screen name="task/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
+      <Stack.Screen
+        name="task/[id]/edit"
+        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
+      />
+      <Stack.Screen
+        name="task/[id]/block"
+        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
+      />
+      <Stack.Screen name="list/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
+      <Stack.Screen name="notes/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
+      <Stack.Screen name="habits/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
       <Stack.Screen
         name="task-filters"
-        options={{ presentation: 'modal', title: t('tasks.filter'), animation: 'slide_from_bottom' }}
+        options={{
+          presentation: 'modal',
+          title: t('tasks.filter'),
+          animation: reduceMotion ? 'none' : 'slide_from_bottom',
+        }}
       />
       <Stack.Screen
         name="filters"
-        options={{ presentation: 'modal', title: t('filters.title'), animation: 'slide_from_bottom' }}
+        options={{
+          presentation: 'modal',
+          title: t('filters.title'),
+          animation: reduceMotion ? 'none' : 'slide_from_bottom',
+        }}
       />
     </Stack>
   );

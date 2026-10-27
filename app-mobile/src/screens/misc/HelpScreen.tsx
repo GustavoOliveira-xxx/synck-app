@@ -1,6 +1,6 @@
+import { PressableScale } from '@/components/motion';
 import { Stack } from 'expo-router';
 import { useState } from 'react';
-import { Pressable } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Card } from '@/components/Card';
@@ -20,7 +20,7 @@ export default function HelpScreen() {
         const expanded = open === index;
         return (
           <Card key={topic.question}>
-            <Pressable
+            <PressableScale
               onPress={() => setOpen(expanded ? null : index)}
               accessibilityRole="button"
               accessibilityState={{ expanded }}
@@ -30,7 +30,7 @@ export default function HelpScreen() {
                 {topic.question}
               </AppText>
               <Icon name={expanded ? 'chevron-up' : 'chevron-down'} color={colors.textMuted} />
-            </Pressable>
+            </PressableScale>
             {expanded && <AppText>{topic.answer}</AppText>}
           </Card>
         );

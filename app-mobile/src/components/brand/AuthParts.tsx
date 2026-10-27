@@ -1,7 +1,8 @@
+import { PressableScale } from '@/components/motion';
 // Peças das telas de entrada: voltar no topo, divisória "ou" e link em linha.
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -51,7 +52,7 @@ export function InlineLink({
   return (
     <View style={[styles.inline, align === 'right' && styles.right]}>
       {lead ? <AppText tone="muted">{lead} </AppText> : null}
-      <Pressable
+      <PressableScale
         onPress={onPress}
         accessibilityRole="link"
         accessibilityLabel={label}
@@ -61,7 +62,7 @@ export function InlineLink({
         <AppText tone="brand" style={fonte('negrito')}>
           {label}
         </AppText>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }

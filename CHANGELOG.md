@@ -1,5 +1,14 @@
 # Histórico de versões
 
+## 3.1.0 — 26/10/2026
+
+- Titillium Web em toda a interface, incluída no aplicativo para uso sem internet.
+- Coleção de 79 ícones próprios em SVG, com 89 nomes de interface; a marca Google também tem original SVG. Os mesmos traçados são renderizados no Android e na web.
+- Resposta ao toque uniforme em botões, abas, dias do calendário, linhas, seletores e ações de avisos. Retorno mais curto e sem oscilação.
+- Foco suave nos campos, indicação de foco pelo teclado e preservação da aparência de controles desabilitados.
+- Entradas mais rápidas e respeito à preferência de reduzir movimento.
+
+
 Todas as mudanças relevantes do app ficam registradas aqui. O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/): `MAIOR.MENOR.CORREÇÃO`.
 
 - **MAIOR:** mudança que exige ação de quem usa (por exemplo, reinstalar).

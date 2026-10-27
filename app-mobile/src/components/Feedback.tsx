@@ -1,17 +1,9 @@
 // Diálogo de confirmação (ações destrutivas) e mensagens rápidas (toast).
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import {
-  AccessibilityInfo,
-  Modal,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { AccessibilityInfo, Modal, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 
-import { MotionView } from './motion';
+import { PressableScale, MotionView } from './motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
@@ -200,7 +192,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
             {toastState.message}
           </AppText>
           {toastState.action ? (
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel={toastState.action.label}
               onPress={() => {
@@ -217,7 +209,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
               >
                 {toastState.action.label}
               </AppText>
-            </Pressable>
+            </PressableScale>
           ) : null}
         </MotionView>
       )}

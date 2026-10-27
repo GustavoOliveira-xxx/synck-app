@@ -13,7 +13,7 @@ O app segue a identidade **SynCK** (um produto CK Group). A fonte de verdade é 
 | Logo (vertical, horizontal e personagem) | `app-mobile/src/components/brand/Logo.tsx` e `app-mobile/assets/brand/` |
 | Abertura animada (logo, barra de progresso, "um produto CK Group") | `app-mobile/src/components/brand/BrandSplash.tsx` |
 | Microinterações (toque com mola, cascata, alternadores) | `app-mobile/src/components/motion.tsx` |
-| Fontes Bricolage Grotesque e Figtree (licença OFL) | `app-mobile/assets/fonts/` |
+| Fonte Titillium Web (licença OFL) | `app-mobile/assets/fonts/` |
 | Ícone do app, ícone adaptativo e monocromático do Android, splash, ícone de notificação | `app-mobile/assets/` e `app-mobile/app.json` |
 | Ícones do site (iPhone e computador) e ícone pequeno das notificações | `app-mobile/public/icons/` |
 
@@ -42,15 +42,15 @@ O teste `src/theme/__tests__/marca.test.ts` confere o contraste (4,5:1 para text
 
 | Estilo (`variant`) | Tamanho | Fonte |
 |---|---|---|
-| `display` | 30/34 | Bricolage Grotesque 800 |
-| `title` | 24/30 | Bricolage Grotesque 700 |
-| `heading` | 18/24 | Figtree 600 |
-| `body` / `bodyMd` | 16/24 e 15/22 | Figtree 400 |
-| `eventTitle` | 15/20 | Figtree 700 |
-| `label` | 13/18 | Figtree 600 |
-| `caption` | 12/16 | Figtree 500 |
-| `overline` | 11/14, caixa alta | Figtree 700 |
-| `time` | 13/16, algarismos tabulares | Figtree 700 |
+| `display` | 30/34 | Titillium Web 700 |
+| `title` | 24/30 | Titillium Web 700 |
+| `heading` | 18/24 | Titillium Web 600 |
+| `body` / `bodyMd` | 16/24 e 15/22 | Titillium Web 400 |
+| `eventTitle` | 15/20 | Titillium Web 700 |
+| `label` | 13/18 | Titillium Web 600 |
+| `caption` | 12/16 | Titillium Web 400 |
+| `overline` | 11/14, caixa alta | Titillium Web 700 |
+| `time` | 13/16, algarismos tabulares | Titillium Web 700 |
 
 O texto acompanha o tamanho de fonte escolhido no aparelho.
 
@@ -58,8 +58,8 @@ O texto acompanha o tamanho de fonte escolhido no aparelho.
 
 - Raios: campos 10, cartões 14, FAB e blocos 22, topo das folhas 28, botões, chips e avatares totalmente arredondados.
 - Sombras curtas tingidas de abismo no tema claro; no escuro a profundidade vem da cor da superfície.
-- Toque: escala 0,96 em botões e 0,98 em cartões, mola com rigidez 400 e amortecimento 28. Vibração leve no botão principal (só no celular).
-- Entradas: saída suave `cubic-bezier(0.2, 0.8, 0.2, 1)`; listas em cascata de 30 ms (no máximo 8 itens).
+- Toque: escala 0,975 em botões e 0,99 em linhas, mola com rigidez 520 e amortecimento 36, sem oscilação. Vibração leve no botão principal (só no celular).
+- Entradas: saída suave `cubic-bezier(0.2, 0.8, 0.2, 1)`; listas em cascata de 20 ms (no máximo 5 itens).
 - Pílula das abas e do seletor escorrega até o item novo; o mês desliza na horizontal ao trocar.
 - Com **reduzir movimento** ligado no aparelho, escalas e deslocamentos viram um fade curto e a decoração fica parada.
 
@@ -101,3 +101,11 @@ As faixas ficam em `src/utils/layout.ts` (hook `useLayout()`):
 - Nenhuma informação depende só de cor: etiquetas com texto, ✓ no item escolhido e nome em cada cor de agenda.
 
 Detalhes em [ACESSIBILIDADE.md](ACESSIBILIDADE.md). Lista de telas em [TELAS.md](TELAS.md).
+
+## Originais SVG e Android
+
+Os 80 arquivos em `app-mobile/assets/icons/` são os originais: 79 desenhos da interface e a marca Google nas cores oficiais. Grade de 24 unidades, traço de 1,75, extremidades arredondadas e aberturas nos contornos. Os nomes públicos ficam em `iconNames.ts`, preservando todas as chamadas das telas. Logotipos e ilustrações de marca continuam nos seus componentes próprios.
+
+Depois de editar um SVG, rode `npm run icons:build` em `app-mobile`. O script compila os traçados em `icons.generated.json`; `Icon` usa `react-native-svg` para desenhá-los no Android e na web, sem URI remota, fonte de ícones, CSS externo ou leitura de XML em tempo de execução. `npm run icons:check` impede divergência entre os originais e o registro usado pelo APK.
+
+A Titillium Web regular, semibold e bold é carregada de arquivos TTF locais antes de fechar a abertura. A licença OFL acompanha os arquivos.

@@ -4,7 +4,7 @@
 // movimento nas agendas, horários livres e o resumo da semana).
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -124,7 +124,7 @@ function WeekStrip({
         const isSel = day === selected;
         const fg = isSel ? colors.primaryText : day < today ? colors.textMuted : colors.text;
         return (
-          <Pressable
+          <PressableScale
             key={day}
             onPress={() => {
               if (!isSel) tapFeedback('select');
@@ -160,7 +160,7 @@ function WeekStrip({
                 },
               ]}
             />
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>
@@ -240,7 +240,7 @@ function Section({
   const color = tone === 'danger' ? colors.danger : colors.textMuted;
   return (
     <View style={styles.section}>
-      <Pressable
+      <PressableScale
         onPress={() => {
           tapFeedback('select');
           toggle(id);
@@ -255,7 +255,7 @@ function Section({
           {count !== undefined ? `${title} · ${count}` : title}
         </AppText>
         <Icon name={collapsed ? 'chevron-down' : 'chevron-up'} size={18} color={colors.textMuted} />
-      </Pressable>
+      </PressableScale>
       {!collapsed && (
         <MotionView entering={FadeIn.duration(160)} style={styles.sectionBody}>
           {children}

@@ -7,7 +7,7 @@
 // (de 15 em 15 minutos, e para o lado para trocar de dia) ou usar os botões
 // da barra de baixo, que são a alternativa para quem não usa gestos.
 import { memo, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { PanResponder, Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { PanResponder, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { strings, t } from '@/i18n';
@@ -22,7 +22,7 @@ import { dueInstant, isOpen, shortTime } from '@/utils/tasks';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { Icon } from './Icon';
-import { tapFeedback } from './motion';
+import { PressableScale, tapFeedback } from './motion';
 
 export interface TimeGridProps {
   days: DateKey[];
@@ -138,7 +138,8 @@ const EventBox = memo(function EventBox({
         style,
       ]}
     >
-      <Pressable
+      <PressableScale
+        scaleTo={0.99}
         onPress={onPress}
         onLongPress={onLongPress}
         delayLongPress={300}
@@ -159,7 +160,7 @@ const EventBox = memo(function EventBox({
             {narrow ? formatTime(occ.start, timezone, timeFormat) : time}
           </AppText>
         )}
-      </Pressable>
+      </PressableScale>
     </Animated.View>
   );
 });
@@ -247,7 +248,8 @@ export function TimeGrid({
             const wd = new Date(`${day}T12:00:00Z`).getUTCDay();
             const isToday = day === today;
             return (
-              <Pressable
+              <PressableScale
+                scaleTo={0.99}
                 key={day}
                 onPress={() => onPressDay?.(day)}
                 accessibilityRole="button"
@@ -265,7 +267,7 @@ export function TimeGrid({
                     {d}
                   </AppText>
                 </View>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -284,7 +286,8 @@ export function TimeGrid({
                   const color =
                     agendaColor(o.event.color ?? calendarColors[o.event.calendar_id], dark) ?? colors.primary;
                   return (
-                    <Pressable
+                    <PressableScale
+                      scaleTo={0.99}
                       key={`${o.key}-${day}`}
                       onPress={() => onPressEvent(o)}
                       accessibilityRole="button"
@@ -294,13 +297,14 @@ export function TimeGrid({
                       <AppText numberOfLines={1} style={[styles.chipText, { color: '#FFFFFF' }]}>
                         {o.event.is_masked ? t('events.maskedTitle') : o.title}
                       </AppText>
-                    </Pressable>
+                    </PressableScale>
                   );
                 })}
               {dateTasks
                 .filter((x) => x.due_date === day)
                 .map((x) => (
-                  <Pressable
+                  <PressableScale
+                    scaleTo={0.99}
                     key={x.id}
                     onPress={() => onPressTask(x)}
                     accessibilityRole="button"
@@ -332,7 +336,7 @@ export function TimeGrid({
                     >
                       {x.title}
                     </AppText>
-                  </Pressable>
+                  </PressableScale>
                 ))}
             </View>
           ))}
@@ -401,7 +405,8 @@ export function TimeGrid({
                   const task = taskById[box.key.slice(5)];
                   if (!task) return null;
                   return (
-                    <Pressable
+                    <PressableScale
+                      scaleTo={0.99}
                       key={box.key}
                       onPress={() => onPressTask(task)}
                       accessibilityRole="button"
@@ -425,7 +430,7 @@ export function TimeGrid({
                       <AppText numberOfLines={1} style={[styles.chipText, { color: colors.text }]}>
                         {task.title}
                       </AppText>
-                    </Pressable>
+                    </PressableScale>
                   );
                 }
                 const occ = occByKey[box.key];

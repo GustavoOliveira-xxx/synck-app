@@ -3,8 +3,16 @@
 // um fade curto.
 import * as Haptics from 'expo-haptics';
 import { forwardRef, useEffect, type ComponentProps, type ComponentRef, type ReactNode } from 'react';
-import { Platform, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   FadeIn,
   FadeInDown,
@@ -33,13 +41,13 @@ export function tapFeedback(kind: 'light' | 'success' | 'select' = 'light') {
 
 export interface PressableScaleProps extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
-  /** Escala ao tocar: 0,96 em botões, 0,98 em cartões. */
+  /** Escala ao tocar: 0,975 em botões, 0,99 em cartões. */
   scaleTo?: number;
   haptic?: boolean;
   children?: ReactNode;
 }
 
-/** Área tocável que afunda com mola e volta com leve rebote. */
+/** Área tocável que afunda com mola e volta sem oscilar. */
 export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, PressableScaleProps>(
   function PressableScale(
     {
@@ -49,6 +57,8 @@ export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, Pressab
       onPressIn,
       onPressOut,
       onPress,
+      onHoverIn,
+      onHoverOut,
       disabled,
       children,
       ...rest
@@ -57,26 +67,47 @@ export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, Pressab
   ) {
     const { reduceMotion } = useAppTheme();
     const pressed = useSharedValue(0);
-    const animated = useAnimatedStyle(() =>
-      reduceMotion
-        ? { opacity: 1 - pressed.value * 0.25 }
-        : { transform: [{ scale: 1 - (1 - scaleTo) * pressed.value }] },
-    );
+    const hovered = useSharedValue(0);
+    const base = StyleSheet.flatten(style) ?? {};
+    const baseOpacity = typeof base.opacity === 'number' ? base.opacity : 1;
+    const baseTransform = Array.isArray(base.transform) ? base.transform : [];
+    useEffect(() => {
+      if (disabled) {
+        cancelAnimation(pressed);
+        cancelAnimation(hovered);
+        pressed.set(0);
+        hovered.set(0);
+      }
+    }, [disabled, hovered, pressed]);
+    const animated = useAnimatedStyle(() => ({
+      opacity: baseOpacity * (1 - pressed.value * 0.1 - hovered.value * 0.035),
+      transform: [
+        ...baseTransform,
+        { scale: reduceMotion || disabled ? 1 : 1 - (1 - scaleTo) * pressed.value },
+      ],
+    }));
     return (
       <AnimatedPressable
         ref={ref}
         disabled={disabled}
         onPressIn={(e) => {
-          pressed.value = reduceMotion
-            ? withTiming(1, { duration: 90 })
-            : withTiming(1, { duration: 90, easing: EASE_OUT });
+          if (!disabled) pressed.set(withTiming(1, { duration: motion.pressionar, easing: EASE_OUT }));
           onPressIn?.(e);
         }}
         onPressOut={(e) => {
-          pressed.value = reduceMotion ? withTiming(0, { duration: 150 }) : withSpring(0, motion.mola);
+          pressed.set(reduceMotion ? withTiming(0, { duration: 150 }) : withSpring(0, motion.mola));
           onPressOut?.(e);
         }}
+        onHoverIn={(e) => {
+          if (!disabled) hovered.set(withTiming(1, { duration: motion.micro }));
+          onHoverIn?.(e);
+        }}
+        onHoverOut={(e) => {
+          hovered.set(withTiming(0, { duration: motion.micro }));
+          onHoverOut?.(e);
+        }}
         onPress={(e) => {
+          if (disabled) return;
           if (haptic) tapFeedback();
           onPress?.(e);
         }}
@@ -89,7 +120,7 @@ export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, Pressab
   },
 );
 
-/** Item de lista que entra em cascata (30 ms entre cada, no máximo 8). */
+/** Item de lista que entra em cascata (20 ms entre cada, no máximo 5). */
 export function EnterItem({
   index = 0,
   children,
@@ -100,13 +131,13 @@ export function EnterItem({
   style?: StyleProp<ViewStyle>;
 }) {
   const { reduceMotion } = useAppTheme();
-  const delay = Math.min(index, 8) * motion.cascata;
+  const delay = reduceMotion ? 0 : Math.min(index, 5) * motion.cascata;
   const entering = reduceMotion
-    ? FadeIn.duration(150)
-    : FadeInDown.duration(240)
+    ? FadeIn.duration(100)
+    : FadeInDown.duration(180)
         .delay(delay)
         .easing(EASE_OUT)
-        .withInitialValues({ transform: [{ translateY: 10 }] });
+        .withInitialValues({ transform: [{ translateY: 6 }] });
   return (
     <MotionView entering={entering} enterDelay={delay} style={style}>
       {children}
@@ -142,12 +173,17 @@ function WebFadeIn({
   const { reduceMotion } = useAppTheme();
   const progress = useSharedValue(animate && !reduceMotion ? 0 : 1);
   useEffect(() => {
-    if (progress.get() < 1)
-      progress.set(withDelay(delay, withTiming(1, { duration: 220, easing: EASE_OUT })));
-  }, [progress, delay]);
+    if (reduceMotion) {
+      cancelAnimation(progress);
+      progress.value = 1;
+    } else if (progress.get() < 1) {
+      progress.set(withDelay(delay, withTiming(1, { duration: motion.base, easing: EASE_OUT })));
+    }
+    return () => cancelAnimation(progress);
+  }, [progress, delay, reduceMotion]);
   const fade = useAnimatedStyle(() => ({
     opacity: progress.get(),
-    transform: [{ translateY: (1 - progress.get()) * 8 }],
+    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.get()) * 6 }],
   }));
   return <Animated.View style={[style, fade]} {...rest} />;
 }
@@ -157,9 +193,7 @@ export function useToggleProgress(on: boolean, duration = 160) {
   const { reduceMotion } = useAppTheme();
   const v = useSharedValue(on ? 1 : 0);
   useEffect(() => {
-    v.value = reduceMotion
-      ? withTiming(on ? 1 : 0, { duration: 150 })
-      : withTiming(on ? 1 : 0, { duration, easing: EASE_OUT });
+    v.value = reduceMotion ? (on ? 1 : 0) : withTiming(on ? 1 : 0, { duration, easing: EASE_OUT });
   }, [on, reduceMotion, duration, v]);
   return v;
 }

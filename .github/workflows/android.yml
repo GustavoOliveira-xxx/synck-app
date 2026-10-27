@@ -148,7 +148,8 @@ jobs:
           retention-days: 30
 
       - name: Publicar na página Releases
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publicar)
+        # Na main, o marcador explícito publica só os commits de lançamento.
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publicar) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[publicar]'))
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}

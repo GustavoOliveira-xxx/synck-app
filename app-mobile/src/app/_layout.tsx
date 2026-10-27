@@ -75,7 +75,7 @@ export default function RootLayout() {
   const initialized = useAuthStore((s) => s.initialized);
   const userId = useAuthStore((s) => s.session?.user.id ?? null);
   useNetworkSync(!!userId);
-  // Bricolage Grotesque e Figtree, carregadas antes de sair da splash nativa.
+  // Titillium Web, carregada antes de sair da splash nativa.
   const [fontsLoaded, fontError] = useFonts(marca.fonte.arquivos);
   const fontsReady = fontsLoaded || !!fontError;
   const ready = initialized && fontsReady;

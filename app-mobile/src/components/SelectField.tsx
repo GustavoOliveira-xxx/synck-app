@@ -1,5 +1,6 @@
+import { PressableScale } from '@/components/motion';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { MIN_TOUCH, radius, spacing } from '@/theme/tokens';
@@ -34,7 +35,7 @@ export function SelectField<T>({
   return (
     <View style={styles.wrapper}>
       <AppText variant="label">{label}</AppText>
-      <Pressable
+      <PressableScale
         onPress={() => setOpen(true)}
         disabled={disabled}
         accessibilityRole="button"
@@ -50,7 +51,7 @@ export function SelectField<T>({
           {current?.label ?? String(value)}
         </AppText>
         <Icon name="chevron-down" size={18} color={colors.textMuted} />
-      </Pressable>
+      </PressableScale>
       {hint ? (
         <AppText variant="small" tone="muted">
           {hint}

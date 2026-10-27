@@ -134,6 +134,49 @@ after(async () => {
   await servidor?.fechar();
 });
 
+test('interface: fonte local, SVG, toque cancelado e movimento reduzido', async () => {
+  const page = await abrirSessao();
+  await page.goto(base + '/login');
+  await semAbertura(page);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).waitFor({ state: 'visible' });
+  await page.evaluate(() => document.fonts.ready);
+  for (const family of ['TitilliumWeb-Regular', 'TitilliumWeb-SemiBold', 'TitilliumWeb-Bold']) {
+    assert.ok(await page.evaluate((name) => [...document.fonts].some((font) => font.family.includes(name) && font.status === 'loaded'), family), 'fonte local carregada: ' + family);
+  }
+  const button = page.getByRole('button', { name: 'Entrar', exact: true });
+  const box = await button.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(100);
+  const pressed = await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+  assert.ok(pressed > 0.95 && pressed < 0.995, 'botão responde ao pressionar');
+  await page.mouse.move(1, 1);
+  await page.mouse.up();
+  await page.waitForTimeout(400);
+  assert.ok(Math.abs(await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a) - 1) < 0.002, 'toque cancelado retorna ao tamanho normal');
+  assert.equal(new URL(page.url()).pathname, SUBPASTA + '/login');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForTimeout(100);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(100);
+  assert.equal(await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a), 1, 'reduzir movimento elimina escala');
+  await page.mouse.move(1, 1);
+  await page.mouse.up();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await entrar(page, 'ana.demo@exemplo.test');
+  const days = page.getByRole('tab').filter({ hasText: /^(D|S|T|Q)/ });
+  const positions = await days.evaluateAll((els) => els.filter((el) => /\d+ de /.test(el.getAttribute('aria-label') ?? '')).map((el) => ({label: el.getAttribute('aria-label'), x: el.getBoundingClientRect().x, width: el.getBoundingClientRect().width})));
+  assert.equal(positions.length, 7, 'sete dias com áreas de toque próprias');
+  for (let i = 1; i < positions.length; i++) {
+    assert.ok(Math.abs(positions[i].x - positions[i-1].x - positions[i-1].width) < 2, 'dias da semana não se sobrepõem');
+  }
+  const svgs = await page.locator('svg[stroke]').evaluateAll((els) => els.filter((el) => el.getAttribute('viewBox') === '0 0 24 24').map((el) => ({ paths: el.querySelectorAll('path').length, hidden: el.getAttribute('aria-hidden'), width: el.getBoundingClientRect().width })));
+  assert.ok(svgs.length > 10, 'ícones presentes na tela');
+  assert.ok(svgs.every((svg) => svg.paths > 0 && svg.hidden === 'true' && svg.width > 0), 'todos os ícones renderizados e decorativos');
+  await page.context().close();
+});
+
 test('primeiro acesso: apresentação e tela de login', async () => {
   const page = await abrirSessao();
   await page.goto(base);
@@ -353,7 +396,7 @@ test('tela Hoje no computador: seções não ficam umas por cima das outras', as
   const caixas = await page.evaluate(() => {
     const ret = (el) => {
       const b = el.getBoundingClientRect();
-      return { top: b.top, bottom: b.bottom, texto: el.textContent.slice(0, 40) };
+      return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, texto: el.textContent.slice(0, 40) };
     };
     // Cabeçalhos das seções recolhíveis: o rótulo termina em "Recolher" ou "Mostrar".
     const ehCabecalho = (el) => /\. (Recolher|Mostrar)$/.test(el.getAttribute('aria-label') ?? '');
@@ -367,7 +410,7 @@ test('tela Hoje no computador: seções não ficam umas por cima das outras', as
   assert.ok(caixas.cabecalhos.length >= 2, 'a tela Hoje deveria ter seções');
   for (const c of caixas.cabecalhos) {
     for (const i of caixas.itens) {
-      const sobrepoe = c.top < i.bottom - 1 && i.top < c.bottom - 1;
+      const sobrepoe = c.top < i.bottom - 1 && i.top < c.bottom - 1 && c.left < i.right - 1 && i.left < c.right - 1;
       assert.ok(!sobrepoe, `"${c.texto}" está por cima de "${i.texto}"`);
     }
   }

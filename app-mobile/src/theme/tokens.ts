@@ -81,11 +81,11 @@ export function fonte(peso: PesoDaFonte): { fontFamily: string } {
 const tabular: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export const typography = {
-  /** 30/34, Bricolage 800: títulos de destaque (login, onboarding). */
-  display: { fontSize: 30, lineHeight: 34, letterSpacing: -0.6, ...fonte('tituloForte') },
-  /** 24/30, Bricolage 700: título de tela. */
-  title: { fontSize: 24, lineHeight: 30, letterSpacing: -0.24, ...fonte('titulo') },
-  /** 18/24, Figtree 600. */
+  /** 30/34, Titillium Web 700: títulos de destaque (login, onboarding). */
+  display: { fontSize: 30, lineHeight: 34, letterSpacing: -0.3, ...fonte('tituloForte') },
+  /** 24/30, Titillium Web 700: título de tela. */
+  title: { fontSize: 24, lineHeight: 30, letterSpacing: 0, ...fonte('titulo') },
+  /** 18/24, Titillium Web 600. */
   heading: { fontSize: 18, lineHeight: 24, ...fonte('semi') },
   /** 16/24. */
   body: { fontSize: 16, lineHeight: 24, ...fonte('regular') },

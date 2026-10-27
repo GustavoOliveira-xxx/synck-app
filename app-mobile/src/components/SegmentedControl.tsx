@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { elevation, fonte, motion, radius, spacing } from '@/theme/tokens';
 
 import { AppText } from './AppText';
-import { tapFeedback } from './motion';
+import { PressableScale, tapFeedback } from './motion';
 
 /** Alternador em trilho afundado; a pílula escorrega até a opção escolhida. */
 export function SegmentedControl<T extends string>({
@@ -37,9 +37,7 @@ export function SegmentedControl<T extends string>({
       x.value = index * segment;
       return;
     }
-    x.value = reduceMotion
-      ? withTiming(index * segment, { duration: 150 })
-      : withSpring(index * segment, motion.mola);
+    x.value = reduceMotion ? index * segment : withSpring(index * segment, motion.mola);
   }, [index, segment, reduceMotion, x]);
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
 
@@ -63,7 +61,7 @@ export function SegmentedControl<T extends string>({
       {options.map((opt) => {
         const selected = opt.value === value;
         return (
-          <Pressable
+          <PressableScale
             key={opt.value}
             onPress={() => {
               if (!selected) tapFeedback('select');
@@ -84,7 +82,7 @@ export function SegmentedControl<T extends string>({
             >
               {opt.label}
             </AppText>
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>

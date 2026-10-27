@@ -157,22 +157,19 @@ export const marca = {
   },
 
   fonte: {
-    /** Bricolage Grotesque nos títulos; Figtree no texto e na interface. */
+    /** Titillium Web local: mesma tipografia em todas as plataformas, inclusive offline. */
     familias: {
-      regular: 'Figtree-Regular',
-      medio: 'Figtree-Medium',
-      semi: 'Figtree-SemiBold',
-      negrito: 'Figtree-Bold',
-      titulo: 'BricolageGrotesque-Bold',
-      tituloForte: 'BricolageGrotesque-ExtraBold',
+      regular: 'TitilliumWeb-Regular',
+      medio: 'TitilliumWeb-Regular',
+      semi: 'TitilliumWeb-SemiBold',
+      negrito: 'TitilliumWeb-Bold',
+      titulo: 'TitilliumWeb-Bold',
+      tituloForte: 'TitilliumWeb-Bold',
     } as Record<PesoDaFonte, string>,
     arquivos: {
-      'Figtree-Regular': require('../../assets/fonts/Figtree-Regular.ttf'),
-      'Figtree-Medium': require('../../assets/fonts/Figtree-Medium.ttf'),
-      'Figtree-SemiBold': require('../../assets/fonts/Figtree-SemiBold.ttf'),
-      'Figtree-Bold': require('../../assets/fonts/Figtree-Bold.ttf'),
-      'BricolageGrotesque-Bold': require('../../assets/fonts/BricolageGrotesque-Bold.ttf'),
-      'BricolageGrotesque-ExtraBold': require('../../assets/fonts/BricolageGrotesque-ExtraBold.ttf'),
+      'TitilliumWeb-Regular': require('../../assets/fonts/TitilliumWeb-Regular.ttf'),
+      'TitilliumWeb-SemiBold': require('../../assets/fonts/TitilliumWeb-SemiBold.ttf'),
+      'TitilliumWeb-Bold': require('../../assets/fonts/TitilliumWeb-Bold.ttf'),
     } as Record<string, number>,
   },
 
@@ -181,13 +178,14 @@ export const marca = {
 
   /** Movimento: molas no toque, saída suave nas entradas. */
   movimento: {
-    escalaToque: 0.96,
-    escalaCartao: 0.98,
-    mola: { stiffness: 400, damping: 28, mass: 1 },
+    escalaToque: 0.975,
+    escalaCartao: 0.99,
+    mola: { stiffness: 520, damping: 36, mass: 0.7, overshootClamping: true },
     curva: [0.2, 0.8, 0.2, 1] as const,
+    pressionar: 65,
     micro: 120,
-    base: 220,
+    base: 180,
     celebrar: 600,
-    cascata: 30,
+    cascata: 20,
   },
 };

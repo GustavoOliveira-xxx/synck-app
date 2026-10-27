@@ -1,3 +1,4 @@
+import { IconButton } from '@/components/IconButton';
 import { Stack } from 'expo-router';
 
 import { t } from '@/i18n';
@@ -5,18 +6,24 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { fonte } from '@/theme/tokens';
 
 export default function AuthLayout() {
-  const { colors } = useAppTheme();
+  const { colors, reduceMotion } = useAppTheme();
   return (
     <Stack
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: fonte('negrito'),
-        animation: 'slide_from_right',
+        animation: reduceMotion ? 'none' : 'slide_from_right',
         headerBackButtonDisplayMode: 'minimal',
+        headerBackVisible: false,
+        headerLeft: navigation.canGoBack()
+          ? () => (
+              <IconButton icon="chevron-back" label={t('common.back')} onPress={() => navigation.goBack()} />
+            )
+          : undefined,
         contentStyle: { backgroundColor: colors.background },
-      }}
+      })}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />

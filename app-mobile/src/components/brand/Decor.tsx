@@ -1,3 +1,4 @@
+import { SvgArtwork } from '../Icon';
 // Decoração SynCK derivada do logo: esfera de vidro com névoa girando,
 // anéis de órbita com satélites, mascote Kairo, estrela de quatro pontas e
 // fitas de névoa. Desenhada em camadas (vidro, névoa, brilho, anel da frente)
@@ -231,14 +232,7 @@ function MistSwirl({ size }: { size: number }) {
 
 /** Estrela de quatro pontas (celebrações e brilhos). */
 export function StarGlyph({ size, color }: { size: number; color: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Path
-        d="M12 1.5c.7 5.6 3.9 8.8 9.5 10.5-5.6 1.7-8.8 4.9-9.5 10.5-.7-5.6-3.9-8.8-9.5-10.5C8.1 10.3 11.3 7.1 12 1.5z"
-        fill={color}
-      />
-    </Svg>
-  );
+  return <SvgArtwork name="brilho" size={size} color={color} />;
 }
 
 const SPHERE_ORBIT: Orbit = { cx: 0.5, cy: 0.56, rx: 0.47, ry: 0.12, tilt: -16 };

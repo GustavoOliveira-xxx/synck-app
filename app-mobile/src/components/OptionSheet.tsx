@@ -1,5 +1,6 @@
+import { PressableScale } from '@/components/motion';
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Modal, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLayout } from '@/hooks/useLayout';
@@ -105,7 +106,8 @@ export function OptionSheet<T>({
             renderItem={({ item }) => {
               const selected = item.value === value;
               return (
-                <Pressable
+                <PressableScale
+                  scaleTo={0.99}
                   disabled={item.disabled}
                   onPress={() => {
                     onSelect(item.value);
@@ -114,10 +116,10 @@ export function OptionSheet<T>({
                   accessibilityRole="radio"
                   accessibilityState={{ checked: selected, disabled: !!item.disabled }}
                   accessibilityLabel={item.description ? `${item.label}. ${item.description}` : item.label}
-                  style={({ pressed }) => [
+                  style={[
                     styles.option,
                     {
-                      backgroundColor: pressed ? colors.surfaceAlt : 'transparent',
+                      backgroundColor: 'transparent',
                       opacity: item.disabled ? 0.45 : 1,
                     },
                   ]}
@@ -131,7 +133,7 @@ export function OptionSheet<T>({
                     ) : null}
                   </View>
                   {selected && <Icon name="checkmark-circle" color={colors.primary} />}
-                </Pressable>
+                </PressableScale>
               );
             }}
           />

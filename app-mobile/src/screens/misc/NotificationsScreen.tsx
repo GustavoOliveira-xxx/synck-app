@@ -1,11 +1,11 @@
 import { router, useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Icon, type IconName } from '@/components/Icon';
-import { EnterItem } from '@/components/motion';
+import { PressableScale, EnterItem } from '@/components/motion';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { EmptyState } from '@/components/StateViews';
 import { useAction } from '@/hooks/useAction';
@@ -143,7 +143,8 @@ export default function NotificationsScreen() {
           const when = new Date(item.created_at);
           return (
             <EnterItem index={index}>
-              <Pressable
+              <PressableScale
+                scaleTo={0.99}
                 onPress={() => open(item)}
                 accessibilityRole="button"
                 accessibilityLabel={[
@@ -154,11 +155,11 @@ export default function NotificationsScreen() {
                 ]
                   .filter(Boolean)
                   .join('. ')}
-                style={({ pressed }) => [
+                style={[
                   styles.item,
                   {
                     borderBottomColor: colors.border,
-                    backgroundColor: pressed ? colors.surfaceAlt : 'transparent',
+                    backgroundColor: 'transparent',
                   },
                 ]}
               >
@@ -179,7 +180,7 @@ export default function NotificationsScreen() {
                 <AppText variant="caption" tone="muted">
                   {formatRelative(when, now, display.timezone, display.dateFormat)}
                 </AppText>
-              </Pressable>
+              </PressableScale>
             </EnterItem>
           );
         }}

@@ -28,6 +28,28 @@
           background-color: #0a1416;
         }
       }
+      [role='button'],
+      [role='tab'],
+      [role='checkbox'],
+      [role='radio'] {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      [role='button']:focus-visible,
+      [role='tab']:focus-visible,
+      [role='checkbox']:focus-visible,
+      [role='radio']:focus-visible {
+        outline: 2px solid #017a68;
+        outline-offset: 3px;
+      }
+      @media (prefers-color-scheme: dark) {
+        [role='button']:focus-visible,
+        [role='tab']:focus-visible,
+        [role='checkbox']:focus-visible,
+        [role='radio']:focus-visible {
+          outline-color: #7fd3f0;
+        }
+      }
       #root {
         display: flex;
         height: 100%;
