@@ -16,6 +16,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { BrandSplash } from '@/components/brand/BrandSplash';
+import { VinhetaCK } from '@/components/brand/vinheta/VinhetaCK';
 import { FeedbackProvider } from '@/components/Feedback';
 import { isSupabaseConfigured } from '@/config/env';
 import { useNetworkSync } from '@/hooks/useNetworkSync';
@@ -81,6 +82,8 @@ export default function RootLayout() {
   const ready = initialized && fontsReady;
   // A abertura animada fica pelo menos 0,6 s, para não piscar.
   const [minTimeDone, setMinTimeDone] = useState(false);
+  // Vinheta de abertura da CK: toca uma vez a cada vez que o app é aberto.
+  const [vinheta, setVinheta] = useState(true);
   useEffect(() => {
     const timer = setTimeout(() => setMinTimeDone(true), 600);
     return () => clearTimeout(timer);
@@ -129,6 +132,7 @@ export default function RootLayout() {
         <FeedbackProvider>
           {ready && <Navigation />}
           {(!ready || !minTimeDone) && <BrandSplash />}
+          {vinheta && <VinhetaCK onFim={() => setVinheta(false)} />}
         </FeedbackProvider>
       </ThemeProvider>
     </SafeAreaProvider>
