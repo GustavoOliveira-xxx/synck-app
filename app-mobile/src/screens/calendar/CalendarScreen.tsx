@@ -1,5 +1,5 @@
 // Tela principal: calendário em visão mensal, semanal, diária ou lista.
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PanResponder, RefreshControl, ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { FadeIn, FadeOut, SlideInLeft, SlideInRight } from 'react-native-reanimated';
@@ -11,6 +11,7 @@ import { Chip } from '@/components/Chip';
 import { EventRow } from '@/components/EventRow';
 import { FAB } from '@/components/FAB';
 import { IconButton } from '@/components/IconButton';
+import { BoardView } from '@/components/BoardView';
 import { EnterItem, MotionView, tapFeedback } from '@/components/motion';
 import { MonthGrid, type DayInfo } from '@/components/MonthGrid';
 import { TaskRow } from '@/components/TaskRow';
@@ -33,7 +34,7 @@ import type { DateKey, Occurrence, Task } from '@/models/types';
 import { ensureRange, syncNow } from '@/offline/syncEngine';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
-import { useUiStore, type CalendarViewMode } from '@/stores/uiStore';
+import { useUiStore, type BoardRange, type CalendarViewMode } from '@/stores/uiStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { agendaColor, SCREEN_MARGIN, spacing } from '@/theme/tokens';
 import { conflictingKeys } from '@/utils/conflicts';
@@ -89,9 +90,18 @@ export default function CalendarScreen() {
   const today = todayKey(tz);
 
   const viewMode = useUiStore((s) => s.viewMode);
+  const boardRange = useUiStore((s) => s.boardRange);
+  const setBoardRange = useUiStore((s) => s.setBoardRange);
+  // No Quadro, o período segue o seletor Dia / Semana / Mês.
+  const span = viewMode === 'board' ? boardRange : viewMode;
   const setViewMode = useUiStore((s) => s.setViewMode);
   const selected = useUiStore((s) => s.selectedDate) ?? today;
   const setSelected = useUiStore((s) => s.setSelectedDate);
+  // Aberto por um dia do widget "Mês" (?date=AAAA-MM-DD): vai para esse dia.
+  const { date: linkedDate } = useLocalSearchParams<{ date?: string }>();
+  useEffect(() => {
+    if (linkedDate && /^\d{4}-\d{2}-\d{2}$/.test(linkedDate)) setSelected(linkedDate);
+  }, [linkedDate, setSelected]);
   const filters = useUiStore((s) => s.filters);
   const setFilters = useUiStore((s) => s.setFilters);
   const listTab = useUiStore((s) => s.listTab);
@@ -113,17 +123,21 @@ export default function CalendarScreen() {
 
   // Período visível em datas locais (no fuso de exibição).
   const [firstDay, lastDay] = useMemo((): [DateKey, DateKey] => {
-    if (viewMode === 'month') {
+    if (viewMode === 'board' && span === 'month') {
+      const first = `${selected.slice(0, 7)}-01`;
+      return [first, addDaysToKey(addMonthsToKey(first, 1), -1)];
+    }
+    if (span === 'month') {
       const grid = monthMatrix(year, month, display.weekStartsOn);
       return [grid[0][0], grid[5][6]];
     }
-    if (viewMode === 'week') {
+    if (span === 'week') {
       const week = weekKeys(selected, display.weekStartsOn);
       return [week[0], week[6]];
     }
-    if (viewMode === 'day') return [selected, selected];
+    if (span === 'day') return [selected, selected];
     return listTab === 'upcoming' ? [today, addDaysToKey(today, 180)] : [addDaysToKey(today, -180), today];
-  }, [viewMode, year, month, selected, display.weekStartsOn, listTab, today]);
+  }, [viewMode, span, year, month, selected, display.weekStartsOn, listTab, today]);
 
   const from = useMemo(() => startOfDayInstant(firstDay, tz), [firstDay, tz]);
   const to = useMemo(() => startOfDayInstant(addDaysToKey(lastDay, 1), tz), [lastDay, tz]);
@@ -212,6 +226,10 @@ export default function CalendarScreen() {
     () => Object.fromEntries(Object.values(calendarsMap).map((c) => [c.id, c.color])),
     [calendarsMap],
   );
+  const calendarNames = useMemo(
+    () => Object.fromEntries(Object.values(calendarsMap).map((c) => [c.id, c.name])),
+    [calendarsMap],
+  );
 
   const writable = calendars.filter((c) => canCreateEvents(c));
   const nFilters = activeFilterCount(filters);
@@ -221,11 +239,11 @@ export default function CalendarScreen() {
   const move = useCallback(
     (dir: 1 | -1) => {
       setDirection(dir);
-      if (viewMode === 'month') setSelected(addMonthsToKey(`${selected.slice(0, 7)}-01`, dir));
-      else if (viewMode === 'week') setSelected(addDaysToKey(selected, 7 * dir));
+      if (span === 'month') setSelected(addMonthsToKey(`${selected.slice(0, 7)}-01`, dir));
+      else if (span === 'week') setSelected(addDaysToKey(selected, 7 * dir));
       else setSelected(addDaysToKey(selected, dir));
     },
-    [viewMode, selected, setSelected],
+    [span, selected, setSelected],
   );
 
   // Deslizar o mês para os lados troca de mês (como virar a página).
@@ -272,11 +290,11 @@ export default function CalendarScreen() {
   );
 
   const periodTitle =
-    viewMode === 'month'
+    span === 'month'
       ? capitalize(formatMonthYear(year, month).split(' de ')[0])
-      : viewMode === 'week'
+      : span === 'week'
         ? t('calendarView.weekRange', { start: formatShortDate(firstDay), end: formatShortDate(lastDay) })
-        : viewMode === 'day'
+        : span === 'day'
           ? capitalize(formatLongDate(selected))
           : '';
 
@@ -307,7 +325,7 @@ export default function CalendarScreen() {
           accessibilityLiveRegion="polite"
         >
           {viewMode === 'list' ? t('calendarView.list') : periodTitle}
-          {viewMode === 'month' ? (
+          {span === 'month' ? (
             <AppText variant="title" tone="muted" style={styles.monthTitle}>{` ${year}`}</AppText>
           ) : null}
         </AppText>
@@ -355,6 +373,7 @@ export default function CalendarScreen() {
               { value: 'month', label: t('calendarView.month') },
               { value: 'week', label: t('calendarView.week') },
               { value: 'day', label: t('calendarView.day') },
+              { value: 'board', label: t('calendarView.board') },
               { value: 'list', label: t('calendarView.list') },
             ]}
           />
@@ -386,6 +405,18 @@ export default function CalendarScreen() {
           onPress={() => setLayers({ ...layers, reminders: !layers.reminders })}
         />
       </View>
+      {viewMode === 'board' ? (
+        <SegmentedControl<BoardRange>
+          label={t('board.range')}
+          value={boardRange}
+          onChange={setBoardRange}
+          options={[
+            { value: 'day', label: t('calendarView.day') },
+            { value: 'week', label: t('calendarView.week') },
+            { value: 'month', label: t('calendarView.month') },
+          ]}
+        />
+      ) : null}
       {viewMode === 'list' ? (
         <SegmentedControl
           label={t('calendarView.list')}
@@ -515,6 +546,45 @@ export default function CalendarScreen() {
         </AppText>
         {dayEvents(dayList)}
       </ScrollView>
+    );
+  } else if (viewMode === 'board') {
+    // Quadro: um dia por coluna, com todos os detalhes de cada dia.
+    const days: DateKey[] = [];
+    for (let d = firstDay; d <= lastDay; d = addDaysToKey(d, 1)) days.push(d);
+    content = (
+      <View style={styles.flex}>
+        <ScrollView
+          style={styles.boardHeader}
+          contentContainerStyle={[styles.gridHeader, styles.column]}
+          scrollEnabled={false}
+        >
+          {header}
+        </ScrollView>
+        <View style={styles.flex}>
+          <BoardView
+            days={days}
+            today={today}
+            selected={selected}
+            occurrences={occurrences}
+            tasks={periodTasks}
+            timezone={tz}
+            timeFormat={display.timeFormat}
+            dayStart={display.dayStart}
+            dayEnd={display.dayEnd}
+            calendarColors={calendarColors}
+            calendarNames={calendarNames}
+            conflicts={conflicts}
+            busy={myBusy(occurrences, userId)}
+            canAdd={writable.length > 0}
+            onSelectDay={setSelected}
+            onPressEvent={openEvent}
+            onPressTask={openTask}
+            onToggleTask={(x) => void toggle(x)}
+            onLongPressTask={openMenu}
+            onAdd={(day) => router.push({ pathname: '/create', params: { date: day } })}
+          />
+        </View>
+      </View>
     );
   } else if (viewMode === 'week' || viewMode === 'day') {
     // Semana e dia: grade de horários de verdade.
@@ -659,6 +729,7 @@ const styles = StyleSheet.create({
   dayTitle: { marginTop: spacing.md, marginBottom: spacing.xs },
   layers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   gridHeader: { paddingHorizontal: SCREEN_MARGIN },
+  boardHeader: { flexGrow: 0 },
   gridBody: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   list: { gap: spacing.sm },
   addRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },

@@ -7,3 +7,5 @@ coverage
 dist-ci
 dist-e2e
 dist-site
+# Gerado por scripts/gerar-icones-do-app.mjs
+src/widgets/simbolo.ts

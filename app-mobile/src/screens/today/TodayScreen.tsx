@@ -26,6 +26,7 @@ import { FAB } from '@/components/FAB';
 import { Icon, type IconName } from '@/components/Icon';
 import { IconButton } from '@/components/IconButton';
 import { EnterItem, MotionView, PressableScale, tapFeedback } from '@/components/motion';
+import { NotesBoard } from '@/components/NotesBoard';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { Cascade } from '@/components/Screen';
 import { EmptyState, LoadingState } from '@/components/StateViews';
@@ -380,6 +381,7 @@ export default function TodayScreen() {
     return map;
   }, [occurrences, tz]);
   const tasks = useMemo(() => Object.values(items.tasks), [items.tasks]);
+  const pinnedNotes = useMemo(() => Object.values(items.notes).filter((n) => n.pinned), [items.notes]);
   const busy = useMemo(() => {
     const set = new Set(byDay.keys());
     for (const x of tasks) if (isOpen(x) && x.due_date) set.add(x.due_date);
@@ -542,6 +544,18 @@ export default function TodayScreen() {
             )}
 
             {nextOcc && <NextUp occ={nextOcc} now={now} timezone={tz} />}
+
+            {/* Anotações fixadas (de qualquer agenda ou pessoais): sempre à mão. */}
+            {pinnedNotes.length > 0 && (
+              <Section
+                id="pinned-notes"
+                title={t('todayHub.pinnedNotes')}
+                count={pinnedNotes.length}
+                icon="star-outline"
+              >
+                <NotesBoard notes={pinnedNotes} showCalendar canAdd={false} />
+              </Section>
+            )}
 
             {calendars.length === 0 ? (
               <EmptyState

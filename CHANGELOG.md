@@ -1,5 +1,19 @@
 # Histórico de versões
 
+## 3.3.0 (31/10/2026)
+
+Quadro do dia a dia, mural de anotações, logo em SVG e widgets para a tela inicial do Android.
+
+- **Visão Quadro** no Calendário: um dia por coluna, como um quadro de cartões, para um dia, a semana ou o mês inteiro (Dia, Semana e Mês logo abaixo). Cada coluna mostra quanto do seu dia está ocupado, os compromissos separados em Dia inteiro, Manhã, Tarde e Noite (com horário, local, agenda, repetição, participantes, conflito e o selo "Agora"), as tarefas e lembretes do dia (dá para concluir ali mesmo) e um botão "Adicionar". As colunas rolam para o lado e cada uma rola para baixo; abre já no dia escolhido.
+- **Mural da agenda:** as anotações de cada agenda aparecem logo no topo da agenda, em cartões na cor dela, com "Nova anotação" e "Ver todas". Tocar e segurar fixa ou desafixa uma anotação.
+- **Anotações fixadas na tela Hoje:** as fixadas (de qualquer agenda ou pessoais) ficam à mão logo no início do dia.
+- **Logo SynCK em SVG** (`app-mobile/assets/brand/svg`): o personagem, os logos vertical e horizontal vetorizados da arte original e um símbolo de uma cor desenhado sobre as medidas do logo. O ícone do app, o ícone adaptativo e o temático do Android, o ícone das notificações, a splash, o favicon e os ícones da versão instalável agora são gerados a partir deles (`scripts/gerar-icones-do-app.mjs`).
+- **Widgets para a tela inicial do Android:**
+  - **SynCK · Meu dia:** compromissos, tarefas e lembretes de hoje, com um "+" para adicionar. Sem nada marcado, mostra o primeiro item de amanhã.
+  - **SynCK · Mês:** mini calendário com o dia de hoje em destaque e pontinhos nos dias com algo marcado; tocar num dia abre o calendário nele.
+  - **SynCK · Contagem:** quantos dias faltam para o evento que você escolher (no evento, "Contar no widget").
+  - Todos seguem o tema claro ou escuro do celular, usam a fonte e as cores do app, se ajustam ao tamanho escolhido e se atualizam sozinhos (quando a agenda muda e a cada 30 minutos). Mostram só título, horário e cor; ao sair da conta, ficam vazios.
+
 ## 3.2.1 (31/10/2026)
 
 Acabamento visual: as telas de entrada ganharam um visual único e várias telas desalinhadas foram corrigidas.

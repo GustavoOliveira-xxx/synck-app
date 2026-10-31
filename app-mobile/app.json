@@ -3,7 +3,7 @@
     "name": "SynCK",
     "slug": "agenda-compartilhada",
     "scheme": "agendacompartilhada",
-    "version": "3.2.1",
+    "version": "3.3.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -98,6 +98,60 @@
           "icon": "./assets/notification-icon.png",
           "color": "#017A68",
           "defaultChannel": "lembretes"
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/TitilliumWeb-Regular.ttf",
+            "./assets/fonts/TitilliumWeb-SemiBold.ttf",
+            "./assets/fonts/TitilliumWeb-Bold.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "SynckHoje",
+              "label": "SynCK · Meu dia",
+              "description": "Compromissos, tarefas e lembretes de hoje.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "520dp",
+              "maxResizeHeight": "420dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widgets/preview-meu-dia.png"
+            },
+            {
+              "name": "SynckCalendario",
+              "label": "SynCK · Mês",
+              "description": "Mini calendário com os dias que têm algo marcado.",
+              "minWidth": "180dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 3,
+              "maxResizeWidth": "420dp",
+              "maxResizeHeight": "420dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widgets/preview-mes.png"
+            },
+            {
+              "name": "SynckContagem",
+              "label": "SynCK · Contagem",
+              "description": "Quantos dias faltam para o evento que você escolher.",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "320dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widgets/preview-contagem.png"
+            }
+          ]
         }
       ]
     ],

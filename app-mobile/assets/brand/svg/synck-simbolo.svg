@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- SynCK, símbolo de uma cor (notificações e ícone temático do Android). Desenhado
+       sobre as medidas do logo: órbita (raio 300), estrela, esfera de vidro, lapelas,
+       peitoral em V e as duas joias. -->
+  <defs>
+    <mask id="recorte">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <circle cx="512" cy="448" r="214" fill="#000"/>
+      <circle cx="392" cy="724" r="46" fill="#000"/>
+      <circle cx="632" cy="724" r="46" fill="#000"/>
+    </mask>
+  </defs>
+  <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="18" d="M209.0 499.2A300 300 0 0 1 241.7 357.8M275.9 305.2A300 300 0 0 1 451.8 199.5M566.2 199.5A300 300 0 0 1 742.1 305.2M776.3 357.8A300 300 0 0 1 809.0 499.2"/>
+  <circle cx="257" cy="331" r="17"/>
+  <circle cx="761" cy="331" r="17"/>
+  <path d="M510 161C514.9 189.6 525.4 200.1 550 205C525.4 209.9 514.9 220.4 510 249C505.1 220.4 494.6 209.9 470 205C494.6 200.1 505.1 189.6 510 161Z"/>
+  <path fill-rule="evenodd" d="M512 250a198 198 0 1 1 0 396a198 198 0 1 1 0-396zm0 24a174 174 0 1 0 0 348a174 174 0 1 0 0-348z"/>
+  <path fill-rule="evenodd" d="M512 288a160 160 0 1 1 0 320a160 160 0 1 1 0-320zM440 388C443.85 415.9 452.1 424.15 474 428C452.1 431.85 443.85 440.1 440 468C436.15 440.1 427.9 431.85 406 428C427.9 424.15 436.15 415.9 440 388ZM478 350a9 9 0 1 1 0 .1zM612 494a9 9 0 1 1 0 .1zM410 468a9 9 0 1 1 0 .1zM574 516a9 9 0 1 1 0 .1z"/>
+  <path mask="url(#recorte)" d="M258 500L336 516L424 632L428 700L360 716L300 690L232 676L196 690L206 636L250 600L268 556ZM766 500L688 516L600 632L596 700L664 716L724 690L792 676L828 690L818 636L774 600L756 556ZM424 650L512 684L600 650L612 722L566 792L512 834L458 792L412 722Z"/>
+  <circle cx="392" cy="724" r="32"/>
+  <circle cx="632" cy="724" r="32"/>
+</svg>

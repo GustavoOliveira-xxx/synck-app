@@ -299,3 +299,16 @@ Resumo (detalhes em [ARQUITETURA.md](ARQUITETURA.md)):
 ## 13. Erros comuns
 
 Veja [TROUBLESHOOTING.md](TROUBLESHOOTING.md#desenvolvimento-computador).
+
+## 10. Logo, ícones e widgets
+
+- **Logo em SVG:** `app-mobile/assets/brand/svg` tem o personagem, os logos vertical e horizontal (vetorizados da arte original) e `synck-simbolo.svg`, o símbolo de uma cor (notificações, ícone temático do Android e widgets).
+- **Ícones do app** (Android, notificação, splash, favicon e PWA) saem desses SVGs. Depois de mudar um SVG:
+
+```bash
+# Pasta: raiz do projeto (precisa de npm ci em e2e, que traz o navegador usado para desenhar)
+node scripts/gerar-icones-do-app.mjs
+node scripts/gerar-previas-widgets.mjs
+```
+
+- **Widgets da tela inicial (Android):** ficam em `app-mobile/src/widgets` e são configurados em `app.json` (plugin `react-native-android-widget`). Só funcionam no APK (não no Expo Go nem na web). O app grava um retrato dos próximos dias (`useWidgetSync`) e os widgets leem esse retrato, mesmo com o app fechado.

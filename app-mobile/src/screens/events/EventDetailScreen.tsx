@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -39,10 +39,19 @@ import { useSyncStore } from '@/stores/syncStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { agendaColor, fonte, radius, SCREEN_MARGIN, spacing } from '@/theme/tokens';
 import { describeActivity } from '@/utils/activity';
-import { capitalize, formatDateTime, formatLongDate, formatOccurrenceTime, toDateKey } from '@/utils/dates';
+import {
+  capitalize,
+  formatDateTime,
+  formatLongDate,
+  formatOccurrenceTime,
+  instantToLocal,
+  toDateKey,
+} from '@/utils/dates';
 import { CONTENT_MAX_WIDTH } from '@/utils/layout';
 import { canComment, canEditEvent } from '@/utils/permissions';
 import { describeRule, expandEvent, parseRule } from '@/utils/recurrence';
+
+import { readWidgetCountdown, saveWidgetCountdown, widgetsSupported } from '@/widgets/update';
 
 import { ReminderPicker } from './ReminderPicker';
 
@@ -343,6 +352,55 @@ function EventHistory({ event }: { event: CalendarEvent }) {
   );
 }
 
+/**
+ * Android: escolher este evento para o widget "Contagem" da tela inicial
+ * (quantos dias faltam). Tocar de novo tira o evento do widget.
+ */
+function CountdownButton({
+  event,
+  occurrence,
+  timezone,
+}: {
+  event: CalendarEvent;
+  occurrence: Occurrence;
+  timezone: string;
+}) {
+  const { toast } = useFeedback();
+  const [current, setCurrent] = useState<string | null>(null);
+  useEffect(() => {
+    void readWidgetCountdown().then((c) => setCurrent(c ? `${c.eventId}:${c.occurrence}` : null));
+  }, []);
+  const key = `${event.id}:${occurrence.originalDate}`;
+  const chosen = current === key;
+  const toggle = async () => {
+    if (chosen) {
+      await saveWidgetCountdown(null);
+      setCurrent(null);
+      toast(t('widgets.countdownRemoved'));
+      return;
+    }
+    const local = instantToLocal(occurrence.start, timezone);
+    await saveWidgetCountdown({
+      eventId: event.id,
+      title: occurrence.title ?? '',
+      date: occurrence.allDay && occurrence.startDate ? occurrence.startDate : local.dateKey,
+      time: occurrence.allDay ? null : local.time.slice(0, 5),
+      color: event.color ?? '#017A68',
+      occurrence: occurrence.originalDate,
+    });
+    setCurrent(key);
+    toast(t('widgets.countdownSet'), 'success');
+  };
+  return (
+    <Button
+      title={chosen ? t('widgets.countdownStop') : t('widgets.countdown')}
+      icon="timeline-outline"
+      variant={chosen ? 'tonal' : 'secondary'}
+      onPress={() => void toggle()}
+    />
+  );
+}
+
 export default function EventDetailScreen() {
   const { width } = useWindowDimensions();
   const { id, date } = useLocalSearchParams<{ id: string; date?: string }>();
@@ -562,6 +620,13 @@ export default function EventDetailScreen() {
       </View>
 
       {amAttendee && !event.is_masked && userId ? <Rsvp event={event} userId={userId} /> : null}
+      {widgetsSupported && !event.is_masked && event.status !== 'cancelled' ? (
+        <CountdownButton
+          event={{ ...event, color: event.color ?? calendar?.color ?? null }}
+          occurrence={occurrence}
+          timezone={display.timezone}
+        />
+      ) : null}
 
       {event.is_masked ? (
         <AppText tone="muted">{t('events.maskedMessage')}</AppText>

@@ -10,6 +10,7 @@ import { parentRoute, pathFromRoute, setCurrentPath } from '@/services/navigatio
 import { useDataStore } from '@/stores/dataStore';
 import { IconButton } from '@/components/IconButton';
 import { useAvailableUpdate } from '@/hooks/useAvailableUpdate';
+import { useWidgetSync } from '@/hooks/useWidgetSync';
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { fonte } from '@/theme/tokens';
@@ -105,6 +106,7 @@ export default function AppLayout() {
   useEffect(() => setCurrentPath(pathname), [pathname]);
   useOpenEventFromNotification();
   useUpdateNotice();
+  useWidgetSync();
   return (
     <Stack
       screenOptions={({ navigation, route }) => {

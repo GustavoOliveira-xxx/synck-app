@@ -10,6 +10,7 @@ import { overlayPending } from '@/offline/outbox';
 import { useAuthStore } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
+import { clearWidgets } from '@/widgets/update';
 import { getDeviceTimezone } from '@/hooks/useDeviceTimezone';
 import { todayKey } from '@/utils/dates';
 import { expandEvents } from '@/utils/recurrence';
@@ -95,6 +96,8 @@ async function doEndSession(): Promise<void> {
   await cancelAllReminders();
   await forgetWebPush();
   if (userId) await clearUserData(userId);
+  // Widgets da tela inicial (Android) voltam a ficar vazios.
+  await clearWidgets();
   useDataStore.getState().reset();
   useSyncStore.getState().reset();
   useAuthStore.getState().setAccount(null);

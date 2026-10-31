@@ -13,6 +13,7 @@ import { Card } from '@/components/Card';
 import { useFeedback } from '@/components/Feedback';
 import { Icon, type IconName } from '@/components/Icon';
 import { ListItem } from '@/components/ListItem';
+import { NotesBoard } from '@/components/NotesBoard';
 import { EnterItem, PressableScale } from '@/components/motion';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -23,6 +24,7 @@ import { useCalendar } from '@/hooks/useCalendar';
 import { useCalendarMembers } from '@/hooks/useCalendarMembers';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useOccurrences } from '@/hooks/useEventsView';
+import { useItems } from '@/hooks/useItems';
 import { useNow } from '@/hooks/useNow';
 import { strings, t } from '@/i18n';
 import type { Occurrence, TimeFormat } from '@/models/types';
@@ -141,6 +143,13 @@ export default function CalendarDetailScreen() {
   const { confirm, toast } = useFeedback();
   const { run, busy } = useAction();
   const now = useNow();
+  const { notes } = useItems();
+  // Mural: anotações desta agenda (numa agenda pessoal, as anotações pessoais).
+  const personalKind = calendar?.kind === 'personal';
+  const boardNotes = useMemo(
+    () => Object.values(notes).filter((n) => (personalKind ? !n.calendar_id : n.calendar_id === id)),
+    [notes, id, personalKind],
+  );
   // Próximos compromissos só desta agenda (60 dias).
   // Recalcula o período a cada hora, não a cada minuto.
   const hour = Math.floor(now / 3600_000);
@@ -345,6 +354,25 @@ export default function CalendarDetailScreen() {
             )}
           </View>
 
+          <SectionHeader
+            title={personalKind ? t('notes.boardPersonal') : t('notes.board')}
+            right={
+              <Button
+                title={t('notes.seeAll')}
+                variant="ghost"
+                compact
+                onPress={() =>
+                  router.push({ pathname: '/notes', params: { calendarId: personalKind ? '' : calendar.id } })
+                }
+              />
+            }
+          />
+          <NotesBoard
+            notes={boardNotes}
+            calendarId={personalKind ? undefined : calendar.id}
+            canAdd={personalKind || writable}
+          />
+
           <SectionHeader title={t('calendars.upcoming')} />
           {upcoming.length ? (
             <View style={styles.list}>
@@ -383,11 +411,6 @@ export default function CalendarDetailScreen() {
               title={t('calendars.membersTitle')}
               subtitle={t('calendars.members', { n: calendar.member_count })}
               onPress={() => router.push({ pathname: '/calendar/[id]/members', params: { id: calendar.id } })}
-            />
-            <ListItem
-              icon="document-text-outline"
-              title={t('calendars.notes')}
-              onPress={() => router.push({ pathname: '/notes', params: { calendarId: calendar.id } })}
             />
             {shared && (
               <ListItem

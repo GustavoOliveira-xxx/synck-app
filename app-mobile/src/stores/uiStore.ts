@@ -8,7 +8,10 @@ import type { DateKey } from '@/models/types';
 import { DEFAULT_FILTERS, type EventFilters } from '@/utils/filters';
 import { DEFAULT_TASK_FILTERS, type SmartView, type TaskFilters, type TaskSort } from '@/utils/tasks';
 
-export type CalendarViewMode = 'month' | 'week' | 'day' | 'list';
+export type CalendarViewMode = 'month' | 'week' | 'day' | 'list' | 'board';
+
+/** Período do Quadro: um dia, a semana ou o mês inteiro, um dia por coluna. */
+export type BoardRange = 'day' | 'week' | 'month';
 
 /** Visão da aba Tarefas: uma visão inteligente ou uma lista (`list:<id>`). */
 export type TaskViewKey = SmartView | `list:${string}`;
@@ -23,6 +26,8 @@ export interface CalendarLayers {
 interface UiState {
   onboardingDone: boolean;
   viewMode: CalendarViewMode;
+  boardRange: BoardRange;
+  setBoardRange: (range: BoardRange) => void;
   selectedDate: DateKey | null;
   filters: EventFilters;
   listTab: 'upcoming' | 'past';
@@ -56,6 +61,8 @@ export const useUiStore = create<UiState>()(
     (set) => ({
       onboardingDone: false,
       viewMode: 'month',
+      boardRange: 'week',
+      setBoardRange: (boardRange) => set({ boardRange }),
       selectedDate: null,
       filters: DEFAULT_FILTERS,
       listTab: 'upcoming',
@@ -89,6 +96,7 @@ export const useUiStore = create<UiState>()(
       partialize: (s) => ({
         onboardingDone: s.onboardingDone,
         viewMode: s.viewMode,
+        boardRange: s.boardRange,
         listTab: s.listTab,
         taskView: s.taskView,
         taskSort: s.taskSort,

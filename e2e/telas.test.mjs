@@ -462,6 +462,37 @@ test('3.2: voltar coerente, descartar com aviso e cadastro direto na agenda', as
   await page.context().close();
 });
 
+test('3.3: mural de anotações, fixadas em Hoje e visão Quadro', async () => {
+  const page = await abrirSessao();
+  await entrar(page, 'ana.demo@exemplo.test');
+
+  // Mural da agenda: criar uma anotação por ele e fixar.
+  await ir(page, `/calendar/${AGENDA}`);
+  await visivel(page, 'Mural da agenda');
+  await page.getByRole('button', { name: 'Nova anotação' }).first().click();
+  await page.getByPlaceholder('Ex.: Ideias para a viagem').fill('Senha do wi-fi');
+  await page.getByPlaceholder(/^Escreva aqui/).fill('casa1234');
+  await page.getByLabel('Fixar no topo').first().click({ force: true });
+  await page.getByTestId('note-save').click();
+  await page.getByTestId('calendar-new-event').waitFor({ timeout: 15_000 });
+  await visivel(page, 'Senha do wi-fi');
+  await foto(page, '21-mural-da-agenda');
+
+  // As fixadas aparecem na tela Hoje.
+  await ir(page, '/');
+  await visivel(page, 'Anotações fixadas');
+  await visivel(page, 'Senha do wi-fi');
+
+  // Quadro: um dia por coluna, com dia, semana e mês.
+  await ir(page, '/month');
+  await page.getByText('Quadro', { exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Semana' }).last().waitFor({ timeout: 10_000 }).catch(() => {});
+  await visivel(page, 'compromisso');
+  await foto(page, '22-quadro-semana');
+  assert.ok((await page.getByText('Adicionar', { exact: true }).count()) > 0, 'cada dia oferece "Adicionar"');
+  await page.context().close();
+});
+
 test('nenhum erro de JavaScript em nenhuma tela', () => {
   assert.deepEqual(erros, []);
   const falhas = servidor.registro.filter((r) => r.includes('ERRO'));

@@ -104,6 +104,7 @@ export const ptBR = {
     week: 'Semana',
     day: 'Dia',
     list: 'Lista',
+    board: 'Quadro',
     upcoming: 'Próximos',
     past: 'Passados',
     previous: 'Anterior',
