@@ -38,8 +38,8 @@ export default function AuthLayout() {
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ title: t('auth.login'), headerShown: false }} />
       <Stack.Screen name="signup" options={{ title: t('auth.signup'), headerShown: false }} />
-      <Stack.Screen name="verify-email" options={{ title: t('auth.verifyTitle') }} />
-      <Stack.Screen name="forgot-password" options={{ title: t('auth.forgotTitle') }} />
+      <Stack.Screen name="verify-email" options={{ title: t('auth.verifyTitle'), headerShown: false }} />
+      <Stack.Screen name="forgot-password" options={{ title: t('auth.forgotTitle'), headerShown: false }} />
       <Stack.Screen name="privacy" options={{ title: t('privacyPolicy.title') }} />
     </Stack>
   );

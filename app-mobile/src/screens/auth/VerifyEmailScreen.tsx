@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import { AppText } from '@/components/AppText';
+import { AuthShell, InlineLink } from '@/components/brand/AuthParts';
 import { Button } from '@/components/Button';
-import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { t } from '@/i18n';
 import { resendSignupCode, verifySignupCode } from '@/services/auth';
@@ -45,11 +45,16 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <Screen showOfflineBanner={false}>
-      <AppText>{t('auth.verifyMessage', { email: email || '...' })}</AppText>
+    <AuthShell
+      title={t('auth.verifyTitle')}
+      subtitle={t('auth.verifyMessage', { email: email || '...' })}
+      backTo="/login"
+      below={<InlineLink label={t('auth.resend')} onPress={() => void resend()} />}
+    >
       {!pending && (
         <TextField
           label={t('auth.email')}
+          icon="mail-outline"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -58,6 +63,7 @@ export default function VerifyEmailScreen() {
       )}
       <TextField
         label={t('auth.code')}
+        icon="key-outline"
         value={code}
         onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
         keyboardType="number-pad"
@@ -65,10 +71,10 @@ export default function VerifyEmailScreen() {
         textContentType="oneTimeCode"
         maxLength={6}
         error={error}
+        onSubmitEditing={verify}
       />
       {info ? <AppText tone="success">{info}</AppText> : null}
       <Button title={t('auth.verify')} onPress={verify} loading={loading} />
-      <Button title={t('auth.resend')} variant="ghost" onPress={resend} />
-    </Screen>
+    </AuthShell>
   );
 }

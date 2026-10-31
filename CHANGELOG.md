@@ -1,5 +1,18 @@
 # Histórico de versões
 
+## 3.2.1 (31/10/2026)
+
+Acabamento visual: as telas de entrada ganharam um visual único e várias telas desalinhadas foram corrigidas.
+
+- **Telas de entrada redesenhadas** (login, cadastro, confirmar e-mail, recuperar senha): personagem SynCK centralizado, título e subtítulo, formulário num cartão, links embaixo e a assinatura CK Group no rodapé. Centralizadas na altura e numa coluna de 440 no computador, com um brilho suave da marca no fundo.
+- **Logo no tema escuro:** em vez de uma placa clara em volta (que no computador virava um bloco enorme), o logo aparece com o personagem e o nome SynCK em texto claro. Vale para a abertura, as boas-vindas, o menu lateral e o Perfil.
+- Boas-vindas: as faixas decorativas não passam mais por baixo dos botões.
+- "Seu dia": o botão "Começar o dia" não quebra mais em duas linhas.
+- Avisos: a bolinha de "não lido" fica ao lado do horário, em vez de cair numa linha sozinha.
+- "Minha semana em sintonia": o título não aparece mais duas vezes.
+- Tela Hoje sem nada marcado: o botão "Adicionar algo" não fica mais por baixo do "+".
+- Computador: Membros, Histórico e Busca ficam na coluna centralizada, como as outras telas (antes esticavam pela largura toda, coladas à esquerda).
+
 ## 3.2.0 (31/10/2026)
 
 Polimento geral: navegação coerente, telas com movimento, agendas mais fáceis de usar e a marca SynCK presente no dia a dia.

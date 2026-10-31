@@ -19,6 +19,7 @@ import { useDataStore } from '@/stores/dataStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { spacing } from '@/theme/tokens';
 import { canInvite, canManageMember } from '@/utils/permissions';
+import { CONTENT_MAX_WIDTH } from '@/utils/layout';
 
 export default function MembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -103,6 +104,13 @@ export default function MembersScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  list: { padding: spacing.lg, gap: spacing.xs },
+  // Coluna centralizada em telas largas, como as demais telas.
+  list: {
+    padding: spacing.lg,
+    gap: spacing.xs,
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+  },
   footer: { marginTop: spacing.md, textAlign: 'center' },
 });

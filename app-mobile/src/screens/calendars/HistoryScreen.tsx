@@ -17,6 +17,7 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { spacing } from '@/theme/tokens';
 import { describeActivity } from '@/utils/activity';
 import { formatDateTime } from '@/utils/dates';
+import { CONTENT_MAX_WIDTH } from '@/utils/layout';
 
 /** Histórico de atividades da agenda ou de um evento (respeita permissões no servidor). */
 export function ActivityList({ calendarId, eventId }: { calendarId: string; eventId?: string }) {
@@ -99,5 +100,12 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  list: { padding: spacing.lg, gap: spacing.sm },
+  // Coluna centralizada em telas largas, como as demais telas.
+  list: {
+    padding: spacing.lg,
+    gap: spacing.sm,
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+  },
 });

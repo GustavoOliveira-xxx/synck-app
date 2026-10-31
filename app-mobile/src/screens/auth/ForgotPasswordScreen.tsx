@@ -1,9 +1,10 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 
 import { AppText } from '@/components/AppText';
+import { AuthShell, InlineLink } from '@/components/brand/AuthParts';
 import { Button } from '@/components/Button';
 import { useFeedback } from '@/components/Feedback';
-import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { t } from '@/i18n';
 import { requestPasswordReset, resetPasswordWithCode } from '@/services/auth';
@@ -54,28 +55,39 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <Screen showOfflineBanner={false}>
+    <AuthShell
+      title={step === 'email' ? t('auth.forgotTitle') : t('auth.resetTitle')}
+      subtitle={step === 'email' ? t('auth.forgotMessage') : t('auth.resetMessage', { email })}
+      backTo="/login"
+      below={
+        step === 'code' ? (
+          <InlineLink label={t('auth.resend')} onPress={() => void send()} />
+        ) : (
+          <InlineLink label={t('auth.backToLogin')} onPress={() => router.replace('/login')} />
+        )
+      }
+    >
       {step === 'email' ? (
         <>
-          <AppText>{t('auth.forgotMessage')}</AppText>
           <TextField
             label={t('auth.email')}
+            icon="mail-outline"
             value={email}
             onChangeText={setEmail}
             error={errors.email}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            onSubmitEditing={send}
           />
           {message ? <AppText tone="danger">{message}</AppText> : null}
           <Button title={t('auth.sendCode')} onPress={send} loading={loading} />
         </>
       ) : (
         <>
-          <AppText variant="heading">{t('auth.resetTitle')}</AppText>
-          <AppText>{t('auth.resetMessage', { email })}</AppText>
           <TextField
             label={t('auth.code')}
+            icon="key-outline"
             value={code}
             onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
             keyboardType="number-pad"
@@ -84,6 +96,7 @@ export default function ForgotPasswordScreen() {
           />
           <TextField
             label={t('auth.newPassword')}
+            icon="lock-closed-outline"
             value={password}
             onChangeText={setPassword}
             secure
@@ -93,9 +106,8 @@ export default function ForgotPasswordScreen() {
           />
           {message ? <AppText tone="danger">{message}</AppText> : null}
           <Button title={t('common.save')} onPress={reset} loading={loading} />
-          <Button title={t('auth.resend')} variant="ghost" onPress={send} />
         </>
       )}
-    </Screen>
+    </AuthShell>
   );
 }

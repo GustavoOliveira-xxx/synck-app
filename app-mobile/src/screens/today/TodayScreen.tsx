@@ -556,7 +556,7 @@ export default function TodayScreen() {
                 art="kairo"
                 title={t('today.emptyTitle')}
                 message={t('today.emptyMessage')}
-                actionLabel={t('create.title')}
+                actionLabel={t('create.add')}
                 onAction={() => router.push({ pathname: '/create', params: { date: selected } })}
               />
             ) : null}

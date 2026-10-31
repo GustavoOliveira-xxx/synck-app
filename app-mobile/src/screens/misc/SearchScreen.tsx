@@ -26,6 +26,7 @@ import { applyFilters, searchOccurrences } from '@/utils/filters';
 import { expandEvent, sortOccurrences } from '@/utils/recurrence';
 import { isSearchable, parseSearch, searchCalendars, searchNotes, searchTasks } from '@/utils/search';
 import { truncate } from '@/utils/text';
+import { CONTENT_MAX_WIDTH } from '@/utils/layout';
 
 type Category = 'all' | 'events' | 'tasks' | 'reminders' | 'notes' | 'calendars';
 const CATEGORIES: Category[] = ['all', 'events', 'tasks', 'reminders', 'notes', 'calendars'];
@@ -306,9 +307,24 @@ export default function SearchScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  header: { padding: spacing.lg, paddingBottom: 0, gap: spacing.sm },
+  // Busca e resultados numa coluna centralizada em telas largas.
+  header: {
+    padding: spacing.lg,
+    paddingBottom: 0,
+    gap: spacing.sm,
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  list: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
+  list: {
+    padding: spacing.lg,
+    gap: spacing.sm,
+    paddingBottom: spacing.xxl,
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+  },
   section: { marginTop: spacing.md, marginBottom: spacing.xs },
   item: { marginBottom: spacing.sm },
   line: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },

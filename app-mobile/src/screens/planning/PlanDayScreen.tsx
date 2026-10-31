@@ -198,7 +198,8 @@ export default function PlanDayScreen() {
     <Screen
       footer={
         <View style={styles.footer}>
-          <View style={styles.flex}>
+          {/* "Agora não" ocupa só o necessário; o botão principal fica com o resto. */}
+          <View>
             <Button title={t('planDay.skip')} variant="ghost" onPress={later} />
           </View>
           <View style={styles.flex}>

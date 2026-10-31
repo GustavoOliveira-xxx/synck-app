@@ -81,7 +81,8 @@ export default function WeekSummaryScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: t('weekSummary.title') }} />
+      {/* O título fica no corpo da tela, ao lado do símbolo; a barra fica limpa. */}
+      <Stack.Screen options={{ title: '' }} />
       <View style={styles.hero}>
         <View style={styles.flex}>
           <AppText variant="overline" tone="muted">

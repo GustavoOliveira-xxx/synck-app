@@ -1,14 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import { AuthTopBar, InlineLink, OrDivider } from '@/components/brand/AuthParts';
+import { AuthShell, InlineLink, OrDivider } from '@/components/brand/AuthParts';
 import { GoogleButton } from '@/components/brand/GoogleButton';
 import { Button } from '@/components/Button';
-import { EnterItem } from '@/components/motion';
-import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { t } from '@/i18n';
 import { signUp } from '@/services/auth';
@@ -45,12 +43,17 @@ export default function SignupScreen() {
   };
 
   return (
-    <Screen showOfflineBanner={false} safeTop maxWidth={480}>
-      <AuthTopBar />
-      <EnterItem index={0} style={{ gap: spacing.xs }}>
-        <AppText variant="display">{t('auth.signupTitle')}</AppText>
-        <AppText tone="muted">{t('auth.signupSubtitle')}</AppText>
-      </EnterItem>
+    <AuthShell
+      title={t('auth.signupTitle')}
+      subtitle={t('auth.signupSubtitle')}
+      below={
+        <InlineLink
+          lead={t('auth.alreadyHave')}
+          label={t('auth.login')}
+          onPress={() => router.replace('/login')}
+        />
+      }
+    >
       <GoogleButton title={t('auth.googleSignup')} onError={setMessage} />
       <OrDivider />
       <TextField
@@ -102,18 +105,17 @@ export default function SignupScreen() {
           {message}
         </AppText>
       ) : null}
-      <View>
-        <AppText variant="small" tone="muted">
+      <View style={styles.terms}>
+        <AppText variant="small" tone="muted" center>
           {t('auth.termsNotice')}
         </AppText>
-        <InlineLink label={t('auth.readPrivacy')} align="right" onPress={() => router.push('/privacy')} />
+        <InlineLink label={t('auth.readPrivacy')} onPress={() => router.push('/privacy')} />
       </View>
       <Button title={t('auth.signup')} onPress={submit} loading={loading} testID="signup-submit" />
-      <InlineLink
-        lead={t('auth.alreadyHave')}
-        label={t('auth.login')}
-        onPress={() => router.replace('/login')}
-      />
-    </Screen>
+    </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  terms: { gap: spacing.xxs },
+});

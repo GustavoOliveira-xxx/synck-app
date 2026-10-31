@@ -169,7 +169,6 @@ export default function NotificationsScreen() {
                 <View style={styles.texts}>
                   <AppText style={[styles.itemTitle, !item.read_at && fonte('negrito')]}>
                     {item.title}
-                    {!item.read_at ? <AppText style={{ color: colors.coral }}> ●</AppText> : null}
                   </AppText>
                   {item.body ? (
                     <AppText variant="caption" tone="muted" numberOfLines={2}>
@@ -177,9 +176,13 @@ export default function NotificationsScreen() {
                     </AppText>
                   ) : null}
                 </View>
-                <AppText variant="caption" tone="muted">
-                  {formatRelative(when, now, display.timezone, display.dateFormat)}
-                </AppText>
+                {/* Horário em cima e, se não foi lido, a bolinha coral embaixo. */}
+                <View style={styles.meta}>
+                  <AppText variant="caption" tone="muted">
+                    {formatRelative(when, now, display.timezone, display.dateFormat)}
+                  </AppText>
+                  {!item.read_at ? <View style={[styles.unread, { backgroundColor: colors.coral }]} /> : null}
+                </View>
               </PressableScale>
             </EnterItem>
           );
@@ -196,6 +199,8 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  meta: { alignItems: 'flex-end', gap: spacing.sm, paddingTop: 2 },
+  unread: { width: 8, height: 8, borderRadius: 4 },
   list: {
     paddingHorizontal: SCREEN_MARGIN,
     paddingBottom: spacing.xl,
