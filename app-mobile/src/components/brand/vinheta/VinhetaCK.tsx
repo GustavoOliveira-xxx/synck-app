@@ -22,7 +22,18 @@ import Animated, {
   type SharedValue,
   type WithTimingConfig,
 } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, LinearGradient, Path, Rect, Stop, SvgXml } from 'react-native-svg';
+import Svg, {
+  Circle,
+  ClipPath,
+  Defs,
+  G,
+  LinearGradient,
+  Path,
+  RadialGradient,
+  Rect,
+  Stop,
+  SvgXml,
+} from 'react-native-svg';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 
@@ -113,8 +124,9 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
   const inicio = completa ? 0 : 1;
 
   // ---- valores animados (0 → 1, salvo indicação) ----
-  const tela = useSharedValue(tipo === 'curta' ? 0 : 1);
-  const conteudo = useSharedValue(tipo === 'reduzida' ? 0 : 1);
+  const tela = useSharedValue(1);
+  const conteudo = useSharedValue(tipo === 'completa' ? 1 : 0);
+  const escala = useSharedValue(tipo === 'curta' ? 0.97 : 1);
   const luz = useSharedValue(inicio);
   const luzGiro = useSharedValue(completa ? -60 : 0);
   const aurora = useSharedValue(inicio);
@@ -131,6 +143,7 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
   const letraC = useSharedValue(inicio);
   const letraK = useSharedValue(inicio);
   const ckBrilho = useSharedValue(completa ? 0 : 0.55);
+  const ckBrilhoEsc = useSharedValue(completa ? 0.6 : 1);
   const clarao = useSharedValue(0);
   const nome = useSharedValue(inicio);
   const faixa = useSharedValue(0);
@@ -138,6 +151,7 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
   const s2 = useSharedValue(inicio);
   const estrelas = useSharedValue(inicio);
   const estouro = useSharedValue(0);
+  const estouro2 = useSharedValue(0);
   const eletrico = useSharedValue(0);
   const relogio = useSharedValue(0);
 
@@ -148,6 +162,7 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
     terminou.current = true;
     timers.current.forEach(clearTimeout);
     tela.value = withTiming(0, { duration: dur, easing: Easing.in(Easing.quad) });
+    escala.value = withTiming(1.04, { duration: dur, easing: Easing.in(Easing.quad) });
     timers.current = [setTimeout(onFim, dur + 30)];
   };
 
@@ -160,7 +175,8 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
       conteudo.value = withTiming(1, { duration: 350 });
       fim(1500, 300);
     } else if (tipo === 'curta') {
-      tela.value = withTiming(1, { duration: 260 });
+      conteudo.value = withTiming(1, { duration: 260, easing: SAI });
+      escala.value = withTiming(1, { duration: 260, easing: SAI });
       piscada.value = withDelay(
         300,
         withSequence(
@@ -209,6 +225,11 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
         1480,
         withSequence(withTiming(1, { duration: 225 }), withTiming(0.55, { duration: 675 })),
       );
+      ckBrilhoEsc.value = withDelay(
+        1480,
+        withSequence(withTiming(1.15, { duration: 225 }), withTiming(1, { duration: 675 })),
+      );
+      estouro2.value = de(2150, 1, 750, Easing.out(Easing.cubic));
       clarao.value = withDelay(
         1570,
         withSequence(withTiming(0.9, { duration: 105 }), withTiming(0, { duration: 595 })),
@@ -263,7 +284,10 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
 
   // ---- estilos animados ----
   const sTela = useAnimatedStyle(() => ({ opacity: tela.value }));
-  const sConteudo = useAnimatedStyle(() => ({ opacity: conteudo.value }));
+  const sConteudo = useAnimatedStyle(() => ({
+    opacity: conteudo.value,
+    transform: [{ scale: escala.value }],
+  }));
   const sAurora = useAnimatedStyle(() => ({ opacity: aurora.value }));
   const sClarao = useAnimatedStyle(() => ({ opacity: clarao.value }));
   const luzLado = Math.hypot(Math.max(mcx, W - mcx), Math.max(mcy, H - mcy)) * 2.1;
@@ -294,7 +318,10 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
   };
   const sC = useAnimatedStyle(letra(letraC));
   const sK = useAnimatedStyle(letra(letraK));
-  const sCkBrilho = useAnimatedStyle(() => ({ opacity: ckBrilho.value }));
+  const sCkBrilho = useAnimatedStyle(() => ({
+    opacity: ckBrilho.value,
+    transform: [{ scale: ckBrilhoEsc.value }],
+  }));
   const sNome = useAnimatedStyle(() => ({
     opacity: nome.value,
     transform: [{ translateY: (1 - nome.value) * 16 }, { scaleX: 1.25 - 0.25 * nome.value }],
@@ -305,8 +332,15 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
   };
   const sS1 = useAnimatedStyle(sobeTexto(s1));
   const sS2 = useAnimatedStyle(sobeTexto(s2));
-  const sCred = useAnimatedStyle(sobeTexto(cred));
-  const faixaProps = useAnimatedProps(() => ({ x: ck.x - ck.w * 0.45 + faixa.value * ck.w * 1.6 }));
+  const sCred = useAnimatedStyle(() => ({
+    opacity: cred.value,
+    transform: [{ translateY: (1 - cred.value) * 14 }],
+  }));
+  const faixaLarg = ck.w * 0.34;
+  const faixaCompensa = Math.tan((20 * Math.PI) / 180) * (ck.y + ck.h / 2);
+  const faixaProps = useAnimatedProps(() => ({
+    x: ck.x + faixaCompensa + faixaLarg * (-1.2 + 5.4 * faixa.value),
+  }));
   const sEletricoA = useAnimatedStyle(() => {
     const v = eletrico.value;
     const ativo = (v > 0 && v < 12) || (v > 12 && v < 16);
@@ -324,6 +358,7 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><defs>` +
       `<radialGradient id="f" gradientUnits="userSpaceOnUse" cx="${mcx}" cy="${mcy}" r="${Math.max(W, H) * 0.75}"><stop offset="0" stop-color="#1f0a33"/><stop offset=".55" stop-color="#0c0416"/><stop offset="1" stop-color="${FUNDO}"/></radialGradient>` +
       `<radialGradient id="a" gradientUnits="userSpaceOnUse" cx="${mcx}" cy="${mcy}" r="${Math.min(W, H) * 0.75}"><stop offset="0" stop-color="#a308c8" stop-opacity=".62"/><stop offset=".5" stop-color="#640187" stop-opacity=".26"/><stop offset="1" stop-color="#640187" stop-opacity="0"/></radialGradient>` +
+      `<radialGradient id="b" gradientUnits="userSpaceOnUse" cx="${W / 2}" cy="${H}" r="${Math.max(W, H) * 0.42}"><stop offset="0" stop-color="#fccf02" stop-opacity=".13"/><stop offset=".7" stop-color="#fccf02" stop-opacity="0"/></radialGradient>` +
       `<radialGradient id="c" gradientUnits="userSpaceOnUse" cx="${ccx}" cy="${ccy}" r="${Math.min(W, H) * 0.46}"><stop offset="0" stop-color="#ffeca0" stop-opacity=".9"/><stop offset=".35" stop-color="#fccf02" stop-opacity=".45"/><stop offset="1" stop-color="#fccf02" stop-opacity="0"/></radialGradient>` +
       `</defs>`,
     [W, H, mcx, mcy, ccx, ccy],
@@ -347,7 +382,7 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
       />
       <Animated.View style={[StyleSheet.absoluteFill, sAurora]} pointerEvents="none">
         <SvgXml
-          xml={`${fundoXml}<rect width="${W}" height="${H}" fill="url(#a)"/></svg>`}
+          xml={`${fundoXml}<rect width="${W}" height="${H}" fill="url(#a)"/><rect width="${W}" height="${H}" fill="url(#b)"/></svg>`}
           width={W}
           height={H}
         />
@@ -439,14 +474,16 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
                     <Stop offset="1" stopColor="#fff" stopOpacity={0} />
                   </LinearGradient>
                 </Defs>
-                <AnimatedRect
-                  animatedProps={faixaProps}
-                  y={ck.y - ck.h * 0.2}
-                  width={ck.w * 0.34}
-                  height={ck.h * 1.4}
-                  fill="url(#ckvFaixa)"
-                  clipPath="url(#ckvClip)"
-                />
+                <G clipPath="url(#ckvClip)">
+                  <AnimatedRect
+                    animatedProps={faixaProps}
+                    y={ck.y - ck.h * 0.2}
+                    width={faixaLarg}
+                    height={ck.h * 1.4}
+                    transform="skewX(-20)"
+                    fill="url(#ckvFaixa)"
+                  />
+                </G>
               </Svg>
             </View>,
           ];
@@ -473,6 +510,9 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
         {FAISCAS.map((f, i) => (
           <Faisca key={i} f={f} cx={ccx} cy={ccy} k={k} progresso={estouro} />
         ))}
+        {FAISCAS_2.map((f, i) => (
+          <Faisca key={`b${i}`} f={f} cx={ccx} cy={ccy} k={k} progresso={estouro2} />
+        ))}
       </Animated.View>
 
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, sClarao]}>
@@ -496,23 +536,44 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
 const CORES = ['#ffd84a', '#ffd84a', '#fff1a8', '#c35cff', '#e7a6ff'];
 
 // Sorteados uma vez, quando o módulo carrega (nada de aleatório durante a renderização).
-const BRASAS = Array.from({ length: 14 }, (_, i) => ({
+// Tamanhos em unidades do desenho (multiplicados pela escala da tela), iguais aos da web.
+const BRASAS = Array.from({ length: 24 }, (_, i) => ({
   x: Math.random(),
-  fase: i / 14,
+  fase: i / 24,
   oscila: 8 + Math.random() * 18,
-  tam: 2 + Math.random() * 4,
+  tam: 6 + Math.random() * 12,
   cor: CORES[i % CORES.length],
 }));
-const FAISCAS = Array.from({ length: 20 }, (_, i) => {
-  const a = (i / 20) * Math.PI * 2 + Math.random() * 0.3;
-  return {
-    dx: Math.cos(a),
-    dy: Math.sin(a),
-    dist: 60 + Math.random() * 120,
-    tam: 3 + Math.random() * 5,
-    cor: CORES[i % CORES.length],
-  };
-});
+const faiscas = (n: number, vel: number) =>
+  Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.3;
+    return {
+      dx: Math.cos(a),
+      dy: Math.sin(a),
+      dist: (90 + Math.random() * 260) * vel,
+      tam: 10 + Math.random() * 22,
+      cor: CORES[i % CORES.length],
+    };
+  });
+const FAISCAS = faiscas(40, 1);
+const FAISCAS_2 = faiscas(18, 0.55);
+
+/** Ponto de luz: centro branco, cor no meio, borda transparente. */
+function Luz({ tam, cor }: { tam: number; cor: string }) {
+  const id = `ckvLuz${cor.slice(1)}`;
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 2 2">
+      <Defs>
+        <RadialGradient id={id} cx="1" cy="1" r="1" gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor="#fff" />
+          <Stop offset="0.18" stopColor={cor} />
+          <Stop offset="1" stopColor={cor} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx="1" cy="1" r="1" fill={`url(#${id})`} />
+    </Svg>
+  );
+}
 
 function Brasa({
   brasa,
@@ -527,7 +588,7 @@ function Brasa({
   H: number;
   k: number;
 }) {
-  const tam = brasa.tam * Math.max(1, k * 1.6);
+  const tam = brasa.tam * k * 1.3;
   const estilo = useAnimatedStyle(() => {
     const p = (relogio.value + brasa.fase) % 1;
     return {
@@ -541,19 +602,10 @@ function Brasa({
   return (
     <Animated.View
       pointerEvents="none"
-      style={[
-        {
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: tam,
-          height: tam,
-          borderRadius: tam,
-          backgroundColor: brasa.cor,
-        },
-        estilo,
-      ]}
-    />
+      style={[{ position: 'absolute', left: 0, top: 0, width: tam, height: tam }, estilo]}
+    >
+      <Luz tam={tam} cor={brasa.cor} />
+    </Animated.View>
   );
 }
 
@@ -570,8 +622,8 @@ function Faisca({
   k: number;
   progresso: SharedValue<number>;
 }) {
-  const tam = f.tam * Math.max(1, k * 1.6);
-  const dist = f.dist * Math.max(1, k * 2.4);
+  const tam = f.tam * k * 1.3;
+  const dist = f.dist * k * 1.3;
   const estilo = useAnimatedStyle(() => {
     const p = progresso.value;
     return {
@@ -585,19 +637,10 @@ function Faisca({
   return (
     <Animated.View
       pointerEvents="none"
-      style={[
-        {
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: tam,
-          height: tam,
-          borderRadius: tam,
-          backgroundColor: f.cor,
-        },
-        estilo,
-      ]}
-    />
+      style={[{ position: 'absolute', left: 0, top: 0, width: tam, height: tam }, estilo]}
+    >
+      <Luz tam={tam} cor={f.cor} />
+    </Animated.View>
   );
 }
 
