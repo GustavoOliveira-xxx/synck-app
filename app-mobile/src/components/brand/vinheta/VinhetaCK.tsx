@@ -170,92 +170,98 @@ function Palco({ tipo, credito, onFim }: { tipo: TipoVinheta; credito: boolean; 
     const fim = (em: number, dur: number) => {
       timers.current.push(setTimeout(() => encerrar(dur), em));
     };
+    // fecha, segura um instante e abre (350 ms), igual à web
+    const piscar = (em: number) => {
+      piscada.value = withDelay(
+        em,
+        withSequence(
+          withTiming(0.06, { duration: 120, easing: IO }),
+          withTiming(0.06, { duration: 80 }),
+          withTiming(1, { duration: 150, easing: IO }),
+        ),
+      );
+    };
     relogio.value = withRepeat(withTiming(1, { duration: 4000, easing: Easing.linear }), -1, false);
     if (tipo === 'reduzida') {
       conteudo.value = withTiming(1, { duration: 350 });
       fim(1500, 300);
     } else if (tipo === 'curta') {
-      conteudo.value = withTiming(1, { duration: 260, easing: SAI });
-      escala.value = withTiming(1, { duration: 260, easing: SAI });
-      piscada.value = withDelay(
-        300,
-        withSequence(
-          withTiming(0.06, { duration: 105, easing: IO }),
-          withTiming(1, { duration: 125, easing: IO }),
-        ),
-      );
+      // versão curta: marca pronta, piscadinha e brilho (mesmos tempos da web)
+      conteudo.value = withTiming(1, { duration: 350, easing: SAI });
+      escala.value = withTiming(1, { duration: 350, easing: SAI });
+      piscar(700);
       raiosEsc.value = withDelay(
-        380,
-        withSequence(withTiming(1.07, { duration: 210 }), withTiming(1, { duration: 310 })),
+        1050,
+        withSequence(withTiming(1.07, { duration: 225 }), withTiming(1, { duration: 335 })),
       );
       raiosGiro.value = withDelay(
-        380,
-        withSequence(withTiming(5, { duration: 210 }), withTiming(0, { duration: 310 })),
+        1050,
+        withSequence(withTiming(5, { duration: 225 }), withTiming(0, { duration: 335 })),
       );
-      faixa.value = de(450, 1, 620, IO);
+      [exc1, exc2, exc3].forEach((v, i) => {
+        v.value = withDelay(
+          1100 + i * 60,
+          withSequence(withTiming(1.357, { duration: 140 }), withTiming(1, { duration: 140 })),
+        );
+      });
+      faixa.value = de(1150, 1, 700, IO);
       ckBrilho.value = withDelay(
-        420,
-        withSequence(withTiming(1, { duration: 210 }), withTiming(0.55, { duration: 490 })),
+        1100,
+        withSequence(withTiming(1, { duration: 240 }), withTiming(0.55, { duration: 560 })),
       );
-      estouro.value = de(450, 1, 900, Easing.out(Easing.cubic));
-      eletrico.value = de(450, 12, 250, Easing.linear);
-      fim(1250, 330);
+      estouro.value = de(1150, 1, 900, Easing.out(Easing.cubic));
+      eletrico.value = de(1150, 12, 250, Easing.linear);
+      fim(1900, 380);
     } else {
-      aurora.value = de(0, 1, 1700);
-      luz.value = de(0, 1, 1600);
+      aurora.value = de(0, 1, 1900);
+      luz.value = de(0, 1, 1800);
       luzGiro.value = withSequence(
-        withTiming(0, { duration: 1600, easing: SAI }),
+        withTiming(0, { duration: 1800, easing: SAI }),
         withTiming(15, { duration: 3600, easing: Easing.linear }),
       );
-      cred.value = de(80, 1, 700);
-      sobe.value = de(0, 1, 1500);
-      raiosGiro.value = de(60, 0, 1750);
-      raiosEsc.value = de(60, 1, 1750);
-      exc1.value = de(950, 1, 420, VOLTA);
-      exc2.value = de(1040, 1, 420, VOLTA);
-      exc3.value = de(1130, 1, 420, VOLTA);
-      olhos.value = de(1015, 1, 165, Easing.linear);
+      cred.value = de(100, 1, 800);
+      sobe.value = de(0, 1, 1700);
+      raiosGiro.value = de(60, 0, 2000);
+      raiosEsc.value = de(60, 1, 2000);
+      exc1.value = de(1100, 1, 450, VOLTA);
+      exc2.value = de(1200, 1, 450, VOLTA);
+      exc3.value = de(1300, 1, 450, VOLTA);
+      olhos.value = de(1150, 1, 180, Easing.linear);
       olhosBrilho.value = withDelay(
-        1000,
-        withSequence(withTiming(1, { duration: 200 }), withTiming(0, { duration: 600 })),
+        1170,
+        withSequence(withTiming(1, { duration: 220 }), withTiming(0, { duration: 660 })),
       );
-      letraC.value = de(1100, 1, 800);
-      letraK.value = de(1210, 1, 800);
+      letraC.value = de(1250, 1, 900);
+      letraK.value = de(1370, 1, 900);
       ckBrilho.value = withDelay(
-        1480,
-        withSequence(withTiming(1, { duration: 225 }), withTiming(0.55, { duration: 675 })),
+        1680,
+        withSequence(withTiming(1, { duration: 250 }), withTiming(0.55, { duration: 750 })),
       );
       ckBrilhoEsc.value = withDelay(
-        1480,
-        withSequence(withTiming(1.15, { duration: 225 }), withTiming(1, { duration: 675 })),
+        1680,
+        withSequence(withTiming(1.15, { duration: 250 }), withTiming(1, { duration: 750 })),
       );
-      estouro2.value = de(2150, 1, 750, Easing.out(Easing.cubic));
       clarao.value = withDelay(
-        1570,
-        withSequence(withTiming(0.9, { duration: 105 }), withTiming(0, { duration: 595 })),
+        1770,
+        withSequence(withTiming(0.9, { duration: 114 }), withTiming(0, { duration: 646 })),
       );
-      estouro.value = de(1600, 1, 1000, Easing.out(Easing.cubic));
+      estouro.value = de(1800, 1, 1000, Easing.out(Easing.cubic));
+      estouro2.value = de(2450, 1, 750, Easing.out(Easing.cubic));
       eletrico.value = withDelay(
-        1600,
+        1800,
         withSequence(
-          withTiming(12, { duration: 650, easing: Easing.linear }),
-          withDelay(700, withTiming(16, { duration: 200, easing: Easing.linear })),
+          withTiming(12, { duration: 700, easing: Easing.linear }),
+          withDelay(800, withTiming(16, { duration: 150, easing: Easing.linear })),
         ),
       );
-      // a piscadinha
-      piscada.value = withDelay(
-        1950,
-        withSequence(
-          withTiming(0.06, { duration: 105, easing: IO }),
-          withTiming(1, { duration: 125, easing: IO }),
-        ),
-      );
-      nome.value = de(1800, 1, 650);
-      faixa.value = de(2100, 1, 720, IO);
-      estrelas.value = de(2050, 1, 450);
-      s1.value = de(2250, 1, 560);
-      s2.value = de(2450, 1, 560);
-      fim(3650, 400);
+      nome.value = de(2050, 1, 700);
+      faixa.value = de(2400, 1, 800, IO);
+      estrelas.value = de(2350, 1, 450);
+      s1.value = de(2600, 1, 600);
+      s2.value = de(2800, 1, 600);
+      // a piscadinha, com tudo já parado na tela
+      piscar(3450);
+      fim(4500, 450);
     }
     const lista = timers.current;
     return () => lista.forEach(clearTimeout);

@@ -2,7 +2,7 @@
 
 ## Próxima versão (ainda não publicada)
 
-- **Vinheta de abertura da CK** ao abrir o app: "Uma produção de", a máscara da CK subindo com os raios girando, os olhos acendendo, o CK se formando com brilho, a piscadinha, o nome Conscious Knowledge e o slogan "Consciência que cria, Conhecimento que transforma." Completa na primeira abertura do dia (cerca de 4 segundos) e curta nas outras; um toque pula. Com "reduzir movimento" ligado, a marca só aparece suavemente. Roda toda na thread de interface (Reanimated), sem travar enquanto o app carrega. Os desenhos vêm de `ck-group/marca` (`src/components/brand/vinheta/dados.json`, gerado; não editar à mão).
+- **Vinheta de abertura da CK** ao abrir o app: "Uma produção de", a máscara da CK subindo com os raios girando, os olhos acendendo, o CK se formando com brilho, a piscadinha, o nome Conscious Knowledge e o slogan "Consciência que cria, Conhecimento que transforma." Completa na primeira abertura do dia (cerca de 5 segundos) e curta nas outras (cerca de 2 segundos); um toque pula. Com "reduzir movimento" ligado, a marca só aparece suavemente. Roda toda na thread de interface (Reanimated), sem travar enquanto o app carrega. Os desenhos vêm de `ck-group/marca` (`src/components/brand/vinheta/dados.json`, gerado; não editar à mão).
 
 ## 3.3.0 (31/10/2026)
 
