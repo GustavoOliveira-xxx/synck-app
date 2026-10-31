@@ -128,6 +128,7 @@ export const ptBR = {
     new: 'Novo evento',
     edit: 'Editar evento',
     details: 'Detalhes do evento',
+    duration: 'Duração',
     titleLabel: 'Título',
     titlePlaceholder: 'Ex.: Jantar, Consulta, Reunião',
     calendar: 'Agenda',
