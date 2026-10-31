@@ -220,7 +220,11 @@ test('proprietária: calendário, evento, membros, convite e demais telas', asyn
 
   await ir(page, `/event/${servidor.eventos['Jantar de aniversário']}`);
   await visivel(page, 'Restaurante Central');
-  await visivel(page, 'de outubro de'); // data por extenso
+  // Data por extenso (o seed usa datas relativas a hoje, então o mês varia).
+  await page
+    .getByText(/ de (janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro) de /)
+    .first()
+    .waitFor({ timeout: 15_000 });
   await foto(page, '05-evento-detalhe');
 
   await ir(page, `/calendar/${AGENDA}/members`);
@@ -414,6 +418,47 @@ test('tela Hoje no computador: seções não ficam umas por cima das outras', as
       assert.ok(!sobrepoe, `"${c.texto}" está por cima de "${i.texto}"`);
     }
   }
+  await page.context().close();
+});
+
+test('3.2: voltar coerente, descartar com aviso e cadastro direto na agenda', async () => {
+  const page = await abrirSessao();
+  await entrar(page, 'ana.demo@exemplo.test');
+  const caminho = () => new URL(page.url()).pathname;
+
+  // Agenda: atalho "Novo evento" já escolhe a agenda; fechar com texto pergunta antes.
+  await ir(page, `/calendar/${AGENDA}`);
+  await page.getByTestId('calendar-new-event').click();
+  await page.getByTestId('event-title').fill('Teste de descarte');
+  await page.getByRole('button', { name: 'Fechar' }).first().click();
+  await visivel(page, 'Descartar o que você escreveu?');
+  await foto(page, '20-descartar');
+  await page.getByText('Continuar editando', { exact: true }).click();
+  await page.getByTestId('event-title').fill('Churrasco de domingo');
+  await page.getByTestId('event-save').click();
+  // Salvar volta para a agenda sem perguntar, e o evento aparece nos próximos.
+  await page.getByTestId('calendar-new-event').waitFor({ timeout: 15_000 });
+  assert.equal(await page.getByText('Descartar o que você escreveu?').count(), 0, 'salvar não deveria perguntar');
+  await visivel(page, 'Churrasco de domingo');
+  await foto(page, '20-agenda');
+
+  // Aberta por link (sem tela anterior), cada tela volta para a sua tela mãe.
+  await ir(page, `/calendar/${AGENDA}/members`);
+  await page.getByRole('button', { name: 'Voltar' }).first().click();
+  await page.waitForURL(`**/calendar/${AGENDA}`);
+  await page.getByRole('button', { name: 'Voltar' }).first().click();
+  await page.waitForURL('**/calendars');
+  assert.ok(caminho().endsWith('/calendars'), caminho());
+
+  // "Ver no calendário" abre a aba Calendário (antes abria a tela Hoje).
+  await ir(page, `/calendar/${AGENDA}`);
+  await page.getByRole('button', { name: 'Ver no calendário' }).first().click();
+  await page.waitForURL('**/month');
+
+  // No Calendário, cada dia oferece Evento, Tarefa e Lembrete.
+  await page.getByTestId('calendar-add-event').click();
+  await page.getByTestId('event-title').waitFor();
+  assert.ok(caminho().endsWith('/event/new'), caminho());
   await page.context().close();
 });
 

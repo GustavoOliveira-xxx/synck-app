@@ -9,6 +9,8 @@ import {
   formToFields,
   newEventForm,
   validateEventForm,
+  withDuration,
+  withStart,
   type EventForm,
 } from '../event';
 import { formatInviteCode, normalizeInviteCode, validateInviteCode } from '../invite';
@@ -151,5 +153,25 @@ describe('código de convite', () => {
     expect(validateInviteCode('ABCD-EFGH-0111')).toBeUndefined();
     expect(validateInviteCode('ABCD-EFGH-011')).toBeDefined();
     expect(validateInviteCode('ABCD-EFGH-011U')).toBeDefined();
+  });
+});
+
+describe('duração do evento no formulário', () => {
+  it('1 h começando 23:30 termina 00:30 do dia seguinte (e é válido)', () => {
+    const form = withDuration(baseForm({ startDate: '2026-11-10', startTime: '23:30' }), 60);
+    expect(form.endDate).toBe('2026-11-11');
+    expect(form.endTime).toBe('00:30');
+    expect(validateEventForm(form)).toEqual({});
+  });
+
+  it('mudar o início leva o término junto', () => {
+    const form = baseForm({ startTime: '09:00', endDate: '2026-11-10', endTime: '10:30' });
+    const moved = withStart(form, '2026-11-12', '14:00');
+    expect([moved.endDate, moved.endTime]).toEqual(['2026-11-12', '15:30']);
+  });
+
+  it('término antes do início vira 1 h ao mudar o início', () => {
+    const form = baseForm({ startTime: '10:00', endDate: '2026-11-10', endTime: '09:00' });
+    expect(withStart(form, '2026-11-10', '11:00').endTime).toBe('12:00');
   });
 });

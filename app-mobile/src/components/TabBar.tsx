@@ -39,12 +39,16 @@ const SIDE_ITEM_H = 48;
 function TabIcon({ icon, focused, color }: { icon: IconName; focused: boolean; color: string }) {
   const { reduceMotion } = useAppTheme();
   const y = useSharedValue(0);
+  const scale = useSharedValue(1);
   useEffect(() => {
     if (focused && !reduceMotion) {
-      y.value = withSequence(withTiming(-2, { duration: 100 }), withSpring(0, motion.mola));
+      y.value = withSequence(withTiming(-3, { duration: 110 }), withSpring(0, motion.molaEntrada));
+      scale.value = withSequence(withTiming(1.14, { duration: 110 }), withSpring(1, motion.molaEntrada));
     }
-  }, [focused, reduceMotion, y]);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  }, [focused, reduceMotion, y, scale]);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: y.value }, { scale: scale.value }],
+  }));
   return (
     <Animated.View style={style}>
       <Icon name={icon} size={24} color={color} />

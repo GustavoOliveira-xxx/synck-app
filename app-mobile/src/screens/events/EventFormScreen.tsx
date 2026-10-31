@@ -1,7 +1,7 @@
 // Criação e edição de eventos (inclusive "só esta ocorrência" e "esta e as próximas").
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
@@ -18,6 +18,7 @@ import { SwitchRow } from '@/components/SwitchRow';
 import { TextField } from '@/components/TextField';
 import { useCalendarMembers } from '@/hooks/useCalendarMembers';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useCalendarsMap, useEventsMap, useOccurrences } from '@/hooks/useEventsView';
 import { strings, t } from '@/i18n';
 import type {
@@ -34,17 +35,21 @@ import { goBack } from '@/services/navigation';
 import { useAuthStore, useUserId } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
-import { spacing } from '@/theme/tokens';
+import { useAppTheme } from '@/theme/ThemeProvider';
+import { agendaColor, spacing } from '@/theme/tokens';
 import { findConflicts } from '@/utils/conflicts';
-import { addDaysToKey, diffDays, todayKey } from '@/utils/dates';
+import { todayKey } from '@/utils/dates';
 import { canCreateEvents } from '@/utils/permissions';
 import { expandEvent } from '@/utils/recurrence';
 import { timezoneOptions } from '@/utils/timezones';
 import {
   eventToForm,
+  formDuration,
   formInstants,
   newEventForm,
   validateEventForm,
+  withDuration,
+  withStart,
   type EventForm,
 } from '@/validation/event';
 
@@ -53,6 +58,15 @@ import { ReminderPicker } from './ReminderPicker';
 const TYPES = Object.keys(strings.eventTypes) as EventType[];
 const STATUSES = Object.keys(strings.eventStatus) as EventStatus[];
 const PRIVACIES = Object.keys(strings.privacy) as EventPrivacy[];
+/** Durações mais comuns, em minutos, para não precisar acertar o horário de término. */
+const DURATIONS = [30, 60, 90, 120];
+
+function durationLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${m}` : `${h} h`;
+}
 
 function Form({
   initial,
@@ -68,15 +82,20 @@ function Form({
   calendars: Calendar[];
 }) {
   const display = useDisplaySettings();
+  const { dark } = useAppTheme();
   const userId = useUserId();
   const { toast } = useFeedback();
   const online = useSyncStore((s) => s.online);
+  const [base] = useState(initial);
   const [form, setForm] = useState<EventForm>(initial);
   const [errors, setErrors] = useState<ReturnType<typeof validateEventForm>>({});
   const [saving, setSaving] = useState(false);
   const [showMore, setShowMore] = useState(!!event);
   const set = <K extends keyof EventForm>(key: K, value: EventForm[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+  const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(base), [form, base]);
+  const { allowLeave } = useUnsavedChanges(dirty && !saving);
+  const duration = formDuration(form);
   const calendar = calendars.find((c) => c.id === form.calendarId);
   const onlyThis = scope === 'this' && !!event?.recurrence_rule;
 
@@ -98,11 +117,9 @@ function Form({
 
   const people = useCalendarMembers(form.calendarId);
 
-  const setStartDate = (v: string) => {
-    // Mantém a duração ao mudar a data de início.
-    const length = Math.max(0, diffDays(form.endDate, form.startDate));
-    setForm((f) => ({ ...f, startDate: v, endDate: addDaysToKey(v, length) }));
-  };
+  // Mudar o início leva o término junto (a duração continua a mesma).
+  const setStartDate = (v: string) => setForm((f) => withStart(f, v, f.startTime));
+  const setStartTime = (v: string) => setForm((f) => withStart(f, f.startDate, v));
 
   const save = async () => {
     const v = validateEventForm(form);
@@ -125,6 +142,7 @@ function Form({
       if (event) await updateEvent(event, form, scope, occurrence);
       else await createEvent(form);
       toast(online ? (event ? t('events.updated') : t('events.created')) : t('events.savedOffline'));
+      allowLeave();
       goBack();
     } catch {
       toast(t('errors.generic'), 'error');
@@ -135,20 +153,6 @@ function Form({
 
   return (
     <Screen footer={<Button title={t('common.save')} onPress={save} loading={saving} testID="event-save" />}>
-      {!event && (
-        <SelectField<string>
-          label={t('events.calendar')}
-          value={form.calendarId}
-          onChange={(v) => {
-            setForm((f) => ({ ...f, calendarId: v, attendeeIds: [], assigneeId: null }));
-          }}
-          options={calendars.map((c) => ({
-            value: c.id,
-            label: c.name,
-            description: strings.calendarKinds[c.kind],
-          }))}
-        />
-      )}
       <TextField
         label={t('events.titleLabel')}
         placeholder={t('events.titlePlaceholder')}
@@ -156,8 +160,46 @@ function Form({
         onChangeText={(v) => set('title', v)}
         error={errors.title}
         maxLength={150}
+        autoFocus={!event && !initial.title}
         testID="event-title"
       />
+      {!event &&
+        (calendars.length <= 8 ? (
+          <View style={styles.field}>
+            <AppText variant="label">{t('events.calendar')}</AppText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollChips}
+            >
+              {calendars.map((c) => (
+                <Chip
+                  key={c.id}
+                  label={c.name}
+                  color={agendaColor(c.color, dark)}
+                  selected={form.calendarId === c.id}
+                  accessibilityLabel={`${c.name}, ${strings.calendarKinds[c.kind]}`}
+                  onPress={() =>
+                    setForm((f) => ({ ...f, calendarId: c.id, attendeeIds: [], assigneeId: null }))
+                  }
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : (
+          <SelectField<string>
+            label={t('events.calendar')}
+            value={form.calendarId}
+            onChange={(v) => {
+              setForm((f) => ({ ...f, calendarId: v, attendeeIds: [], assigneeId: null }));
+            }}
+            options={calendars.map((c) => ({
+              value: c.id,
+              label: c.name,
+              description: strings.calendarKinds[c.kind],
+            }))}
+          />
+        ))}
       {!onlyThis && (
         <SwitchRow label={t('events.allDay')} value={form.allDay} onChange={(v) => set('allDay', v)} />
       )}
@@ -175,7 +217,7 @@ function Form({
             mode="time"
             label={t('events.startTime')}
             value={form.startTime}
-            onChange={(v) => set('startTime', v)}
+            onChange={setStartTime}
             timeFormat={display.timeFormat}
           />
         )}
@@ -199,6 +241,21 @@ function Form({
           />
         )}
       </View>
+      {!form.allDay && (
+        <View style={styles.field}>
+          <AppText variant="label">{t('events.duration')}</AppText>
+          <View style={styles.chipsWrap}>
+            {DURATIONS.map((m) => (
+              <Chip
+                key={m}
+                label={durationLabel(m)}
+                selected={duration === m}
+                onPress={() => setForm((f) => withDuration(f, m))}
+              />
+            ))}
+          </View>
+        </View>
+      )}
       {conflicts.length > 0 && (
         <AppText tone="warning" accessibilityLiveRegion="polite">
           {conflicts.length === 1
@@ -420,12 +477,12 @@ export default function EventFormScreen() {
     const time = /^([01]\d|2[0-3]):[0-5]\d$/;
     if (params.title) initial.title = params.title.slice(0, 150);
     if (params.start && time.test(params.start)) {
-      initial.startTime = params.start;
-      const hour = Math.min(23, Number(params.start.slice(0, 2)) + 1);
-      initial.endTime = `${String(hour).padStart(2, '0')}:${params.start.slice(3)}`;
-      initial.endDate = initial.startDate;
+      // Começa no horário pedido e dura 1 h (às 23:30, termina 00:30 do dia seguinte).
+      initial = withDuration({ ...initial, startDate: initial.startDate, startTime: params.start }, 60);
     }
-    if (params.end && time.test(params.end) && params.end > initial.startTime) initial.endTime = params.end;
+    if (params.end && time.test(params.end) && params.end > initial.startTime) {
+      initial = { ...initial, endDate: initial.startDate, endTime: params.end };
+    }
   }
 
   return (
@@ -444,6 +501,9 @@ export default function EventFormScreen() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.md },
+  field: { gap: spacing.sm },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   gap: { gap: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  scrollChips: { gap: spacing.sm, paddingRight: spacing.lg },
 });

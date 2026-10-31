@@ -16,6 +16,7 @@ import { TextField } from '@/components/TextField';
 import { useItems } from '@/hooks/useItems';
 import { strings, t } from '@/i18n';
 import { createNote, deleteNote, updateNote } from '@/services/itemActions';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { goBack } from '@/services/navigation';
 import { useUserId } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
@@ -36,6 +37,9 @@ export default function NoteEditorScreen() {
   const [pinned, setPinned] = useState(note?.pinned ?? false);
   const [where, setWhere] = useState<string | null>(note?.calendar_id ?? (calendarId || null));
   const [error, setError] = useState<string>();
+  const { allowLeave } = useUnsavedChanges(
+    title !== (note?.title ?? '') || body !== (note?.body ?? '') || pinned !== (note?.pinned ?? false),
+  );
 
   if (id && !note) {
     return (
@@ -72,6 +76,7 @@ export default function NoteEditorScreen() {
       await createNote({ title: title.trim() || null, body, calendar_id: where, pinned });
     }
     toast(t('notes.saved'));
+    allowLeave();
     goBack();
   };
 
@@ -85,6 +90,7 @@ export default function NoteEditorScreen() {
     if (!ok) return;
     await deleteNote(note);
     toast(t('notes.deleted'));
+    allowLeave();
     goBack();
   };
 

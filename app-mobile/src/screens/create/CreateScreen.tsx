@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
@@ -17,6 +18,7 @@ import { TextField } from '@/components/TextField';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useLayout } from '@/hooks/useLayout';
 import { t } from '@/i18n';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { goBack } from '@/services/navigation';
 import { defaultEventCalendar, saveQuick } from '@/services/quickCreate';
 import { useAuthStore } from '@/stores/authStore';
@@ -56,6 +58,8 @@ export default function CreateScreen() {
   const [text, setText] = useState(params.text ?? '');
   const [kind, setKind] = useState<QuickKind | null>(null);
   const [saving, setSaving] = useState(false);
+  // Algo digitado na adição rápida: perguntar antes de descartar.
+  const { allowLeave } = useUnsavedChanges(text.trim() !== (params.text ?? '').trim() && !saving);
   const parsed = useMemo(() => (text.trim() ? parseQuickAdd(text, today) : null), [text, today]);
   const parse = parsed && kind ? { ...parsed, kind } : parsed;
   const hasCalendar = !!defaultEventCalendar(calendars);
@@ -74,6 +78,8 @@ export default function CreateScreen() {
   ];
 
   const open = (key: Option['key']) => {
+    // O texto digitado segue para o formulário: nada se perde ao trocar de tela.
+    allowLeave();
     const title = parse?.title ?? '';
     const day = parse?.date ?? params.date ?? '';
     switch (key) {
@@ -128,6 +134,7 @@ export default function CreateScreen() {
             ? t('tasks.reminderCreated')
             : t('tasks.created');
       toast(online ? message : t('events.savedOffline'));
+      allowLeave();
       goBack();
     } finally {
       setSaving(false);
@@ -159,6 +166,15 @@ export default function CreateScreen() {
       }
     >
       <Stack.Screen options={{ title: t('create.title') }} />
+      {/* O personagem SynCK como assistente da adição rápida. */}
+      <View style={styles.assistant}>
+        <BrandMark size={58} />
+        <View style={[styles.bubble, { backgroundColor: colors.primarySoft }]}>
+          <AppText variant="small" style={{ color: colors.primaryInk }}>
+            {t('create.assistant')}
+          </AppText>
+        </View>
+      </View>
       <TextField
         label={t('create.quickLabel')}
         placeholder={t('create.quickPlaceholder')}
@@ -234,6 +250,14 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   warn: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -spacing.xs },
+  assistant: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  bubble: {
+    flex: 1,
+    borderRadius: radius.md,
+    borderTopLeftRadius: radius.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   tile: { gap: spacing.xs, minHeight: 132 },
   tileIcon: {
     width: 44,

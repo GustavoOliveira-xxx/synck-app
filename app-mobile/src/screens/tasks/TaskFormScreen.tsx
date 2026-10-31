@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/StateViews';
 import { TextField } from '@/components/TextField';
 import { useCalendarMembers } from '@/hooks/useCalendarMembers';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useLists, useTask } from '@/hooks/useItems';
 import { strings, t } from '@/i18n';
 import type { ItemType, RecurrenceMode, TaskPriority, TaskPrivacy, TaskStatus } from '@/models/types';
@@ -30,7 +31,7 @@ import { useUserId } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { spacing } from '@/theme/tokens';
-import { instantToLocal, isValidDateKey, todayKey } from '@/utils/dates';
+import { addDaysToKey, instantToLocal, isValidDateKey, todayKey } from '@/utils/dates';
 import { canCreateEvents } from '@/utils/permissions';
 import { PRIORITIES, priorityMarks } from '@/utils/tasks';
 import { timezoneOptions } from '@/utils/timezones';
@@ -50,10 +51,28 @@ export function estimateLabel(minutes: number | null): string {
   return m ? t('tasks.estimateHoursMinutes', { h, m }) : t('tasks.estimateHours', { h });
 }
 
-/** Próxima hora cheia, no fuso de exibição (para lembretes novos). */
-function nextHour(timezone: string): string {
+/**
+ * Próxima hora cheia, no fuso de exibição (para lembretes novos). Às 23h vira
+ * meia-noite do dia seguinte, e a data acompanha (antes ficava no passado).
+ */
+function nextHourSlot(timezone: string): { date: string; time: string } {
   const local = instantToLocal(new Date(Date.now() + 60 * 60_000), timezone);
-  return `${local.time.slice(0, 2)}:00`;
+  return { date: local.dateKey, time: `${local.time.slice(0, 2)}:00` };
+}
+
+function nextHour(timezone: string): string {
+  return nextHourSlot(timezone).time;
+}
+
+/** Atalhos de prazo: hoje, amanhã e a próxima segunda-feira. */
+function quickDates(today: string): { key: 'today' | 'tomorrow' | 'nextWeek'; date: string }[] {
+  const weekday = new Date(`${today}T12:00:00Z`).getUTCDay();
+  const toMonday = (8 - weekday) % 7 || 7;
+  return [
+    { key: 'today', date: today },
+    { key: 'tomorrow', date: addDaysToKey(today, 1) },
+    { key: 'nextWeek', date: addDaysToKey(today, toMonday) },
+  ];
 }
 
 function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolean; taskId?: string }) {
@@ -65,6 +84,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
   const task = useTask(taskId);
   const lists = useLists();
   const { plan } = useLocalSearchParams<{ plan?: string }>();
+  const [base] = useState(initial);
   const [form, setForm] = useState<TaskForm>(initial);
   const [errors, setErrors] = useState<ReturnType<typeof validateTaskForm>>({});
   const [saving, setSaving] = useState(false);
@@ -76,6 +96,12 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
     setForm((f) => ({ ...f, [key]: value }));
   const people = useCalendarMembers(form.calendarId ?? undefined);
   const reminder = form.itemType === 'reminder';
+  const dirty =
+    JSON.stringify(form) !== JSON.stringify(base) ||
+    tagText !== base.tags.join(', ') ||
+    linkText !== base.links.join('\n');
+  const { allowLeave } = useUnsavedChanges(dirty && !saving);
+  const today = todayKey(display.timezone);
 
   const writable = useMemo(() => calendars.filter((c) => canCreateEvents(c)), [calendars]);
   const listOptions = lists.filter((l) => l.calendar_id === form.calendarId);
@@ -102,6 +128,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
               ? t('tasks.reminderCreated')
               : t('tasks.created'),
       );
+      allowLeave();
       goBack();
     } catch {
       toast(t('errors.generic'), 'error');
@@ -164,31 +191,53 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
     </View>
   ) : (
     <Button
-      title={t('tasks.addDue')}
-      variant="secondary"
+      title={t('tasks.otherDate')}
+      variant="ghost"
+      compact
       icon="calendar-outline"
       onPress={() =>
-        setForm((f) => ({
-          ...f,
-          dueDate: todayKey(display.timezone),
-          dueTime: reminder ? nextHour(f.timezone) : f.dueTime,
-        }))
+        setForm((f) => {
+          const slot = nextHourSlot(f.timezone);
+          return {
+            ...f,
+            dueDate: reminder ? slot.date : todayKey(display.timezone),
+            dueTime: reminder ? slot.time : f.dueTime,
+          };
+        })
       }
     />
   );
 
   return (
     <Screen footer={<Button title={t('common.save')} onPress={save} loading={saving} testID="task-save" />}>
+      {/* O título acompanha o tipo escolhido (tarefa ou lembrete). */}
+      <Stack.Screen
+        options={{
+          title: editing
+            ? reminder
+              ? t('tasks.editReminder')
+              : t('tasks.edit')
+            : reminder
+              ? t('tasks.newReminder')
+              : t('tasks.new'),
+        }}
+      />
       {!editing && (
         <SegmentedControl<ItemType>
           label={t('create.kindLabel')}
           value={form.itemType}
           onChange={(v) =>
-            setForm((f) => ({
-              ...f,
-              itemType: v,
-              alerts: v === 'reminder' && f.alerts.length === 0 ? [0] : f.alerts,
-            }))
+            setForm((f) => {
+              // Lembrete precisa de data e hora para avisar: sem prazo, sugere a próxima hora.
+              const slot = v === 'reminder' && !f.dueDate ? nextHourSlot(f.timezone) : null;
+              return {
+                ...f,
+                itemType: v,
+                dueDate: slot ? slot.date : f.dueDate,
+                dueTime: slot ? slot.time : v === 'reminder' && !f.dueTime ? nextHour(f.timezone) : f.dueTime,
+                alerts: v === 'reminder' && f.alerts.length === 0 ? [0] : f.alerts,
+              };
+            })
           }
           options={[
             { value: 'task', label: t('create.task') },
@@ -207,6 +256,22 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
         testID="task-title"
       />
       <AppText variant="label">{reminder ? t('tasks.reminderDate') : t('tasks.due')}</AppText>
+      <View style={styles.chips}>
+        {quickDates(today).map((q) => (
+          <Chip
+            key={q.key}
+            label={t(`tasks.quick.${q.key}`)}
+            selected={form.dueDate === q.date}
+            onPress={() =>
+              setForm((f) => ({
+                ...f,
+                dueDate: q.date,
+                dueTime: f.dueTime ?? (reminder ? nextHour(f.timezone) : null),
+              }))
+            }
+          />
+        ))}
+      </View>
       {dueBlock}
 
       {!reminder && (
@@ -528,26 +593,13 @@ export default function TaskFormScreen() {
       title: params.title ?? '',
       listId: list?.id ?? null,
       calendarId: list ? list.calendar_id : params.calendarId || null,
-      dueDate: date ?? (type === 'reminder' ? todayKey(display.timezone) : null),
+      dueDate: date ?? (type === 'reminder' ? nextHourSlot(display.timezone).date : null),
       dueTime: type === 'reminder' ? nextHour(display.timezone) : null,
       alerts: type === 'reminder' ? [0] : [],
     });
   }
 
-  const title = task
-    ? task.item_type === 'reminder'
-      ? t('tasks.editReminder')
-      : t('tasks.edit')
-    : params.type === 'reminder'
-      ? t('tasks.newReminder')
-      : t('tasks.new');
-
-  return (
-    <>
-      <Stack.Screen options={{ title }} />
-      <Form initial={initial} editing={!!task} taskId={task?.id} />
-    </>
-  );
+  return <Form initial={initial} editing={!!task} taskId={task?.id} />;
 }
 
 const styles = StyleSheet.create({

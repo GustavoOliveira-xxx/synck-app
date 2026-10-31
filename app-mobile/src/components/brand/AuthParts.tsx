@@ -14,11 +14,12 @@ import { IconButton } from '../IconButton';
 export function AuthTopBar({ right }: { right?: ReactNode }) {
   return (
     <View style={styles.top}>
-      {router.canGoBack() ? (
-        <IconButton icon="chevron-back" label={t('common.back')} onPress={() => router.back()} />
-      ) : (
-        <View />
-      )}
+      {/* Aberta direto pelo endereço (sem tela anterior): volta para as boas-vindas. */}
+      <IconButton
+        icon="chevron-back"
+        label={t('common.back')}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}
+      />
       {right}
     </View>
   );

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { useAction } from '@/hooks/useAction';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { getDeviceTimezone } from '@/hooks/useDeviceTimezone';
 import { t } from '@/i18n';
 import type { CalendarKind } from '@/models/types';
@@ -25,6 +26,7 @@ export default function NewCalendarScreen() {
     kind: kind === 'personal' ? 'personal' : 'shared',
     default_timezone: getDeviceTimezone(),
   });
+  const { allowLeave } = useUnsavedChanges((!!values.name.trim() || !!values.description.trim()) && !busy);
   const [errors, setErrors] = useState<Partial<Record<'name' | 'description' | 'color', string>>>({});
 
   const submit = async () => {
@@ -42,6 +44,7 @@ export default function NewCalendarScreen() {
     );
     if (result.ok) {
       await syncNow();
+      allowLeave();
       router.replace({ pathname: '/calendar/[id]', params: { id: result.value } });
     }
   };

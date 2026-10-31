@@ -6,11 +6,13 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { spacing } from '@/theme/tokens';
 
 import { AppText } from './AppText';
+import { BrandMark } from './brand/BrandMark';
 import { GlassSphere, Kairo, OrbitRings, OrbitSymbol, useDecorSize } from './brand/Decor';
 import { Button } from './Button';
 import { Icon, type IconName } from './Icon';
 import { EnterItem } from './motion';
 
+/** Carregando: o personagem SynCK flutua dentro dos anéis de órbita. */
 export function LoadingState({ message }: { message?: string }) {
   const focused = useScreenFocus();
   return (
@@ -19,7 +21,10 @@ export function LoadingState({ message }: { message?: string }) {
       accessibilityRole="progressbar"
       accessibilityLabel={message ?? t('common.loading')}
     >
-      <OrbitRings size={96} paused={!focused} />
+      <View style={styles.loader}>
+        <OrbitRings size={120} paused={!focused} style={StyleSheet.absoluteFill} />
+        <BrandMark size={72} halo={false} />
+      </View>
       <AppText tone="muted">{message ?? t('common.loading')}</AppText>
     </View>
   );
@@ -116,6 +121,7 @@ const styles = StyleSheet.create({
     minHeight: 240,
   },
   art: { alignItems: 'center', marginBottom: spacing.sm },
+  loader: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center' },
   texts: { gap: spacing.sm, alignItems: 'center', maxWidth: 360 },
   actions: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm },
   iconTile: { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

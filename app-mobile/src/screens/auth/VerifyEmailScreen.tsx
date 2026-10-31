@@ -6,7 +6,6 @@ import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { t } from '@/i18n';
 import { resendSignupCode, verifySignupCode } from '@/services/auth';
-import { goBack } from '@/services/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toFriendlyError } from '@/utils/errors';
 import { validateEmail, validateOtp } from '@/validation/auth';
@@ -70,7 +69,6 @@ export default function VerifyEmailScreen() {
       {info ? <AppText tone="success">{info}</AppText> : null}
       <Button title={t('auth.verify')} onPress={verify} loading={loading} />
       <Button title={t('auth.resend')} variant="ghost" onPress={resend} />
-      <Button title={t('common.back')} variant="ghost" onPress={() => goBack()} />
     </Screen>
   );
 }

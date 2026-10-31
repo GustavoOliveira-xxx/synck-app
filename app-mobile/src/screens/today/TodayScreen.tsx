@@ -18,7 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
-import { OrbitRings, useDecorSize } from '@/components/brand/Decor';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
 import { EventRow } from '@/components/EventRow';
@@ -27,6 +27,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { IconButton } from '@/components/IconButton';
 import { EnterItem, MotionView, PressableScale, tapFeedback } from '@/components/motion';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { Cascade } from '@/components/Screen';
 import { EmptyState, LoadingState } from '@/components/StateViews';
 import { TaskRow } from '@/components/TaskRow';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
@@ -55,6 +56,7 @@ import {
   formatLongDate,
   formatRelative,
   formatTime,
+  instantToLocal,
   spannedDayKeys,
   startOfDayInstant,
   todayKey,
@@ -338,7 +340,6 @@ export default function TodayScreen() {
   const people = usePeople();
   useSharedMembers();
   const { toggle, openMenu, sheet } = useTaskActions();
-  const decor = Math.min(useDecorSize('header') * 1.25, 168);
 
   const days = useMemo(() => weekKeys(selected, display.weekStartsOn), [selected, display.weekStartsOn]);
   const from = useMemo(() => startOfDayInstant(days[0], tz), [days, tz]);
@@ -455,6 +456,16 @@ export default function TodayScreen() {
     );
   };
   const nothing = !list.length && !dayTasks.length && !overdue.length && !reminders.length;
+  // Resumo em uma linha: quanto há no dia escolhido.
+  const daySummary = nothing
+    ? t('todayHub.summaryFree')
+    : [
+        list.length ? t('todayHub.summaryEvents', { n: list.length }) : null,
+        dayTasks.length ? t('todayHub.summaryTasks', { n: dayTasks.length }) : null,
+        overdue.length ? t('todayHub.summaryOverdue', { n: overdue.length }) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ') || t('todayHub.summaryFree');
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
@@ -464,227 +475,233 @@ export default function TodayScreen() {
         refreshControl={<RefreshControl refreshing={syncing} onRefresh={() => void syncNow()} />}
       >
         <View style={styles.column}>
-          <OrbitRings
-            size={decor}
-            paused={!focused}
-            style={[styles.decor, { right: -decor * 0.34, top: -decor * 0.42 }]}
-          />
-          <View style={styles.header}>
-            <View style={[styles.flex, { paddingRight: spacing.sm }]}>
-              <AppText variant="overline" tone="muted" accessibilityRole="text">
-                {dateLine}
-              </AppText>
-              <AppText variant="title" style={styles.greeting} numberOfLines={2}>
-                {isToday ? greeting(name, hour) : capitalize(formatLongDate(selected).split(',')[0])}
-              </AppText>
-            </View>
-            <View>
-              <IconButton
-                icon={unread ? 'notifications-unread' : 'notifications-outline'}
-                label={unread ? t('tabs.notificationsUnread', { n: unread }) : t('tabs.notifications')}
-                filled
-                onPress={() => router.push('/notifications')}
-              />
-            </View>
-          </View>
-
-          <WeekStrip days={days} selected={selected} today={today} busy={busy} onSelect={setSelected} />
-
-          <View style={styles.pillRow}>
-            <SyncPill calendars={active} />
-            {!isToday && (
-              <PressableScale
-                onPress={() => setSelected(today)}
-                accessibilityRole="button"
-                accessibilityLabel={t('calendarView.goToToday')}
-                style={[styles.pill, { borderColor: colors.border, borderWidth: 1 }]}
-              >
-                <Icon name="today-outline" size={16} color={colors.text} />
-                <AppText variant="label">{t('common.today')}</AppText>
-              </PressableScale>
-            )}
-          </View>
-
-          {isToday && (
-            <Card
-              onPress={() => router.push('/plan-day')}
-              accessibilityLabel={
-                checkedIn ? t('planDay.title') : `${t('planDay.open')}. ${t('planDay.openHint')}`
-              }
-              style={[styles.planCard, { backgroundColor: colors.primarySoft }]}
-            >
-              <View style={[styles.planIcon, { backgroundColor: colors.primary }]}>
-                <Icon name="sunny-outline" size={22} color={colors.primaryText} />
-              </View>
-              <View style={styles.flex}>
-                <AppText variant="heading" style={{ color: colors.primaryInk }}>
-                  {checkedIn ? t('planDay.title') : t('planDay.question')}
+          <Cascade>
+            <View style={styles.header}>
+              <BrandMark size={64} style={styles.brand} />
+              <View style={[styles.flex, { paddingRight: spacing.sm }]}>
+                <AppText variant="overline" tone="muted" accessibilityRole="text">
+                  {dateLine}
                 </AppText>
-                <AppText variant="small" tone="muted">
-                  {checkedIn
-                    ? t('planDay.summary', { n: dayTasks.length + list.length })
-                    : t('planDay.openHint')}
+                <AppText variant="title" style={styles.greeting} numberOfLines={2}>
+                  {isToday ? greeting(name, hour) : capitalize(formatLongDate(selected).split(',')[0])}
+                </AppText>
+                <AppText variant="small" tone="muted" numberOfLines={2}>
+                  {daySummary}
                 </AppText>
               </View>
-              <Icon name="chevron-forward" size={20} color={colors.primaryInk} />
-            </Card>
-          )}
-
-          {nextOcc && <NextUp occ={nextOcc} now={now} timezone={tz} />}
-
-          {calendars.length === 0 ? (
-            <EmptyState
-              art="orbit"
-              title={t('calendars.emptyTitle')}
-              message={t('calendars.emptyMessage')}
-              actionLabel={t('calendars.new')}
-              onAction={() => router.push('/calendar/new')}
-            />
-          ) : nothing ? (
-            <EmptyState
-              art="kairo"
-              title={t('today.emptyTitle')}
-              message={t('today.emptyMessage')}
-              actionLabel={t('create.title')}
-              onAction={() => router.push({ pathname: '/create', params: { date: selected } })}
-            />
-          ) : null}
-
-          {list.length > 0 && (
-            <Section id="agenda" title={t('todayHub.agenda')} count={list.length} icon="calendar-outline">
-              <View style={styles.list} key={selected}>
-                {list.map((occ, i) => (
-                  <EnterItem key={occ.key} index={i}>
-                    <EventRow
-                      occurrence={occ}
-                      calendarName={calendarsMap[occ.event.calendar_id]?.name}
-                      calendarColor={calendarsMap[occ.event.calendar_id]?.color}
-                      timezone={tz}
-                      timeFormat={display.timeFormat}
-                      dateFormat={display.dateFormat}
-                      conflict={conflicts.has(occ.key)}
-                      onPress={openEvent}
-                    />
-                  </EnterItem>
-                ))}
-              </View>
-            </Section>
-          )}
-
-          {(dayTasks.length > 0 || isToday) && !nothing && (
-            <Section id="tasks" title={t('todayHub.dueToday')} count={dayTasks.length} icon="task-outline">
-              {dayTasks.length ? (
-                <View style={styles.list}>{dayTasks.map(taskRow)}</View>
-              ) : (
-                <AppText variant="small" tone="muted">
-                  {t('todayHub.nothingDue')}
-                </AppText>
-              )}
-            </Section>
-          )}
-
-          {overdue.length > 0 && (
-            <Section
-              id="overdue"
-              title={t('todayHub.overdue')}
-              count={overdue.length}
-              icon="alert-circle-outline"
-              tone="danger"
-              defaultCollapsed={overdue.length > 3}
-            >
-              <View style={styles.list}>{overdue.slice(0, 10).map(taskRow)}</View>
-              {overdue.length > 10 && (
-                <Chip label={t('common.seeAll')} selected={false} onPress={() => router.push('/tasks')} />
-              )}
-            </Section>
-          )}
-
-          {reminders.length > 0 && (
-            <Section
-              id="reminders"
-              title={t('todayHub.reminders')}
-              count={reminders.length}
-              icon="notifications-outline"
-            >
-              <View style={styles.list}>{reminders.map(taskRow)}</View>
-            </Section>
-          )}
-
-          {isToday && recent.length > 0 && (
-            <Section id="shared" title={t('todayHub.shared')} count={recent.length} icon="group-outline">
-              {recent.map((n) => (
-                <PressableScale
-                  key={n.id}
+              <View>
+                <IconButton
+                  icon={unread ? 'notifications-unread' : 'notifications-outline'}
+                  label={unread ? t('tabs.notificationsUnread', { n: unread }) : t('tabs.notifications')}
+                  filled
                   onPress={() => router.push('/notifications')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${n.title}. ${n.body ?? ''}`}
-                  style={[styles.notice, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                >
-                  <View style={[styles.unreadDot, { backgroundColor: colors.coral }]} />
-                  <View style={styles.flex}>
-                    <AppText variant="label" numberOfLines={1}>
-                      {n.title}
-                    </AppText>
-                    {n.body ? (
-                      <AppText variant="caption" tone="muted" numberOfLines={1}>
-                        {n.body}
-                      </AppText>
-                    ) : null}
-                  </View>
-                  <AppText variant="caption" tone="muted">
-                    {formatRelative(new Date(n.created_at), now, tz, display.dateFormat)}
-                  </AppText>
-                </PressableScale>
-              ))}
-            </Section>
-          )}
+                />
+              </View>
+            </View>
 
-          {(list.length > 0 || dayTasks.length > 0) && (
-            <Section
-              id="free"
-              title={t('todayHub.freeSlots')}
-              count={slots.length}
-              icon="time-outline"
-              defaultCollapsed
-            >
-              {slots.length ? (
-                <View style={styles.chips}>
-                  {slots.map((s) => (
-                    <Chip
-                      key={s.start.toISOString()}
-                      label={`${formatTime(s.start, tz, display.timeFormat)} a ${formatTime(s.end, tz, display.timeFormat)}`}
-                      selected={false}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/create',
-                          params: { date: selected },
-                        })
-                      }
-                    />
+            <WeekStrip days={days} selected={selected} today={today} busy={busy} onSelect={setSelected} />
+
+            <View style={styles.pillRow}>
+              <SyncPill calendars={active} />
+              {!isToday && (
+                <PressableScale
+                  onPress={() => setSelected(today)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('calendarView.goToToday')}
+                  style={[styles.pill, { borderColor: colors.border, borderWidth: 1 }]}
+                >
+                  <Icon name="today-outline" size={16} color={colors.text} />
+                  <AppText variant="label">{t('common.today')}</AppText>
+                </PressableScale>
+              )}
+            </View>
+
+            {isToday && (
+              <Card
+                onPress={() => router.push('/plan-day')}
+                accessibilityLabel={
+                  checkedIn ? t('planDay.title') : `${t('planDay.open')}. ${t('planDay.openHint')}`
+                }
+                style={[styles.planCard, { backgroundColor: colors.primarySoft }]}
+              >
+                <View style={[styles.planIcon, { backgroundColor: colors.primary }]}>
+                  <Icon name="sunny-outline" size={22} color={colors.primaryText} />
+                </View>
+                <View style={styles.flex}>
+                  <AppText variant="heading" style={{ color: colors.primaryInk }}>
+                    {checkedIn ? t('planDay.title') : t('planDay.question')}
+                  </AppText>
+                  <AppText variant="small" tone="muted">
+                    {checkedIn
+                      ? t('planDay.summary', { n: dayTasks.length + list.length })
+                      : t('planDay.openHint')}
+                  </AppText>
+                </View>
+                <Icon name="chevron-forward" size={20} color={colors.primaryInk} />
+              </Card>
+            )}
+
+            {nextOcc && <NextUp occ={nextOcc} now={now} timezone={tz} />}
+
+            {calendars.length === 0 ? (
+              <EmptyState
+                art="orbit"
+                title={t('calendars.emptyTitle')}
+                message={t('calendars.emptyMessage')}
+                actionLabel={t('calendars.new')}
+                onAction={() => router.push('/calendar/new')}
+              />
+            ) : nothing ? (
+              <EmptyState
+                art="kairo"
+                title={t('today.emptyTitle')}
+                message={t('today.emptyMessage')}
+                actionLabel={t('create.title')}
+                onAction={() => router.push({ pathname: '/create', params: { date: selected } })}
+              />
+            ) : null}
+
+            {list.length > 0 && (
+              <Section id="agenda" title={t('todayHub.agenda')} count={list.length} icon="calendar-outline">
+                <View style={styles.list} key={selected}>
+                  {list.map((occ, i) => (
+                    <EnterItem key={occ.key} index={i}>
+                      <EventRow
+                        occurrence={occ}
+                        calendarName={calendarsMap[occ.event.calendar_id]?.name}
+                        calendarColor={calendarsMap[occ.event.calendar_id]?.color}
+                        timezone={tz}
+                        timeFormat={display.timeFormat}
+                        dateFormat={display.dateFormat}
+                        conflict={conflicts.has(occ.key)}
+                        onPress={openEvent}
+                      />
+                    </EnterItem>
                   ))}
                 </View>
-              ) : (
-                <AppText variant="small" tone="muted">
-                  {t('todayHub.freeSlotsEmpty')}
-                </AppText>
-              )}
-            </Section>
-          )}
+              </Section>
+            )}
 
-          <Card
-            onPress={() => router.push('/week')}
-            accessibilityLabel={t('todayHub.weekSummary')}
-            style={styles.weekCard}
-          >
-            <Icon name="sparkles-outline" size={22} color={colors.primaryInk} />
-            <View style={styles.flex}>
-              <AppText variant="heading">{t('todayHub.weekSummary')}</AppText>
-              <AppText variant="small" tone="muted">
-                {t('todayHub.weekSummaryHint')}
-              </AppText>
-            </View>
-            <Icon name="chevron-forward" size={20} color={colors.textMuted} />
-          </Card>
+            {(dayTasks.length > 0 || isToday) && !nothing && (
+              <Section id="tasks" title={t('todayHub.dueToday')} count={dayTasks.length} icon="task-outline">
+                {dayTasks.length ? (
+                  <View style={styles.list}>{dayTasks.map(taskRow)}</View>
+                ) : (
+                  <AppText variant="small" tone="muted">
+                    {t('todayHub.nothingDue')}
+                  </AppText>
+                )}
+              </Section>
+            )}
+
+            {overdue.length > 0 && (
+              <Section
+                id="overdue"
+                title={t('todayHub.overdue')}
+                count={overdue.length}
+                icon="alert-circle-outline"
+                tone="danger"
+                defaultCollapsed={overdue.length > 3}
+              >
+                <View style={styles.list}>{overdue.slice(0, 10).map(taskRow)}</View>
+                {overdue.length > 10 && (
+                  <Chip label={t('common.seeAll')} selected={false} onPress={() => router.push('/tasks')} />
+                )}
+              </Section>
+            )}
+
+            {reminders.length > 0 && (
+              <Section
+                id="reminders"
+                title={t('todayHub.reminders')}
+                count={reminders.length}
+                icon="notifications-outline"
+              >
+                <View style={styles.list}>{reminders.map(taskRow)}</View>
+              </Section>
+            )}
+
+            {isToday && recent.length > 0 && (
+              <Section id="shared" title={t('todayHub.shared')} count={recent.length} icon="group-outline">
+                {recent.map((n) => (
+                  <PressableScale
+                    key={n.id}
+                    onPress={() => router.push('/notifications')}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${n.title}. ${n.body ?? ''}`}
+                    style={[styles.notice, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  >
+                    <View style={[styles.unreadDot, { backgroundColor: colors.coral }]} />
+                    <View style={styles.flex}>
+                      <AppText variant="label" numberOfLines={1}>
+                        {n.title}
+                      </AppText>
+                      {n.body ? (
+                        <AppText variant="caption" tone="muted" numberOfLines={1}>
+                          {n.body}
+                        </AppText>
+                      ) : null}
+                    </View>
+                    <AppText variant="caption" tone="muted">
+                      {formatRelative(new Date(n.created_at), now, tz, display.dateFormat)}
+                    </AppText>
+                  </PressableScale>
+                ))}
+              </Section>
+            )}
+
+            {(list.length > 0 || dayTasks.length > 0) && (
+              <Section
+                id="free"
+                title={t('todayHub.freeSlots')}
+                count={slots.length}
+                icon="time-outline"
+                defaultCollapsed
+              >
+                {slots.length ? (
+                  <View style={styles.chips}>
+                    {slots.map((s) => (
+                      <Chip
+                        key={s.start.toISOString()}
+                        label={`${formatTime(s.start, tz, display.timeFormat)} a ${formatTime(s.end, tz, display.timeFormat)}`}
+                        selected={false}
+                        onPress={() =>
+                          // Abre o evento já no horário livre escolhido.
+                          router.push({
+                            pathname: '/event/new',
+                            params: {
+                              date: selected,
+                              start: instantToLocal(s.start, tz).time.slice(0, 5),
+                              end: instantToLocal(s.end, tz).time.slice(0, 5),
+                            },
+                          })
+                        }
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <AppText variant="small" tone="muted">
+                    {t('todayHub.freeSlotsEmpty')}
+                  </AppText>
+                )}
+              </Section>
+            )}
+
+            <Card
+              onPress={() => router.push('/week')}
+              accessibilityLabel={t('todayHub.weekSummary')}
+              style={styles.weekCard}
+            >
+              <Icon name="sparkles-outline" size={22} color={colors.primaryInk} />
+              <View style={styles.flex}>
+                <AppText variant="heading">{t('todayHub.weekSummary')}</AppText>
+                <AppText variant="small" tone="muted">
+                  {t('todayHub.weekSummaryHint')}
+                </AppText>
+              </View>
+              <Icon name="chevron-forward" size={20} color={colors.textMuted} />
+            </Card>
+          </Cascade>
         </View>
       </ScrollView>
       <FAB
@@ -700,8 +717,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: SCREEN_MARGIN, paddingBottom: 120 },
   column: { width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center', gap: spacing.lg },
-  decor: { position: 'absolute', opacity: 0.9 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  brand: { marginLeft: -spacing.xs },
   greeting: { fontSize: 26, lineHeight: 32, marginTop: spacing.xs },
   week: { flexDirection: 'row', marginHorizontal: -spacing.xs },
   bubble: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.pill },

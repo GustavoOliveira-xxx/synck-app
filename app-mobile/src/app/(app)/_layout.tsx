@@ -1,11 +1,12 @@
 import * as Notifications from 'expo-notifications';
-import { router, Stack } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { Linking, Platform } from 'react-native';
 
 import { useFeedback } from '@/components/Feedback';
 import { completeTask } from '@/services/itemActions';
 import { ACTION_DONE, ACTION_SNOOZE, forgetSnoozesFor, snoozeReminder } from '@/services/localNotifications';
+import { parentRoute, pathFromRoute, setCurrentPath } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { IconButton } from '@/components/IconButton';
 import { useAvailableUpdate } from '@/hooks/useAvailableUpdate';
@@ -77,70 +78,74 @@ function useUpdateNotice() {
   }, [update, toast]);
 }
 
+/**
+ * Telas que sobem de baixo como uma folha (criar e editar): no topo, "Fechar"
+ * (X) em vez da seta de voltar.
+ */
+const SHEETS = new Set([
+  'event/new',
+  'event/[id]/edit',
+  'calendar/new',
+  'create',
+  'plan-day',
+  'task/new',
+  'task/[id]/edit',
+  'task/[id]/block',
+  'list/new',
+  'list/[id]',
+  'notes/new',
+  'habits/new',
+  'task-filters',
+  'filters',
+]);
+
 export default function AppLayout() {
   const { colors, reduceMotion } = useAppTheme();
+  const pathname = usePathname();
+  useEffect(() => setCurrentPath(pathname), [pathname]);
   useOpenEventFromNotification();
   useUpdateNotice();
   return (
     <Stack
-      screenOptions={({ navigation }) => ({
-        headerStyle: { backgroundColor: colors.background },
-        headerShadowVisible: false,
-        headerTintColor: colors.text,
-        headerTitleStyle: { ...fonte('titulo'), fontSize: 19 },
-        headerBackButtonDisplayMode: 'minimal',
-        headerBackVisible: false,
-        contentStyle: { backgroundColor: colors.background },
-        animation: reduceMotion ? 'none' : 'slide_from_right',
-        // No navegador, uma tela aberta direto por link (ou após recarregar) não tem
-        // "voltar": mostra um botão para o início.
-        headerLeft: navigation.canGoBack()
-          ? () => (
-              <IconButton icon="chevron-back" label={t('common.back')} onPress={() => navigation.goBack()} />
-            )
-          : Platform.OS === 'web'
-            ? () => (
-                <IconButton
-                  icon="home-outline"
-                  label={t('common.goHome')}
-                  onPress={() => router.replace('/')}
-                />
-              )
-            : undefined,
-      })}
+      screenOptions={({ navigation, route }) => {
+        const isSheet = SHEETS.has(route.name);
+        return {
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+          headerTintColor: colors.text,
+          headerTitleStyle: { ...fonte('titulo'), fontSize: 19 },
+          headerTitleAlign: 'left',
+          headerBackButtonDisplayMode: 'minimal',
+          headerBackVisible: false,
+          contentStyle: { backgroundColor: colors.background },
+          animation: reduceMotion ? 'none' : isSheet ? 'slide_from_bottom' : 'slide_from_right',
+          animationDuration: 280,
+          gestureEnabled: true,
+          // Sempre há para onde voltar: a tela anterior ou, se a tela foi aberta
+          // direto por um link (ou depois de recarregar a página), a tela mãe.
+          headerLeft: () => (
+            <IconButton
+              icon={isSheet ? 'close' : 'chevron-back'}
+              label={isSheet ? t('common.close') : t('common.back')}
+              onPress={() => {
+                if (navigation.canGoBack()) navigation.goBack();
+                else
+                  router.replace(
+                    parentRoute(pathFromRoute(route.name, route.params as Record<string, unknown>)),
+                  );
+              }}
+            />
+          ),
+        };
+      }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="notifications" options={{ title: t('notificationsInbox.title') }} />
-      {/* Criar e editar evento sobem de baixo, como uma folha. */}
-      <Stack.Screen name="event/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
-      <Stack.Screen
-        name="event/[id]/edit"
-        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
-      />
-      <Stack.Screen
-        name="calendar/new"
-        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
-      />
-      <Stack.Screen name="create" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
-      <Stack.Screen name="plan-day" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
-      <Stack.Screen name="task/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
-      <Stack.Screen
-        name="task/[id]/edit"
-        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
-      />
-      <Stack.Screen
-        name="task/[id]/block"
-        options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }}
-      />
-      <Stack.Screen name="list/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
-      <Stack.Screen name="notes/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
-      <Stack.Screen name="habits/new" options={{ animation: reduceMotion ? 'none' : 'slide_from_bottom' }} />
       <Stack.Screen
         name="task-filters"
         options={{
           presentation: 'modal',
           title: t('tasks.filter'),
-          animation: reduceMotion ? 'none' : 'slide_from_bottom',
         }}
       />
       <Stack.Screen
@@ -148,7 +153,6 @@ export default function AppLayout() {
         options={{
           presentation: 'modal',
           title: t('filters.title'),
-          animation: reduceMotion ? 'none' : 'slide_from_bottom',
         }}
       />
     </Stack>

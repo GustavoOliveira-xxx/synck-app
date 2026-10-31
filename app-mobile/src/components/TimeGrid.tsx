@@ -7,7 +7,7 @@
 // (de 15 em 15 minutos, e para o lado para trocar de dia) ou usar os botões
 // da barra de baixo, que são a alternativa para quem não usa gestos.
 import { memo, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
-import { PanResponder, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { PanResponder, Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { strings, t } from '@/i18n';
@@ -40,6 +40,8 @@ export interface TimeGridProps {
   onPressTask: (task: Task) => void;
   onMove: (occ: Occurrence, start: Date) => void;
   onPressDay?: (day: DateKey) => void;
+  /** Toque num horário vazio: dia e minutos desde a meia-noite (de meia em meia hora). */
+  onPressSlot?: (day: DateKey, minutes: number) => void;
   /** Hora em que a grade abre rolada (padrão: 7h ou a hora atual). */
   initialHour?: number;
 }
@@ -181,6 +183,7 @@ export function TimeGrid({
   onPressTask,
   onMove,
   onPressDay,
+  onPressSlot,
   initialHour,
 }: TimeGridProps) {
   const { colors, dark } = useAppTheme();
@@ -372,6 +375,21 @@ export function TimeGrid({
                 },
               ]}
             >
+              {onPressSlot && (
+                <Pressable
+                  style={StyleSheet.absoluteFill}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('calendarGrid.tapToAdd', {
+                    day: strings.weekdays.long[new Date(`${day}T12:00:00Z`).getUTCDay()],
+                  })}
+                  onPress={(e) => {
+                    if (moving) return setMoving(null);
+                    const half = Math.floor((e.nativeEvent.locationY / HOUR) * 2);
+                    tapFeedback('select');
+                    onPressSlot(day, Math.max(0, Math.min(47, half)) * 30);
+                  }}
+                />
+              )}
               {single &&
                 freeSlots
                   ?.filter((s) => s.day === day)

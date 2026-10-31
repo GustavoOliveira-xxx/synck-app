@@ -15,7 +15,7 @@ const ITEMS: TabItem[] = [
 ];
 
 export default function TabsLayout() {
-  const { colors } = useAppTheme();
+  const { colors, reduceMotion } = useAppTheme();
   // Tablet e computador: menu lateral. Celular: abas embaixo, ao alcance do polegar.
   const { sideNav } = useLayout();
   return (
@@ -28,7 +28,8 @@ export default function TabsLayout() {
         headerTitleStyle: fonte('negrito'),
         headerTintColor: colors.text,
         sceneStyle: { backgroundColor: colors.background },
-        animation: 'fade',
+        // Trocar de aba desliza a tela de leve para o lado da aba escolhida.
+        animation: reduceMotion ? 'fade' : 'shift',
       }}
     >
       {ITEMS.map((item) => (

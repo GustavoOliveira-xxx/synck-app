@@ -19,6 +19,7 @@ import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useItems } from '@/hooks/useItems';
 import { strings, t } from '@/i18n';
 import { createHabit, updateHabit } from '@/services/itemActions';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { spacing } from '@/theme/tokens';
@@ -49,6 +50,9 @@ export default function HabitFormScreen() {
   const [color, setColor] = useState<string | null>(habit?.color ?? null);
   const [streak, setStreak] = useState(habit?.show_streak ?? false);
   const [error, setError] = useState<string>();
+  const { allowLeave } = useUnsavedChanges(
+    title !== (habit?.title ?? '') || description !== (habit?.description ?? ''),
+  );
 
   if (id && !habit) {
     return (
@@ -92,6 +96,7 @@ export default function HabitFormScreen() {
     if (habit) await updateHabit(habit, fields);
     else await createHabit({ ...fields, calendar_id: calendarId, start_date: todayKey(display.timezone) });
     toast(t('habits.saved'));
+    allowLeave();
     goBack();
   };
 

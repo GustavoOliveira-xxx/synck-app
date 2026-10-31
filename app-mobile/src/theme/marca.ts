@@ -186,6 +186,12 @@ export const marca = {
     micro: 120,
     base: 180,
     celebrar: 600,
-    cascata: 20,
+    /** Intervalo entre itens que entram em sequência. */
+    cascata: 45,
+    /** Entrada de telas e blocos: tempo e deslocamento. */
+    entrada: 420,
+    distancia: 18,
+    /** Mola das entradas: assenta com um leve balanço. */
+    molaEntrada: { stiffness: 210, damping: 22, mass: 0.9 },
   },
 };

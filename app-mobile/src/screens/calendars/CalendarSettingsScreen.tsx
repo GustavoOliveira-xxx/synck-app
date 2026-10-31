@@ -17,6 +17,7 @@ import { strings, t } from '@/i18n';
 import type { Calendar, ConflictPolicy, Role } from '@/models/types';
 import { syncNow } from '@/offline/syncEngine';
 import * as api from '@/services/api';
+import { goBack } from '@/services/navigation';
 import { saveJsonFile } from '@/services/share';
 import { useDataStore } from '@/stores/dataStore';
 import { spacing } from '@/theme/tokens';
@@ -78,7 +79,10 @@ function SettingsForm({ calendar }: { calendar: Calendar }) {
         }),
       { success: t('common.saved') },
     );
-    if (result.ok) await syncNow();
+    if (!result.ok) return;
+    await syncNow();
+    // Salvou: volta para a agenda, como nos outros formulários.
+    goBack();
   };
 
   const stateAction = async (action: 'archive' | 'unarchive' | 'trash') => {

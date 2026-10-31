@@ -484,10 +484,19 @@ export default function EventDetailScreen() {
         ]}
       >
         <View style={styles.chips}>
-          <View style={[styles.calChip, { borderColor: colors.border }]}>
+          {/* A agenda do evento: tocar abre a agenda. */}
+          <PressableScale
+            onPress={() =>
+              calendar && router.push({ pathname: '/calendar/[id]', params: { id: calendar.id } })
+            }
+            accessibilityRole="link"
+            accessibilityLabel={calendar?.name}
+            style={[styles.calChip, { borderColor: colors.border }]}
+          >
             <View style={[styles.dot, { backgroundColor: color }]} />
             <AppText variant="label">{calendar?.name}</AppText>
-          </View>
+            <Icon name="chevron-forward" size={14} color={colors.textMuted} />
+          </PressableScale>
           {isNow && <Badge label={t('today.now')} tone="strong" />}
           {event.status !== 'planned' && event.status !== 'confirmed' && (
             <Badge

@@ -1,16 +1,17 @@
 // Tela principal: calendário em visão mensal, semanal, diária ou lista.
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, SectionList, StyleSheet, View } from 'react-native';
+import { PanResponder, RefreshControl, ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { FadeIn, FadeOut, SlideInLeft, SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
+import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { EventRow } from '@/components/EventRow';
 import { FAB } from '@/components/FAB';
 import { IconButton } from '@/components/IconButton';
-import { EnterItem, MotionView } from '@/components/motion';
+import { EnterItem, MotionView, tapFeedback } from '@/components/motion';
 import { MonthGrid, type DayInfo } from '@/components/MonthGrid';
 import { TaskRow } from '@/components/TaskRow';
 import { TimeGrid } from '@/components/TimeGrid';
@@ -217,12 +218,38 @@ export default function CalendarScreen() {
 
   // Direção da última troca de período (para a grade deslizar do lado certo).
   const [direction, setDirection] = useState<1 | -1>(1);
-  const move = (dir: 1 | -1) => {
-    setDirection(dir);
-    if (viewMode === 'month') setSelected(addMonthsToKey(`${selected.slice(0, 7)}-01`, dir));
-    else if (viewMode === 'week') setSelected(addDaysToKey(selected, 7 * dir));
-    else setSelected(addDaysToKey(selected, dir));
-  };
+  const move = useCallback(
+    (dir: 1 | -1) => {
+      setDirection(dir);
+      if (viewMode === 'month') setSelected(addMonthsToKey(`${selected.slice(0, 7)}-01`, dir));
+      else if (viewMode === 'week') setSelected(addDaysToKey(selected, 7 * dir));
+      else setSelected(addDaysToKey(selected, dir));
+    },
+    [viewMode, selected, setSelected],
+  );
+
+  // Deslizar o mês para os lados troca de mês (como virar a página).
+  const swipe = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.6,
+        onPanResponderRelease: (_, g) => {
+          if (Math.abs(g.dx) < 60) return;
+          tapFeedback('select');
+          move(g.dx < 0 ? 1 : -1);
+        },
+      }),
+    [move],
+  );
+
+  // Agenda já escolhida no filtro (uma só): o evento novo nasce nela.
+  const filteredCalendar =
+    filters.calendarIds.length === 1 ? writable.find((c) => c.id === filters.calendarIds[0]) : undefined;
+  const newEventAt = (day: DateKey, start?: string) =>
+    router.push({
+      pathname: '/event/new',
+      params: { date: day, start: start ?? '', calendarId: filteredCalendar?.id ?? '' },
+    });
 
   const openEvent = useCallback(
     (occ: Occurrence) =>
@@ -286,6 +313,17 @@ export default function CalendarScreen() {
         </AppText>
         {viewMode !== 'list' && (
           <>
+            {selected !== today && (
+              <Button
+                title={t('common.today')}
+                variant="tonal"
+                compact
+                onPress={() => {
+                  setDirection(selected > today ? -1 : 1);
+                  setSelected(today);
+                }}
+              />
+            )}
             <IconButton icon="chevron-back" label={t('calendarView.previous')} onPress={() => move(-1)} />
             <IconButton icon="chevron-forward" label={t('calendarView.next')} onPress={() => move(1)} />
           </>
@@ -359,37 +397,77 @@ export default function CalendarScreen() {
           ]}
         />
       ) : null}
-      {selected !== today && viewMode !== 'list' ? (
-        <Chip label={t('calendarView.goToToday')} selected={false} onPress={() => setSelected(today)} />
-      ) : null}
     </View>
   );
 
   const noCalendars = calendars.length === 0;
   const emptyMessage = nFilters ? t('calendarView.noResults') : t('calendarView.emptyMessage');
 
-  const dayEvents = (dayList: Occurrence[]) =>
-    dayList.length || tasksOn(selected).length ? (
-      <View style={styles.list} key={selected}>
-        {dayList.map((occ, i) => (
-          <EnterItem key={occ.key} index={i}>
-            {renderRow(occ)}
-          </EnterItem>
-        ))}
-        {tasksOn(selected).map(taskRow)}
+  // Lista do dia escolhido, sempre com um jeito direto de marcar algo nele.
+  const addOnDay =
+    writable.length > 0 ? (
+      <View style={styles.addRow}>
+        <Button
+          title={t('create.event')}
+          icon="add"
+          variant="tonal"
+          compact
+          onPress={() => newEventAt(selected)}
+          testID="calendar-add-event"
+        />
+        <Button
+          title={t('create.task')}
+          icon="task-outline"
+          variant="secondary"
+          compact
+          onPress={() => router.push({ pathname: '/task/new', params: { date: selected } })}
+        />
+        <Button
+          title={t('create.reminder')}
+          icon="notifications-outline"
+          variant="secondary"
+          compact
+          onPress={() => router.push({ pathname: '/task/new', params: { type: 'reminder', date: selected } })}
+        />
       </View>
-    ) : (
-      <AppText tone="muted">
-        {noCalendars ? t('calendars.emptyMessage') : t('calendarView.noEventsDay')}
-      </AppText>
-    );
+    ) : null;
+  const dayEvents = (dayList: Occurrence[]) => (
+    <View style={styles.list} key={selected}>
+      {dayList.length || tasksOn(selected).length ? (
+        <>
+          {dayList.map((occ, i) => (
+            <EnterItem key={occ.key} index={i}>
+              {renderRow(occ)}
+            </EnterItem>
+          ))}
+          {tasksOn(selected).map((task, i) => (
+            <EnterItem key={task.id} index={dayList.length + i}>
+              {taskRow(task)}
+            </EnterItem>
+          ))}
+        </>
+      ) : (
+        <EnterItem>
+          <AppText tone="muted">
+            {noCalendars ? t('calendars.emptyMessage') : t('calendarView.noEventsDay')}
+          </AppText>
+        </EnterItem>
+      )}
+      {addOnDay}
+    </View>
+  );
 
   // Troca de mês: a grade desliza na horizontal com fade.
   const monthEntering = reduceMotion
     ? FadeIn.duration(150)
     : (direction > 0 ? SlideInRight : SlideInLeft).duration(220);
   const grid = (
-    <MotionView key={`${year}-${month}`} entering={monthEntering} exiting={FadeOut.duration(80)}>
+    <MotionView
+      key={`${year}-${month}`}
+      entering={monthEntering}
+      exiting={FadeOut.duration(80)}
+      {...swipe.panHandlers}
+    >
       <MonthGrid
         year={year}
         month={month}
@@ -478,6 +556,15 @@ export default function CalendarScreen() {
               setSelected(day);
               setViewMode('day');
             }}
+            onPressSlot={
+              writable.length
+                ? (day, minutes) =>
+                    newEventAt(
+                      day,
+                      `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`,
+                    )
+                : undefined
+            }
           />
         </View>
       </View>
@@ -549,7 +636,7 @@ export default function CalendarScreen() {
       {writable.length > 0 && (
         <FAB
           label={t('calendarView.newEvent')}
-          onPress={() => router.push({ pathname: '/create', params: { date: selected } })}
+          onPress={() => newEventAt(viewMode === 'list' ? today : selected)}
         />
       )}
       {sheet}
@@ -574,6 +661,7 @@ const styles = StyleSheet.create({
   gridHeader: { paddingHorizontal: SCREEN_MARGIN },
   gridBody: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   list: { gap: spacing.sm },
+  addRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
   listItem: { marginBottom: spacing.sm },
   weekDay: { gap: spacing.sm, marginTop: spacing.sm },
 });

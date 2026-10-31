@@ -1,5 +1,30 @@
 # Histórico de versões
 
+## 3.2.0 (31/10/2026)
+
+Polimento geral: navegação coerente, telas com movimento, agendas mais fáceis de usar e a marca SynCK presente no dia a dia.
+
+- **Voltar sempre faz sentido:** toda tela interna tem voltar no topo. Se ela foi aberta direto por um link (ou depois de recarregar a página), o voltar sobe para a tela de onde ela normalmente vem (membros voltam para a agenda, a agenda volta para Agendas, a edição volta para o detalhe), em vez de sempre ir para a tela Hoje. Telas de criar e editar mostram "Fechar" (X) e sobem de baixo.
+- **Nada se perde sem querer:** fechar um formulário com algo digitado (evento, tarefa, anotação, hábito, nova agenda, adição rápida) pergunta antes de descartar. No navegador, fechar a aba também avisa.
+- **Telas com movimento:** cada tela entra em cascata, bloco por bloco; trocar de aba desliza a tela; o ícone da aba escolhida pula; o mês troca deslizando o dedo para os lados.
+- **Agenda redesenhada:** cabeçalho na cor da agenda com os participantes, atalhos para Novo evento, Convidar, Ver no calendário e Horário em comum, os próximos compromissos dela e, depois, as ferramentas e ajustes.
+- **Cadastrar ficou mais direto:** "+" em cada cartão de agenda; no Calendário, o "+" abre o evento no dia escolhido (e na agenda filtrada), cada dia tem Evento, Tarefa e Lembrete, e tocar num horário vazio da semana ou do dia já abre o evento naquele horário. Horários livres da tela Hoje abrem o evento com início e fim preenchidos.
+- **Formulário de evento:** título primeiro, agenda em chips coloridos, durações rápidas (30 min, 1 h, 1 h 30, 2 h) e o término acompanha o início.
+- **Formulário de tarefa:** prazos rápidos (Hoje, Amanhã, Próxima semana) e o título acompanha o tipo (tarefa ou lembrete).
+- **Marca SynCK:** o personagem do logo aparece no topo da tela Hoje, como assistente na adição rápida, no carregamento e na comemoração ao entrar numa agenda.
+- Tela Hoje com um resumo do dia abaixo da saudação.
+
+### Corrigido
+
+- "Ver no calendário" de uma agenda abria a tela Hoje; agora abre a aba Calendário filtrada.
+- Depois de aceitar um convite, o botão "Calendário" abria a tela Hoje.
+- Evento começando às 23h (pela adição rápida ou pelo toque na grade) ficava com término igual ao início e não salvava; agora termina no dia seguinte.
+- Lembrete criado entre 23h e meia-noite ficava para meia-noite do mesmo dia (no passado); agora vai para o dia seguinte.
+- Trocar de Tarefa para Lembrete sem prazo deixava o lembrete sem data; agora sugere a próxima hora.
+- Salvar as configurações da agenda agora volta para a agenda.
+- O código de confirmação do e-mail tinha um "Voltar" repetido embaixo do voltar do topo.
+- O item "Membros" usava o ícone de agendas.
+
 ## 3.1.0 — 26/10/2026
 
 - Titillium Web em toda a interface, incluída no aplicativo para uso sem internet.

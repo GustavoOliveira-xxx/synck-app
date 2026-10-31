@@ -1,5 +1,5 @@
 import { IconButton } from '@/components/IconButton';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -9,19 +9,27 @@ export default function AuthLayout() {
   const { colors, reduceMotion } = useAppTheme();
   return (
     <Stack
-      screenOptions={({ navigation }) => ({
+      screenOptions={({ navigation, route }) => ({
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: fonte('negrito'),
         animation: reduceMotion ? 'none' : 'slide_from_right',
+        animationDuration: 280,
         headerBackButtonDisplayMode: 'minimal',
         headerBackVisible: false,
-        headerLeft: navigation.canGoBack()
-          ? () => (
-              <IconButton icon="chevron-back" label={t('common.back')} onPress={() => navigation.goBack()} />
-            )
-          : undefined,
+        // Sem tela anterior (link direto): "Esqueci a senha" e o código voltam ao login.
+        headerLeft: () => (
+          <IconButton
+            icon="chevron-back"
+            label={t('common.back')}
+            onPress={() =>
+              navigation.canGoBack()
+                ? navigation.goBack()
+                : router.replace(route.name === 'privacy' ? '/welcome' : '/login')
+            }
+          />
+        ),
         contentStyle: { backgroundColor: colors.background },
       })}
     >

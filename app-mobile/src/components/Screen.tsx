@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
+import { Stack } from 'expo-router';
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -6,6 +7,7 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { SCREEN_MARGIN, spacing } from '@/theme/tokens';
 import { CONTENT_MAX_WIDTH } from '@/utils/layout';
 
+import { EnterItem } from './motion';
 import { OfflineBanner } from './OfflineBanner';
 
 interface ScreenProps {
@@ -23,12 +25,43 @@ interface ScreenProps {
   safeTop?: boolean;
   /** A tela tem o botão flutuante "+": deixa espaço no fim para ele não cobrir o último item. */
   withFab?: boolean;
+  /** Blocos entram em cascata ao abrir a tela (padrão, só em telas com rolagem). */
+  stagger?: boolean;
 }
 
 /** Altura livre no fim da rolagem quando há botão flutuante (56 do botão + margens). */
 const FAB_CLEARANCE = 120;
 
-/** Estrutura padrão de tela: fundo, margens, rolagem e aviso de sem internet. */
+/**
+ * Filhos diretos, com os fragmentos abertos (cada bloco entra no seu tempo).
+ * As chaves seguem a posição no código, não na tela: um bloco que aparece ou
+ * some (ex.: uma mensagem de erro) não faz os de baixo serem recriados, então
+ * campos de texto não perdem o foco nem o que foi digitado.
+ */
+function flatten(children: ReactNode, prefix = ''): { key: string; node: ReactNode }[] {
+  return Children.toArray(children).flatMap((child, i) => {
+    const key = `${prefix}${isValidElement(child) && child.key != null ? child.key : i}`;
+    return isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment
+      ? flatten(child.props.children, `${key}/`)
+      : [{ key, node: child }];
+  });
+}
+
+/** Cada bloco da tela sobe e aparece, um depois do outro. */
+export function Cascade({ children }: { children: ReactNode }) {
+  let index = 0;
+  return flatten(children).map(({ key, node }) =>
+    // Opções da barra de título não desenham nada: ficam fora da cascata.
+    isValidElement(node) && node.type === Stack.Screen ? (
+      <Fragment key={key}>{node}</Fragment>
+    ) : (
+      <EnterItem key={key} index={index++}>
+        {node}
+      </EnterItem>
+    ),
+  );
+}
+
 export function Screen({
   children,
   scroll = true,
@@ -40,6 +73,7 @@ export function Screen({
   maxWidth = CONTENT_MAX_WIDTH,
   safeTop,
   withFab,
+  stagger = true,
 }: ScreenProps) {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -66,7 +100,7 @@ export function Screen({
         ) : undefined
       }
     >
-      {children}
+      {stagger ? <Cascade>{children}</Cascade> : children}
     </ScrollView>
   ) : (
     <View

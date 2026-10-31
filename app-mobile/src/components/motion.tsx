@@ -120,26 +120,37 @@ export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, Pressab
   },
 );
 
-/** Item de lista que entra em cascata (20 ms entre cada, no máximo 5). */
+/** Atraso de quem entra em sequência: cresce até o 8º item e depois para. */
+export function cascadeDelay(index: number): number {
+  return Math.min(Math.max(index, 0), 8) * motion.cascata;
+}
+
+/**
+ * Bloco que entra subindo e aparecendo, em cascata pelo `index`. Usado nos
+ * itens de lista e, pela Screen, em cada bloco de toda tela que abre.
+ */
 export function EnterItem({
   index = 0,
   children,
   style,
+  distance = motion.distancia,
 }: {
   index?: number;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
+  /** Quanto o bloco sobe ao entrar (dp). */
+  distance?: number;
 }) {
   const { reduceMotion } = useAppTheme();
-  const delay = reduceMotion ? 0 : Math.min(index, 5) * motion.cascata;
+  const delay = reduceMotion ? 0 : cascadeDelay(index);
   const entering = reduceMotion
     ? FadeIn.duration(100)
-    : FadeInDown.duration(180)
+    : FadeInDown.duration(motion.entrada)
         .delay(delay)
         .easing(EASE_OUT)
-        .withInitialValues({ transform: [{ translateY: 6 }] });
+        .withInitialValues({ opacity: 0, transform: [{ translateY: distance }] });
   return (
-    <MotionView entering={entering} enterDelay={delay} style={style}>
+    <MotionView entering={entering} enterDelay={delay} enterDistance={distance} style={style}>
       {children}
     </MotionView>
   );
@@ -148,6 +159,8 @@ export function EnterItem({
 type MotionViewProps = ComponentProps<typeof Animated.View> & {
   /** Atraso da entrada no navegador (no celular vale o da própria animação). */
   enterDelay?: number;
+  /** Deslocamento da entrada no navegador. */
+  enterDistance?: number;
 };
 
 /**
@@ -157,19 +170,27 @@ type MotionViewProps = ComponentProps<typeof Animated.View> & {
  * um esmaecer simples, que não mexe no layout; saída e reposicionamento são
  * imediatos.
  */
-export function MotionView({ entering, exiting, layout, enterDelay = 0, ...rest }: MotionViewProps) {
+export function MotionView({
+  entering,
+  exiting,
+  layout,
+  enterDelay = 0,
+  enterDistance = motion.distancia,
+  ...rest
+}: MotionViewProps) {
   if (Platform.OS !== 'web') {
     return <Animated.View entering={entering} exiting={exiting} layout={layout} {...rest} />;
   }
-  return <WebFadeIn animate={!!entering} delay={enterDelay} {...rest} />;
+  return <WebFadeIn animate={!!entering} delay={enterDelay} distance={enterDistance} {...rest} />;
 }
 
 function WebFadeIn({
   animate,
   delay,
+  distance,
   style,
   ...rest
-}: ComponentProps<typeof Animated.View> & { animate: boolean; delay: number }) {
+}: ComponentProps<typeof Animated.View> & { animate: boolean; delay: number; distance: number }) {
   const { reduceMotion } = useAppTheme();
   const progress = useSharedValue(animate && !reduceMotion ? 0 : 1);
   useEffect(() => {
@@ -177,13 +198,13 @@ function WebFadeIn({
       cancelAnimation(progress);
       progress.value = 1;
     } else if (progress.get() < 1) {
-      progress.set(withDelay(delay, withTiming(1, { duration: motion.base, easing: EASE_OUT })));
+      progress.set(withDelay(delay, withTiming(1, { duration: motion.entrada, easing: EASE_OUT })));
     }
     return () => cancelAnimation(progress);
   }, [progress, delay, reduceMotion]);
   const fade = useAnimatedStyle(() => ({
     opacity: progress.get(),
-    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.get()) * 6 }],
+    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.get()) * distance }],
   }));
   return <Animated.View style={[style, fade]} {...rest} />;
 }

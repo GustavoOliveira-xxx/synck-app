@@ -14,8 +14,10 @@ import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
 import { FAB } from '@/components/FAB';
 import { IconButton } from '@/components/IconButton';
-import { EnterItem } from '@/components/motion';
+import { Icon } from '@/components/Icon';
+import { EnterItem, PressableScale } from '@/components/motion';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { Cascade } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { EmptyState } from '@/components/StateViews';
 import { useCalendarMembers } from '@/hooks/useCalendarMembers';
@@ -34,6 +36,7 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { agendaColor, fonte, mix, pastel, radius, SCREEN_MARGIN, spacing } from '@/theme/tokens';
 import { addDaysToKey, capitalize, formatShortDate, formatTime, todayKey, toDateKey } from '@/utils/dates';
 import { CONTENT_MAX_WIDTH } from '@/utils/layout';
+import { canCreateEvents } from '@/utils/permissions';
 
 type Filter = 'all' | 'shared' | 'mine';
 
@@ -110,6 +113,18 @@ function CalendarCard({
           {archived ? t('calendars.archivedBadge') : nextText}
         </AppText>
         <AvatarStack people={people} max={2} size={28} />
+        {!archived && !calendar.deleted_at && canCreateEvents(calendar) && (
+          <PressableScale
+            onPress={() => router.push({ pathname: '/event/new', params: { calendarId: calendar.id } })}
+            haptic
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('calendars.addEventIn', { name: calendar.name })}
+            style={[styles.add, { backgroundColor: colors.primarySoft }]}
+          >
+            <Icon name="add" size={18} color={colors.primaryInk} strokeWidth={2.4} />
+          </PressableScale>
+        )}
       </View>
     </Card>
   );
@@ -171,108 +186,110 @@ export default function CalendarsScreen() {
         }
       >
         <View style={styles.column}>
-          <OrbitRings
-            size={decor}
-            paused={!focused}
-            style={[styles.decor, { right: decor * 0.2, top: -decor * 0.36 }]}
-          />
-          <View style={styles.header}>
-            <AppText variant="title" style={[styles.flex, styles.title]} accessibilityRole="header">
-              {t('calendars.title')}
-            </AppText>
-            <IconButton
-              icon="search"
-              label={t('common.search')}
-              onPress={() => router.push('/search')}
-              filled
+          <Cascade>
+            <OrbitRings
+              size={decor}
+              paused={!focused}
+              style={[styles.decor, { right: decor * 0.2, top: -decor * 0.36 }]}
             />
-          </View>
+            <View style={styles.header}>
+              <AppText variant="title" style={[styles.flex, styles.title]} accessibilityRole="header">
+                {t('calendars.title')}
+              </AppText>
+              <IconButton
+                icon="search"
+                label={t('common.search')}
+                onPress={() => router.push('/search')}
+                filled
+              />
+            </View>
 
-          {calendars.length === 0 ? (
-            <EmptyState
-              art="orbit"
-              title={t('calendars.emptyTitle')}
-              message={t('calendars.emptyMessage')}
-              actionLabel={t('calendars.inviteSomeone')}
-              actionIcon="person-add-outline"
-              onAction={() => router.push({ pathname: '/calendar/new', params: { kind: 'shared' } })}
-              secondaryLabel={t('calendars.justForMe')}
-              onSecondary={() => router.push({ pathname: '/calendar/new', params: { kind: 'personal' } })}
-            />
-          ) : (
-            <>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chips}
-              >
-                <Chip
-                  label={t('calendars.filterAll', { n: groups.live.length })}
-                  selected={filter === 'all'}
-                  onPress={() => setFilter('all')}
-                />
-                <Chip
-                  label={t('calendars.filterShared')}
-                  selected={filter === 'shared'}
-                  onPress={() => setFilter('shared')}
-                />
-                <Chip
-                  label={t('calendars.filterMine')}
-                  selected={filter === 'mine'}
-                  onPress={() => setFilter('mine')}
-                />
-              </ScrollView>
+            {calendars.length === 0 ? (
+              <EmptyState
+                art="orbit"
+                title={t('calendars.emptyTitle')}
+                message={t('calendars.emptyMessage')}
+                actionLabel={t('calendars.inviteSomeone')}
+                actionIcon="person-add-outline"
+                onAction={() => router.push({ pathname: '/calendar/new', params: { kind: 'shared' } })}
+                secondaryLabel={t('calendars.justForMe')}
+                onSecondary={() => router.push({ pathname: '/calendar/new', params: { kind: 'personal' } })}
+              />
+            ) : (
+              <>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chips}
+                >
+                  <Chip
+                    label={t('calendars.filterAll', { n: groups.live.length })}
+                    selected={filter === 'all'}
+                    onPress={() => setFilter('all')}
+                  />
+                  <Chip
+                    label={t('calendars.filterShared')}
+                    selected={filter === 'shared'}
+                    onPress={() => setFilter('shared')}
+                  />
+                  <Chip
+                    label={t('calendars.filterMine')}
+                    selected={filter === 'mine'}
+                    onPress={() => setFilter('mine')}
+                  />
+                </ScrollView>
 
-              <View style={styles.actions}>
-                <Button
-                  title={t('calendars.joinWithCode')}
-                  icon="key-outline"
-                  variant="tonal"
-                  compact
-                  onPress={() => router.push('/invites/accept')}
-                />
-                <Button
-                  title={
-                    pendingInvites
-                      ? `${t('calendars.invitesReceived')} (${pendingInvites})`
-                      : t('calendars.invitesReceived')
-                  }
-                  icon="mail-outline"
-                  variant={pendingInvites ? 'primary' : 'secondary'}
-                  compact
-                  onPress={() => router.push('/invites')}
-                />
-              </View>
+                <View style={styles.actions}>
+                  <Button
+                    title={t('calendars.joinShort')}
+                    icon="key-outline"
+                    variant="tonal"
+                    compact
+                    onPress={() => router.push('/invites/accept')}
+                  />
+                  <Button
+                    title={
+                      pendingInvites
+                        ? `${t('calendars.invitesShort')} (${pendingInvites})`
+                        : t('calendars.invitesShort')
+                    }
+                    icon="mail-outline"
+                    variant={pendingInvites ? 'primary' : 'secondary'}
+                    compact
+                    onPress={() => router.push('/invites')}
+                  />
+                </View>
 
-              <View style={styles.list} key={filter}>
-                {groups.shown.map((c, i) => (
-                  <EnterItem key={c.id} index={i}>
-                    <CalendarCard calendar={c} next={nextByCalendar[c.id]} display={display} now={now} />
-                  </EnterItem>
-                ))}
-              </View>
-              {groups.archived.length > 0 && (
-                <>
-                  <SectionHeader title={t('calendars.archived')} />
-                  <View style={styles.list}>
-                    {groups.archived.map((c) => (
-                      <CalendarCard key={c.id} calendar={c} display={display} />
-                    ))}
-                  </View>
-                </>
-              )}
-              {groups.trash.length > 0 && (
-                <>
-                  <SectionHeader title={t('calendars.trash')} />
-                  <View style={styles.list}>
-                    {groups.trash.map((c) => (
-                      <CalendarCard key={c.id} calendar={c} display={display} />
-                    ))}
-                  </View>
-                </>
-              )}
-            </>
-          )}
+                <View style={styles.list} key={filter}>
+                  {groups.shown.map((c, i) => (
+                    <EnterItem key={c.id} index={i}>
+                      <CalendarCard calendar={c} next={nextByCalendar[c.id]} display={display} now={now} />
+                    </EnterItem>
+                  ))}
+                </View>
+                {groups.archived.length > 0 && (
+                  <>
+                    <SectionHeader title={t('calendars.archived')} />
+                    <View style={styles.list}>
+                      {groups.archived.map((c) => (
+                        <CalendarCard key={c.id} calendar={c} display={display} />
+                      ))}
+                    </View>
+                  </>
+                )}
+                {groups.trash.length > 0 && (
+                  <>
+                    <SectionHeader title={t('calendars.trash')} />
+                    <View style={styles.list}>
+                      {groups.trash.map((c) => (
+                        <CalendarCard key={c.id} calendar={c} display={display} />
+                      ))}
+                    </View>
+                  </>
+                )}
+              </>
+            )}
+          </Cascade>
         </View>
       </ScrollView>
       <FAB icon="add" label={t('calendars.new')} onPress={() => router.push('/calendar/new')} />
@@ -302,4 +319,5 @@ const styles = StyleSheet.create({
   initial: { fontSize: 18, lineHeight: 22, ...fonte('tituloForte') },
   cardBottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  add: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
 });

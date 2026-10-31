@@ -162,6 +162,42 @@ export function formToFields(form: EventForm): EventFields {
 }
 
 /** Formulário inicial de um evento novo: próxima hora cheia, duração de 1 hora. */
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** Minutos desde a meia-noite de "HH:MM". */
+function minutesOf(time: string): number {
+  return Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+}
+
+/** Duração do evento em minutos (no relógio local do formulário). */
+export function formDuration(
+  form: Pick<EventForm, 'startDate' | 'startTime' | 'endDate' | 'endTime'>,
+): number {
+  const days = Math.round(
+    (Date.parse(`${form.endDate}T00:00:00Z`) - Date.parse(`${form.startDate}T00:00:00Z`)) / 86_400_000,
+  );
+  return days * 1440 + minutesOf(form.endTime) - minutesOf(form.startTime);
+}
+
+/**
+ * Termina `minutes` depois do início. Passa da meia-noite quando precisa
+ * (começar 23:30 com 1 h termina 00:30 do dia seguinte).
+ */
+export function withDuration<T extends EventForm>(form: T, minutes: number): T {
+  const total = minutesOf(form.startTime) + Math.max(0, minutes);
+  return {
+    ...form,
+    endDate: addDaysToKey(form.startDate, Math.floor(total / 1440)),
+    endTime: `${pad2(Math.floor((total % 1440) / 60))}:${pad2(total % 60)}`,
+  };
+}
+
+/** Muda o início e leva o término junto, mantendo a duração. */
+export function withStart<T extends EventForm>(form: T, startDate: DateKey, startTime: string): T {
+  const length = formDuration(form);
+  return withDuration({ ...form, startDate, startTime }, length > 0 ? length : 60);
+}
+
 export function newEventForm(
   calendarId: string,
   timezone: string,
