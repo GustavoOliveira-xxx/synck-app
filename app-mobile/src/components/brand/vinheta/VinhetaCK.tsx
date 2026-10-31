@@ -9,7 +9,7 @@
 // opacidade e transformação. Cada camada é um SVG pequeno desenhado uma vez.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -94,13 +94,15 @@ export function VinhetaCK({ onFim, credito = true }: { onFim: () => void; credit
   }, [reduceMotion, tipo]);
 
   // Enquanto decide (alguns milissegundos), segura a tela escura para o app não aparecer antes.
-  if (!tipo) return <View style={[StyleSheet.absoluteFill, styles.raiz]} />;
+  if (!tipo) return <View style={[StyleSheet.absoluteFill, styles.raiz]} testID="vinheta-ck" />;
   return (
     <Palco
       tipo={tipo}
       credito={credito}
       onFim={() => {
         if (tipo === 'completa') void AsyncStorage.setItem(CHAVE_DIA_VINHETA, diaLocal()).catch(() => {});
+        // Na versão web, marca a página quando a vinheta termina (os testes de tela esperam por isso).
+        if (Platform.OS === 'web') document.documentElement.dataset.vinhetaCk = 'fim';
         onFim();
       }}
     />

@@ -71,8 +71,12 @@ async function abrirSessao(tema = 'light', viewport = { width: 390, height: 844 
   return page;
 }
 
-/** Espera a abertura animada (logo SynCK) sair da frente. */
-const semAbertura = (page) => page.getByTestId('abertura').waitFor({ state: 'detached', timeout: 15_000 });
+/** Espera a abertura animada (logo SynCK) e a vinheta da CK saírem da frente. */
+const semAbertura = async (page) => {
+  // A vinheta marca a página quando termina; até lá ela cobre a tela e um toque só a pula.
+  await page.waitForSelector('html[data-vinheta-ck="fim"]', { state: 'attached', timeout: 20_000 });
+  await page.getByTestId('abertura').waitFor({ state: 'detached', timeout: 15_000 });
+};
 
 async function entrar(page, email) {
   await page.goto(`${base}/login`);
