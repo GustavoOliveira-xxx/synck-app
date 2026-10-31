@@ -284,6 +284,7 @@ Recuperação de senha também usa código de 6 dígitos digitado no app (evita 
 | VIBRATE | Vibrar no lembrete | Não |
 | WAKE_LOCK | Entregar o lembrete com a tela apagada | Não |
 | DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION | Interna do Android, protege o próprio app | Não |
+| FOREGROUND_SERVICE | Exigida pelo WorkManager do Android, que redesenha os widgets da tela inicial em segundo plano (3.3.0). Sem ela, a atualização dos widgets pode falhar no Android 11 ou mais antigo. O app não inicia serviço em primeiro plano por conta própria | Não |
 
 **Motivo.** O app não deve pedir permissões desnecessárias. A checagem automática impede que uma atualização de biblioteca traga uma permissão nova sem ninguém perceber.
 
@@ -456,3 +457,13 @@ Formulários e listas têm largura máxima de 720 (leitura confortável) e diál
 
 **Também na web.** Voltar sem tela anterior (página aberta pelo endereço) leva para a tela Hoje (`services/navigation.ts`), em vez de não fazer nada.
 
+
+## D40 Widgets da tela inicial com react-native-android-widget
+
+**Alternativas.** (a) Widgets nativos escritos em Kotlin, com um módulo próprio para receber os dados; (b) `react-native-android-widget`, que desenha o widget a partir de componentes em JavaScript e tem plugin para o Expo.
+
+**Decisão.** (b). O app grava um retrato compacto da agenda (`src/widgets/snapshot.ts`: título, horário e cor dos itens de ontem até daqui a 14 dias, dias com algo marcado e o evento da contagem) e os widgets leem esse retrato, inclusive com o app fechado, quando o Android pede (ao adicionar, redimensionar e a cada 30 minutos).
+
+**Motivo.** Mantém tudo em TypeScript, com as mesmas cores, fonte e datas do app, sem código nativo próprio para manter. O retrato não leva descrição, local nem pessoas, porque a tela inicial fica à vista de quem pega o celular, e é apagado ao sair da conta.
+
+**Consequência.** A biblioteca usa o WorkManager, que traz a permissão FOREGROUND_SERVICE (ver D22). Ela não aparece para a pessoa e não dá acesso a dados.

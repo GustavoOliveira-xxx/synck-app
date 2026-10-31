@@ -128,7 +128,8 @@ jobs:
           "$BT/aapt2" dump permissions "../saida/$NOME.apk" | tee permissoes.txt
           # Lista fechada: qualquer permissão nova trazida por uma biblioteca faz o build falhar,
           # para ninguém ser surpreendido por um pedido de acesso que o app não precisa.
-          PERMITIDAS='INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE|POST_NOTIFICATIONS|RECEIVE_BOOT_COMPLETED|VIBRATE|WAKE_LOCK|DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'
+          # FOREGROUND_SERVICE: WorkManager dos widgets da tela inicial (DECISOES.md, D22 e D40).
+          PERMITIDAS='INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE|POST_NOTIFICATIONS|RECEIVE_BOOT_COMPLETED|VIBRATE|WAKE_LOCK|FOREGROUND_SERVICE|DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'
           EXTRAS=$(grep "uses-permission" permissoes.txt | grep -vE "($PERMITIDAS)'" || true)
           if [ -n "$EXTRAS" ]; then
             echo "::error title=Permissão inesperada::$EXTRAS"
