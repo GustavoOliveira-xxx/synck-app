@@ -1,3 +1,4 @@
+import { Decoration } from '@/components/DecorationPicker';
 // Hábitos e rotinas: registrar quando fizer, ver as últimas semanas, pausar
 // e arquivar. Não ocupam horário na agenda. Sequência só se a pessoa ligar.
 import { router, Stack } from 'expo-router';
@@ -58,6 +59,7 @@ function HabitCard({
     <EnterItem index={index}>
       <Card style={styles.gap}>
         <View style={styles.row}>
+          <Decoration name={habit.decoration} color={color} />
           <View style={[styles.dot, { backgroundColor: color }]} />
           <View style={styles.flex}>
             <AppText variant="heading" numberOfLines={1}>

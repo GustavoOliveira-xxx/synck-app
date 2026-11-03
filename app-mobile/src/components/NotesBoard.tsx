@@ -1,3 +1,4 @@
+import { Decoration } from './DecorationPicker';
 // Mural de anotações: cartões lado a lado, na cor da agenda, com as fixadas
 // primeiro. Tocar abre a anotação; tocar e segurar fixa ou desafixa (as
 // fixadas também aparecem na tela Hoje). O primeiro cartão cria uma nova.
@@ -103,6 +104,7 @@ export function NotesBoard({
               style={[styles.card, { backgroundColor: bg }]}
             >
               <View style={styles.top}>
+                <Decoration name={note.decoration} size={20} />
                 <AppText numberOfLines={2} style={[styles.title, { color: ink }]}>
                   {noteHeadline(note)}
                 </AppText>

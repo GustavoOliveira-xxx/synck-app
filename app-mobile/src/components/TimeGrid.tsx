@@ -1,3 +1,4 @@
+import { Decoration } from './DecorationPicker';
 // Grade de horários (visões semanal e diária): eventos posicionados pelo
 // início e duração, lado a lado quando se sobrepõem, área própria para dia
 // inteiro, linha do horário atual, tarefas e lembretes com horário e
@@ -150,6 +151,9 @@ const EventBox = memo(function EventBox({
         accessibilityHint={t('calendarGrid.moveHint')}
         style={styles.boxInner}
       >
+        {!narrow && height > 65 && !occ.event.is_masked && (
+          <Decoration name={occ.event.decoration} color={color} size={18} />
+        )}
         {/* Coluna estreita (semana no celular): uma linha com reticências, sem quebrar a palavra no meio. */}
         <AppText
           numberOfLines={narrow || height <= 36 ? 1 : 2}

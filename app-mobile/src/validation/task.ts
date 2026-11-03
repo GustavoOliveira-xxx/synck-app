@@ -26,6 +26,7 @@ export interface ChecklistDraft {
 }
 
 export interface TaskForm {
+  decoration?: string | null;
   itemType: ItemType;
   title: string;
   description: string;
@@ -81,6 +82,7 @@ export function newTaskForm(itemType: ItemType, timezone: string, options: Parti
 
 export function taskToForm(task: Task): TaskForm {
   return {
+    decoration: task.decoration ?? null,
     itemType: task.item_type,
     title: task.title,
     description: task.description ?? '',
@@ -149,6 +151,7 @@ export function formToTaskFields(form: TaskForm): Omit<TaskFields, 'position'> {
     calendar_id: form.calendarId,
     list_id: form.listId,
     title: form.title.trim(),
+    decoration: form.decoration ?? null,
     description: form.description.trim() || null,
     links: form.links.map((l) => l.trim()).filter(Boolean),
     tags: form.tags,
@@ -167,6 +170,7 @@ export function formToTaskFields(form: TaskForm): Omit<TaskFields, 'position'> {
 }
 
 const COMPARED: (keyof Omit<TaskFields, 'position'>)[] = [
+  'decoration',
   'item_type',
   'calendar_id',
   'list_id',

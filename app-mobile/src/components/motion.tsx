@@ -43,6 +43,7 @@ export interface PressableScaleProps extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
   /** Escala ao tocar: 0,975 em botões, 0,99 em cartões. */
   scaleTo?: number;
+  translateXTo?: number;
   haptic?: boolean;
   children?: ReactNode;
 }
@@ -53,6 +54,7 @@ export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, Pressab
     {
       style,
       scaleTo = motion.escalaToque,
+      translateXTo = 0,
       haptic,
       onPressIn,
       onPressOut,
@@ -84,6 +86,7 @@ export const PressableScale = forwardRef<ComponentRef<typeof Pressable>, Pressab
       transform: [
         ...baseTransform,
         { scale: reduceMotion || disabled ? 1 : 1 - (1 - scaleTo) * pressed.value },
+        { translateX: reduceMotion || disabled ? 0 : translateXTo * pressed.value },
       ],
     }));
     return (

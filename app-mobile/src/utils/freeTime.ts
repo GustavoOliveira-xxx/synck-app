@@ -125,11 +125,11 @@ export function startOptions(
   const length = durationMinutes * 60_000;
   const out: Interval[] = [];
   for (const slot of slots) {
-    // Começa no próximo múltiplo do passo (ex.: 14:00, 14:30).
-    let t = Math.ceil(slot.start.getTime() / step) * step;
+    // Preserva o primeiro instante livre; as opções seguintes seguem o passo.
+    let t = slot.start.getTime();
     while (t + length <= slot.end.getTime() && out.length < max) {
       out.push({ start: t, end: t + length });
-      t += step;
+      t = (Math.floor(t / step) + 1) * step;
     }
     if (out.length >= max) break;
   }

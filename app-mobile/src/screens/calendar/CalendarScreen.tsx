@@ -1,3 +1,4 @@
+import { routineBusy } from '@/utils/routine';
 // Tela principal: calendário em visão mensal, semanal, diária ou lista.
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -28,7 +29,7 @@ import { myBusy } from '@/hooks/usePlanning';
 import { useTaskActions } from '@/hooks/useTaskActions';
 import { useFeedback } from '@/components/Feedback';
 import { moveEvent } from '@/services/eventActions';
-import { useUserId } from '@/stores/authStore';
+import { useAuthStore, useUserId } from '@/stores/authStore';
 import { t } from '@/i18n';
 import type { DateKey, Occurrence, Task } from '@/models/types';
 import { ensureRange, syncNow } from '@/offline/syncEngine';
@@ -109,6 +110,7 @@ export default function CalendarScreen() {
   const layers = useUiStore((s) => s.layers);
   const setLayers = useUiStore((s) => s.setLayers);
   const userId = useUserId();
+  const routines = useAuthStore((s) => s.account?.preferences.routine_periods);
   const now = useNow();
   const { toast } = useFeedback();
   const allTasks = useTasks();
@@ -574,7 +576,7 @@ export default function CalendarScreen() {
             calendarColors={calendarColors}
             calendarNames={calendarNames}
             conflicts={conflicts}
-            busy={myBusy(occurrences, userId)}
+            busy={[...myBusy(occurrences, userId), ...routineBusy(routines ?? [], days)]}
             canAdd={writable.length > 0}
             onSelectDay={setSelected}
             onPressEvent={openEvent}
@@ -592,7 +594,7 @@ export default function CalendarScreen() {
     const slots =
       viewMode === 'day'
         ? freeSlots(
-            myBusy(byDay.get(selected) ?? [], userId),
+            [...myBusy(byDay.get(selected) ?? [], userId), ...routineBusy(routines ?? [], [selected])],
             [selected],
             tz,
             display.dayStart,

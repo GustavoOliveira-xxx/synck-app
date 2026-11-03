@@ -22,6 +22,7 @@ import { parseRule, serializeRule, type RecurrenceRule } from '@/utils/recurrenc
 import { clean, type FieldErrors } from './auth';
 
 export interface EventForm {
+  decoration?: string | null;
   calendarId: string;
   title: string;
   allDay: boolean;
@@ -142,6 +143,7 @@ export function formToFields(form: EventForm): EventFields {
   if (!instants) throw new Error('Formulário de evento inválido');
   return {
     title: form.title.trim(),
+    decoration: form.decoration ?? null,
     description: nullIfEmpty(form.description),
     location: nullIfEmpty(form.location),
     address: nullIfEmpty(form.address),
@@ -261,6 +263,7 @@ export function eventToForm(
   const s = instantToLocal(start, tz);
   const e = instantToLocal(end, tz);
   return {
+    decoration: event.decoration ?? null,
     calendarId: event.calendar_id,
     title: occurrence?.title ?? event.title ?? '',
     allDay: event.all_day,

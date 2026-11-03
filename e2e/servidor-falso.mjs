@@ -188,6 +188,19 @@ export async function criarServidorFalso() {
         return resposta(400, { code: e.code, message: e.message });
       }
     }
+    if (caminho === '/rest/v1/user_preferences' && metodo === 'PATCH') {
+      const columns = Object.keys(corpo).filter(c => /^[a-z_]+$/.test(c));
+      const target = url.searchParams.get('user_id')?.replace(/^eq\./, '');
+      if (!columns.length || !target) return resposta(400, { message: 'alteração inválida' });
+      try {
+        await comoUsuario(uid, `update public.user_preferences prefs set (${columns.join(',')}) = (select ${columns.join(',')} from json_populate_record(null::public.user_preferences, $1::json)) where prefs.user_id=$2::uuid`, [JSON.stringify(corpo),target]);
+        registro.push('patch user_preferences');
+        return vazio;
+      } catch (e) {
+        registro.push(`patch user_preferences ERRO ${e.message}`);
+        return resposta(400, { code: e.code, message: e.message });
+      }
+    }
     if (caminho.startsWith('/rest/v1/') && metodo === 'POST') {
       // Inserção (ex.: criar agenda): só as colunas enviadas; as demais ficam com o valor padrão.
       const tabela = caminho.slice('/rest/v1/'.length);

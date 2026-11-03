@@ -210,12 +210,13 @@ export async function deleteList(list: TaskList): Promise<void> {
 
 export async function createNote(
   input: Pick<Note, 'title' | 'body' | 'calendar_id' | 'pinned'> &
-    Partial<Pick<Note, 'event_id' | 'task_id'>>,
+    Partial<Pick<Note, 'event_id' | 'task_id' | 'decoration'>>,
 ): Promise<string> {
   const id = newId();
   await queue('note', 'create', id, input.calendar_id, {
     title: input.title?.trim() || null,
     body: input.body,
+    decoration: input.decoration ?? null,
     calendar_id: input.calendar_id,
     pinned: input.pinned,
     event_id: input.event_id ?? null,
@@ -224,7 +225,10 @@ export async function createNote(
   return id;
 }
 
-export async function updateNote(note: Note, changes: Partial<Pick<Note, 'title' | 'body' | 'pinned'>>) {
+export async function updateNote(
+  note: Note,
+  changes: Partial<Pick<Note, 'title' | 'body' | 'pinned' | 'decoration'>>,
+) {
   await queue('note', 'update', note.id, note.calendar_id, changes, {
     version: note.version,
     snapshot: Object.fromEntries(Object.keys(changes).map((k) => [k, note[k as keyof Note] ?? null])),
@@ -240,7 +244,14 @@ export async function deleteNote(note: Note): Promise<void> {
 export async function createHabit(
   input: Pick<
     Habit,
-    'title' | 'description' | 'calendar_id' | 'recurrence_rule' | 'start_date' | 'show_streak' | 'color'
+    | 'title'
+    | 'description'
+    | 'calendar_id'
+    | 'recurrence_rule'
+    | 'start_date'
+    | 'show_streak'
+    | 'color'
+    | 'decoration'
   >,
 ): Promise<string> {
   const id = newId();
@@ -250,7 +261,9 @@ export async function createHabit(
 
 export async function updateHabit(
   habit: Habit,
-  changes: Partial<Pick<Habit, 'title' | 'description' | 'recurrence_rule' | 'show_streak' | 'color'>> & {
+  changes: Partial<
+    Pick<Habit, 'title' | 'description' | 'recurrence_rule' | 'show_streak' | 'color' | 'decoration'>
+  > & {
     status?: HabitStatus;
   },
 ) {

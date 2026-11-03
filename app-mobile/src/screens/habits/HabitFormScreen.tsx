@@ -1,3 +1,4 @@
+import { DecorationPicker } from '@/components/DecorationPicker';
 // Criar e editar hábitos: frequência (todo dia, dias da semana, um dia do
 // mês), de quem é a rotina (só minha ou de uma agenda) e sequência opcional.
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -47,11 +48,14 @@ export default function HabitFormScreen() {
   const [days, setDays] = useState<WeekdayCode[]>(rule?.byDay.length ? rule.byDay : ['MO', 'WE', 'FR']);
   const [monthDay, setMonthDay] = useState(String(rule?.byMonthDay ?? 1));
   const [calendarId, setCalendarId] = useState<string | null>(habit?.calendar_id ?? null);
+  const [decoration, setDecoration] = useState<string | null>(habit?.decoration ?? null);
   const [color, setColor] = useState<string | null>(habit?.color ?? null);
   const [streak, setStreak] = useState(habit?.show_streak ?? false);
   const [error, setError] = useState<string>();
   const { allowLeave } = useUnsavedChanges(
-    title !== (habit?.title ?? '') || description !== (habit?.description ?? ''),
+    title !== (habit?.title ?? '') ||
+      description !== (habit?.description ?? '') ||
+      decoration !== (habit?.decoration ?? null),
   );
 
   if (id && !habit) {
@@ -92,6 +96,7 @@ export default function HabitFormScreen() {
       recurrence_rule: ruleText(),
       show_streak: streak,
       color,
+      decoration,
     };
     if (habit) await updateHabit(habit, fields);
     else await createHabit({ ...fields, calendar_id: calendarId, start_date: todayKey(display.timezone) });
@@ -166,6 +171,7 @@ export default function HabitFormScreen() {
         multiline
         maxLength={1000}
       />
+      <DecorationPicker value={decoration} onChange={setDecoration} />
       <ColorPicker
         label={t('calendars.color')}
         value={color}

@@ -1,3 +1,7 @@
+import { AvailableTimes } from '@/components/AvailableTimes';
+import { useFreeSlots } from '@/hooks/usePlanning';
+import { startOptions } from '@/utils/freeTime';
+import { DecorationPicker } from '@/components/DecorationPicker';
 // Criação e edição de eventos (inclusive "só esta ocorrência" e "esta e as próximas").
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -13,7 +17,7 @@ import { useFeedback } from '@/components/Feedback';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SelectField } from '@/components/SelectField';
-import { EmptyState } from '@/components/StateViews';
+import { EmptyState, LoadingState } from '@/components/StateViews';
 import { SwitchRow } from '@/components/SwitchRow';
 import { TextField } from '@/components/TextField';
 import { useCalendarMembers } from '@/hooks/useCalendarMembers';
@@ -38,7 +42,7 @@ import { useSyncStore } from '@/stores/syncStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { agendaColor, spacing } from '@/theme/tokens';
 import { findConflicts } from '@/utils/conflicts';
-import { todayKey } from '@/utils/dates';
+import { todayKey, instantToLocal, isValidDateKey } from '@/utils/dates';
 import { canCreateEvents } from '@/utils/permissions';
 import { expandEvent } from '@/utils/recurrence';
 import { timezoneOptions } from '@/utils/timezones';
@@ -163,6 +167,13 @@ function Form({
         autoFocus={!event && !initial.title}
         testID="event-title"
       />
+      {!onlyThis && (
+        <DecorationPicker
+          value={form.decoration}
+          onChange={(v) => set('decoration', v)}
+          color={agendaColor(form.color ?? calendar?.color, dark)}
+        />
+      )}
       {!event &&
         (calendars.length <= 8 ? (
           <View style={styles.field}>
@@ -255,6 +266,26 @@ function Form({
             ))}
           </View>
         </View>
+      )}
+      {!form.allDay && (
+        <AvailableTimes
+          day={form.startDate}
+          minutes={Math.max(1, duration)}
+          timezone={form.timezone}
+          excludeEventId={event?.id}
+          selected={form.startTime}
+          onChoose={(start, end) => {
+            const a = instantToLocal(start, form.timezone);
+            const b = instantToLocal(end, form.timezone);
+            setForm((f) => ({
+              ...f,
+              startDate: a.dateKey,
+              startTime: a.time,
+              endDate: b.dateKey,
+              endTime: b.time,
+            }));
+          }}
+        />
       )}
       {conflicts.length > 0 && (
         <AppText tone="warning" accessibilityLiveRegion="polite">
@@ -426,6 +457,9 @@ export default function EventFormScreen() {
   const events = useEventsMap();
   const writable = useMemo(() => allCalendars.filter((c) => canCreateEvents(c)), [allCalendars]);
 
+  const requestedDay = params.date && isValidDateKey(params.date) ? params.date : todayKey(display.timezone);
+  const { slots: initialSlots, loading: loadingSlots } = useFreeSlots([requestedDay], 60);
+  const suggested = startOptions(initialSlots, 60, 15, 1)[0];
   const event = params.id ? events[params.id] : undefined;
   const scope: RecurrenceScope = params.scope ?? 'all';
   const occurrence = useMemo(() => {
@@ -457,6 +491,9 @@ export default function EventFormScreen() {
     );
   }
 
+  if (!params.id && !params.start && loadingSlots)
+    return <LoadingState message="Conferindo os horários do dia…" />;
+
   let initial: EventForm;
   if (event) {
     // "Todas": formulário com a série; "só esta" / "esta e as próximas": com a ocorrência.
@@ -470,10 +507,18 @@ export default function EventFormScreen() {
     initial = newEventForm(
       preferred.id,
       display.timezone,
-      params.date ?? todayKey(display.timezone),
+      requestedDay,
       new Date(),
       account?.notification_preferences.default_reminder_minutes ?? null,
     );
+    // Sem vaga, mantenha o dia escolhido para um possível encaixe manual.
+    if (!suggested && initial.startDate !== requestedDay)
+      initial = withStart(initial, requestedDay, display.dayStart.slice(0, 5));
+    if (suggested && !params.start) {
+      const a = instantToLocal(new Date(suggested.start), display.timezone);
+      const b = instantToLocal(new Date(suggested.end), display.timezone);
+      initial = { ...initial, startDate: a.dateKey, startTime: a.time, endDate: b.dateKey, endTime: b.time };
+    }
     const time = /^([01]\d|2[0-3]):[0-5]\d$/;
     if (params.title) initial.title = params.title.slice(0, 150);
     if (params.start && time.test(params.start)) {

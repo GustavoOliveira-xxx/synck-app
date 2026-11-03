@@ -1,3 +1,4 @@
+import { Decoration } from '@/components/DecorationPicker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -541,6 +542,7 @@ export default function EventDetailScreen() {
           floating && [styles.heroCard, { borderColor: colors.border }],
         ]}
       >
+        {!event.is_masked && <Decoration name={event.decoration} color={color} size={36} />}
         <View style={styles.chips}>
           {/* A agenda do evento: tocar abre a agenda. */}
           <PressableScale

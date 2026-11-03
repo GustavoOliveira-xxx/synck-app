@@ -497,6 +497,48 @@ test('3.3: mural de anotações, fixadas em Hoje e visão Quadro', async () => {
   await page.context().close();
 });
 
+test('3.4: rotina pessoal, primeira vaga e decoração editável persistem entre aberturas', async () => {
+  const page = await abrirSessao();
+  await entrar(page, 'ana.demo@exemplo.test');
+  await ir(page, '/settings/routine');
+  await foto(page, '23-rotina-vazia');
+  await page.getByText('Trabalho', { exact: true }).click();
+  await page.getByRole('textbox', { name: 'Nome do período', exact: true }).fill('Meu expediente');
+  await foto(page, '23-minha-rotina');
+  await page.getByTestId('routine-save').click();
+  await page.waitForURL('**/profile');
+  await ir(page, '/settings/routine');
+  assert.equal(await page.getByRole('textbox', { name: 'Nome do período', exact: true }).inputValue(), 'Meu expediente');
+  const future = new Date(); future.setDate(future.getDate() + ((8-future.getDay())%7 || 7) + 7);
+  const day = future.toISOString().slice(0,10);
+  await ir(page, '/event/new?date='+day+'&calendarId='+AGENDA);
+  await page.getByTestId('event-title').fill('Almoço com decoração');
+  await visivel(page, 'Horários disponíveis');
+  assert.equal(await page.locator('input[type="time"]').first().inputValue(), '12:00');
+  await page.getByRole('button', { name: 'Decoração do item', exact: true }).click();
+  await page.getByRole('radio', { name: 'Decoração: Flor', exact: true }).click();
+  await foto(page, '24-decoracoes-e-horarios');
+  await page.getByTestId('event-save').click();
+  await page.waitForURL(url => !url.pathname.endsWith('/event/new'));
+  await ir(page, '/month');
+  // O servidor devolve o desenho junto com o evento; reabrir confere a edição.
+  const stored = await page.evaluate(async () => {
+    const entry=Object.entries(localStorage).find(([key])=>key.includes('auth-token'));
+    const raw=JSON.parse(entry[1]); const token=raw.access_token ?? raw.currentSession?.access_token;
+    const response=await fetch('https://demonstracao.supabase.co/rest/v1/rpc/list_events', {method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({p_calendar_ids:null,p_from:'2026-01-01T00:00:00Z',p_to:'2040-01-01T00:00:00Z'})});
+    return (await response.json()).find(e=>e.title==='Almoço com decoração');
+  });
+  assert.equal(stored.decoration,'decor-flor');
+  await ir(page, '/event/'+stored.id+'/edit');
+  await page.getByRole('button', { name: 'Decoração do item', exact: true }).click();
+  await foto(page, '25-editar-decoracao');
+  assert.equal(await page.getByRole('radio', { name: 'Decoração: Flor', exact: true }).getAttribute('aria-checked'),'true');
+  await page.getByRole('radio', { name: 'Decoração: Lua', exact: true }).click();
+  await page.getByTestId('event-save').click();
+  await page.waitForURL(url => !url.pathname.endsWith('/edit'));
+  await page.context().close();
+});
+
 test('nenhum erro de JavaScript em nenhuma tela', () => {
   assert.deepEqual(erros, []);
   const falhas = servidor.registro.filter((r) => r.includes('ERRO'));

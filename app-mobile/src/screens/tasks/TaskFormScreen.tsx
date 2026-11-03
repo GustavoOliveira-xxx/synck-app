@@ -1,3 +1,6 @@
+import { AvailableTimes } from '@/components/AvailableTimes';
+import { useFreeSlots } from '@/hooks/usePlanning';
+import { DecorationPicker } from '@/components/DecorationPicker';
 // Criar e editar tarefas e lembretes. Uma tarefa simples só precisa do título;
 // o resto fica em "Mais opções".
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -15,7 +18,7 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SelectField } from '@/components/SelectField';
-import { EmptyState } from '@/components/StateViews';
+import { EmptyState, LoadingState } from '@/components/StateViews';
 import { TextField } from '@/components/TextField';
 import { useCalendarMembers } from '@/hooks/useCalendarMembers';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
@@ -102,6 +105,13 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
     linkText !== base.links.join('\n');
   const { allowLeave } = useUnsavedChanges(dirty && !saving);
   const today = todayKey(display.timezone);
+  const { slots: dueSlots } = useFreeSlots(
+    [form.dueDate ?? today],
+    reminder ? 1 : (form.estimatedMinutes ?? 30),
+    undefined,
+    form.timezone,
+  );
+  const firstDue = dueSlots[0] ? instantToLocal(dueSlots[0].start, form.timezone) : null;
 
   const writable = useMemo(() => calendars.filter((c) => canCreateEvents(c)), [calendars]);
   const listOptions = lists.filter((l) => l.calendar_id === form.calendarId);
@@ -177,7 +187,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
             variant="ghost"
             compact
             icon="time-outline"
-            onPress={() => set('dueTime', nextHour(form.timezone))}
+            onPress={() => set('dueTime', firstDue?.time ?? nextHour(form.timezone))}
           />
         )}
         <Button
@@ -229,7 +239,12 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
           onChange={(v) =>
             setForm((f) => {
               // Lembrete precisa de data e hora para avisar: sem prazo, sugere a próxima hora.
-              const slot = v === 'reminder' && !f.dueDate ? nextHourSlot(f.timezone) : null;
+              const slot =
+                v === 'reminder' && !f.dueDate
+                  ? firstDue
+                    ? { date: firstDue.dateKey, time: firstDue.time }
+                    : nextHourSlot(f.timezone)
+                  : null;
               return {
                 ...f,
                 itemType: v,
@@ -255,6 +270,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
         autoFocus={!editing}
         testID="task-title"
       />
+      <DecorationPicker value={form.decoration} onChange={(v) => set('decoration', v)} />
       <AppText variant="label">{reminder ? t('tasks.reminderDate') : t('tasks.due')}</AppText>
       <View style={styles.chips}>
         {quickDates(today).map((q) => (
@@ -273,6 +289,18 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
         ))}
       </View>
       {dueBlock}
+      {form.dueDate && form.dueTime && (
+        <AvailableTimes
+          day={form.dueDate}
+          minutes={reminder ? 1 : (form.estimatedMinutes ?? 30)}
+          timezone={form.timezone}
+          selected={form.dueTime}
+          onChoose={(start) => {
+            const local = instantToLocal(start, form.timezone);
+            setForm((f) => ({ ...f, dueDate: local.dateKey, dueTime: local.time }));
+          }}
+        />
+      )}
 
       {!reminder && (
         <View style={styles.gap}>
@@ -573,6 +601,9 @@ export default function TaskFormScreen() {
   const display = useDisplaySettings();
   const task = useTask(params.id);
   const lists = useLists();
+  const requestedDay = params.date && isValidDateKey(params.date) ? params.date : todayKey(display.timezone);
+  const { slots, loading: loadingSlots } = useFreeSlots([requestedDay], 1);
+  const first = slots[0] ? instantToLocal(slots[0].start, display.timezone) : null;
 
   if (params.id && !task) {
     return (
@@ -581,6 +612,9 @@ export default function TaskFormScreen() {
       </Screen>
     );
   }
+
+  if (!params.id && params.type === 'reminder' && loadingSlots)
+    return <LoadingState message="Conferindo os horários do dia…" />;
 
   let initial: TaskForm;
   if (task) {
@@ -593,8 +627,8 @@ export default function TaskFormScreen() {
       title: params.title ?? '',
       listId: list?.id ?? null,
       calendarId: list ? list.calendar_id : params.calendarId || null,
-      dueDate: date ?? (type === 'reminder' ? nextHourSlot(display.timezone).date : null),
-      dueTime: type === 'reminder' ? nextHour(display.timezone) : null,
+      dueDate: date ?? (type === 'reminder' ? (first?.dateKey ?? requestedDay) : null),
+      dueTime: type === 'reminder' ? (first?.time ?? nextHour(display.timezone)) : null,
       alerts: type === 'reminder' ? [0] : [],
     });
   }

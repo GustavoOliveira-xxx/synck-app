@@ -1,8 +1,9 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { fonte, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
+import { SyncLoader } from './SyncLoader';
 import { AppText } from './AppText';
 import { Icon, type IconName } from './Icon';
 import { PressableScale } from './motion';
@@ -67,7 +68,7 @@ export function Button({
     >
       <View style={styles.row}>
         {loading ? (
-          <ActivityIndicator color={palette.fg} />
+          <SyncLoader color={palette.fg} />
         ) : (
           (leading ?? (icon && <Icon name={icon} size={20} color={palette.fg} />))
         )}

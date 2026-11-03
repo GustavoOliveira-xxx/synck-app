@@ -1,3 +1,4 @@
+import { routineBusy } from '@/utils/routine';
 // Encontrar horário em comum numa agenda compartilhada. Usa só horários
 // ocupados (sem títulos) que cada pessoa autorizou; nada é enviado sem
 // confirmação. Sem horário para todos, dá para fazer uma enquete.
@@ -25,7 +26,7 @@ import type { CalendarEvent } from '@/models/types';
 import * as api from '@/services/api';
 import { createEvent } from '@/services/eventActions';
 import { goBack } from '@/services/navigation';
-import { useUserId } from '@/stores/authStore';
+import { useAuthStore, useUserId } from '@/stores/authStore';
 import { spacing } from '@/theme/tokens';
 import {
   addDaysToKey,
@@ -49,6 +50,7 @@ export default function FindTimeScreen() {
   const calendar = useCalendar(id);
   const members = useCalendarMembers(id);
   const userId = useUserId();
+  const routines = useAuthStore((s) => s.account?.preferences.routine_periods);
   const display = useDisplaySettings();
   const { toast, confirm } = useFeedback();
   const { run, busy } = useAction();
@@ -119,6 +121,8 @@ export default function FindTimeScreen() {
     }
     const days: string[] = [];
     for (let d = from; d <= to; d = addDaysToKey(d, 1)) days.push(d);
+    if (userId && people.includes(userId))
+      byUser[userId] = [...(byUser[userId] ?? []), ...routineBusy(routines ?? [], days)];
     const slots = commonFree(
       Object.values(byUser).map(mergeIntervals),
       days,

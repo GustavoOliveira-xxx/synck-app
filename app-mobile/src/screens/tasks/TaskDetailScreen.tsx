@@ -1,3 +1,4 @@
+import { Decoration } from '@/components/DecorationPicker';
 // Detalhes de uma tarefa ou lembrete: conclusão, etapas com progresso,
 // prazo e repetição, blocos de tempo no calendário, comentários e histórico.
 import { router, Stack, useLocalSearchParams } from 'expo-router';
@@ -412,6 +413,7 @@ export default function TaskDetailScreen() {
           onPress={() => void toggle(task)}
           disabled={!canTick}
         />
+        <Decoration name={task.decoration} size={28} />
         <AppText
           variant="title"
           selectable

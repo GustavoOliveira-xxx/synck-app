@@ -1,3 +1,4 @@
+import { Decoration, DecorationPicker } from '@/components/DecorationPicker';
 // Editar uma anotação: título, texto, fixar e, ao criar, onde guardar.
 // Links (https://) no texto aparecem como botões para abrir.
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -34,11 +35,15 @@ export default function NoteEditorScreen() {
   const { toast, confirm } = useFeedback();
   const [title, setTitle] = useState(note?.title ?? '');
   const [body, setBody] = useState(note?.body ?? '');
+  const [decoration, setDecoration] = useState<string | null>(note?.decoration ?? null);
   const [pinned, setPinned] = useState(note?.pinned ?? false);
   const [where, setWhere] = useState<string | null>(note?.calendar_id ?? (calendarId || null));
   const [error, setError] = useState<string>();
   const { allowLeave } = useUnsavedChanges(
-    title !== (note?.title ?? '') || body !== (note?.body ?? '') || pinned !== (note?.pinned ?? false),
+    title !== (note?.title ?? '') ||
+      body !== (note?.body ?? '') ||
+      pinned !== (note?.pinned ?? false) ||
+      decoration !== (note?.decoration ?? null),
   );
 
   if (id && !note) {
@@ -70,10 +75,11 @@ export default function NoteEditorScreen() {
       const changes: Record<string, unknown> = {};
       if ((note.title ?? '') !== title.trim()) changes.title = title.trim() || null;
       if (note.body !== body) changes.body = body;
+      if ((note.decoration ?? null) !== decoration) changes.decoration = decoration;
       if (note.pinned !== pinned) changes.pinned = pinned;
       if (Object.keys(changes).length) await updateNote(note, changes);
     } else {
-      await createNote({ title: title.trim() || null, body, calendar_id: where, pinned });
+      await createNote({ title: title.trim() || null, body, calendar_id: where, pinned, decoration });
     }
     toast(t('notes.saved'));
     allowLeave();
@@ -117,6 +123,11 @@ export default function NoteEditorScreen() {
         <AppText variant="small" tone="muted">
           {t('notes.readOnly')}
         </AppText>
+      )}
+      {canEdit ? (
+        <DecorationPicker value={decoration} onChange={setDecoration} />
+      ) : (
+        <Decoration name={decoration} size={32} />
       )}
       <TextField
         label={t('notes.titleLabel')}

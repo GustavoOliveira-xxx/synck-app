@@ -29,6 +29,8 @@ export function IconButton({
   return (
     <PressableScale
       testID={testID}
+      translateXTo={icon === 'chevron-back' ? -4 : 0}
+      scaleTo={icon === 'chevron-back' ? 0.9 : 0.975}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"

@@ -1,5 +1,14 @@
 # Histórico de versões
 
+## 3.4.0 — 03/11/2026
+
+- Minha rotina: períodos semanais de trabalho, escola, sono, deslocamento, refeições, atividade física e cuidados, com horários editáveis e opção de pausar. A rotina é privada e ajusta sugestões sem criar eventos.
+- Cadastros mostram horários livres para a duração escolhida e eventos novos começam na primeira vaga do dia. Horários escolhidos explicitamente e eventos em edição são preservados.
+- 12 decorações SVG selecionáveis em eventos, tarefas, lembretes, anotações e hábitos, sincronizadas e editáveis, com opção de remover.
+- Botões de voltar com movimento direcional e carregamento vetorial animado, respeitando movimento reduzido e pausa em segundo plano.
+- Banco: aplicar a migration 20261103000900_rotina_decoracoes.sql antes de distribuir esta versão.
+
+
 ## Próxima versão (ainda não publicada)
 
 - **Vinheta de abertura da CK** ao abrir o app: "Uma produção de", a máscara da CK subindo com os raios girando, os olhos acendendo, o CK se formando com brilho, a piscadinha, o nome Conscious Knowledge e o slogan "Consciência que cria, Conhecimento que transforma." Completa na primeira abertura do dia (cerca de 5 segundos) e curta nas outras (cerca de 2 segundos); um toque pula. Com "reduzir movimento" ligado, a marca só aparece suavemente. Roda toda na thread de interface (Reanimated), sem travar enquanto o app carrega. Os desenhos vêm de `ck-group/marca` (`src/components/brand/vinheta/dados.json`, gerado; não editar à mão).

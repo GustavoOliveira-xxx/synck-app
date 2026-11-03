@@ -46,7 +46,7 @@ function paraDeno(codigo, arquivo) {
     if (alvo === 'luxon') return `from '${LUXON}'`;
     let caminho = null;
     if (alvo.startsWith('@/')) caminho = alvo.slice(2);
-    else if (alvo.startsWith('.')) caminho = join(dirname(arquivo), alvo);
+    else if (alvo.startsWith('.')) caminho = join(dirname(arquivo), alvo).replaceAll('\\', '/');
     if (caminho === null) throw new Error(`import não suportado em ${arquivo}: ${alvo}`);
     const comExt = ARQUIVOS.find((a) => a === `${caminho}.ts` || a === `${caminho}/index.ts`);
     if (!comExt) throw new Error(`${arquivo} importa ${alvo}, que não está na lista de arquivos copiados`);
@@ -60,7 +60,7 @@ const verificar = process.argv.includes('--verificar');
 const desatualizados = [];
 for (const arquivo of ARQUIVOS) {
   const cabecalho = `// Cópia gerada de app-mobile/src/${arquivo} por scripts/copiar-logica-push.mjs. Não edite aqui.\n`;
-  let codigo = readFileSync(join(origem, arquivo), 'utf8');
+  let codigo = readFileSync(join(origem, arquivo), 'utf8').replaceAll('\r\n', '\n');
   if (arquivo === 'i18n/pt-BR.ts') codigo = soSecoesUsadas(codigo);
   const conteudo = cabecalho + paraDeno(codigo, arquivo);
   const alvo = join(destino, arquivo);

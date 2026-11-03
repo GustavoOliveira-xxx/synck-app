@@ -1,3 +1,4 @@
+import { Decoration } from './DecorationPicker';
 // Quadro: um dia por coluna, como um quadro de cartões. Cada coluna mostra o
 // dia inteiro em detalhe: quanto do seu dia está ocupado, os compromissos
 // separados em Dia inteiro, Manhã, Tarde e Noite (com horário, local e quem
@@ -147,6 +148,7 @@ const BoardEvent = memo(function BoardEvent({
         </View>
       ) : null}
       <View style={styles.meta}>
+        {!e.is_masked && <Decoration name={e.decoration} color={color} size={20} />}
         <View style={[styles.dot, { backgroundColor: color }]} />
         <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.flex}>
           {calendarName}

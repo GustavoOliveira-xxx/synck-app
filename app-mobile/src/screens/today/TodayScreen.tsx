@@ -1,3 +1,4 @@
+import { routineBusy } from '@/utils/routine';
 // Tela Hoje: central do dia. Data e saudação, semana compacta, faixa de
 // sincronização, a pergunta "O que você pretende fazer hoje?", o próximo
 // compromisso e seções recolhíveis (agenda, tarefas, atrasadas, lembretes,
@@ -328,6 +329,7 @@ export default function TodayScreen() {
   const account = useAuthStore((s) => s.account);
   const name = account?.display_name ?? '';
   const userId = useUserId();
+  const routines = useAuthStore((s) => s.account?.preferences.routine_periods);
   const calendars = useDataStore((s) => s.calendars);
   const hydrated = useDataStore((s) => s.hydrated);
   const notifications = useDataStore((s) => s.notifications);
@@ -417,10 +419,17 @@ export default function TodayScreen() {
         .filter((o) => !o.allDay && o.event.status !== 'cancelled' && o.end.getTime() > now)
         .sort((a, b) => a.start.getTime() - b.start.getTime())[0]
     : undefined;
-  const slots = freeSlots(myBusy(list, userId), [selected], tz, display.dayStart, display.dayEnd, {
-    minMinutes: 30,
-    now: new Date(now),
-  });
+  const slots = freeSlots(
+    [...myBusy(list, userId), ...routineBusy(routines ?? [], [selected])],
+    [selected],
+    tz,
+    display.dayStart,
+    display.dayEnd,
+    {
+      minMinutes: 30,
+      now: new Date(now),
+    },
+  );
   const recent = notifications.filter((n) => !n.read_at).slice(0, 3);
 
   const openEvent = useCallback(

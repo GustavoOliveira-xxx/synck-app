@@ -1,3 +1,4 @@
+import { Decoration } from './DecorationPicker';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -135,6 +136,7 @@ export const EventRow = memo(function EventRow({
       <View style={[styles.bar, { backgroundColor: color, opacity: cancelled ? 0.4 : 1 }]} />
       <View style={styles.body}>
         <View style={styles.titleRow}>
+          {!e.is_masked && <Decoration name={e.decoration} color={color} size={22} />}
           <AppText
             variant="eventTitle"
             numberOfLines={1}

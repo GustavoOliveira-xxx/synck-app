@@ -1,3 +1,4 @@
+import { Decoration } from './DecorationPicker';
 import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -182,6 +183,7 @@ export const TaskRow = memo(function TaskRow({
       />
       <View style={styles.body}>
         <View style={styles.titleRow}>
+          <Decoration name={task.decoration} size={20} />
           {task.item_type === 'reminder' && (
             <Icon name="notifications-outline" size={15} color={colors.textMuted} />
           )}

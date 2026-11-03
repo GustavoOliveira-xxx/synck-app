@@ -1,5 +1,6 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 
+import { Button } from '@/components/Button';
 import { AppText } from '@/components/AppText';
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
@@ -82,6 +83,12 @@ export default function PreferencesScreen() {
         />
       </Card>
       <SectionHeader title={t('preferences.planning')} />
+      <Button
+        title="Minha rotina"
+        variant="secondary"
+        icon="time-outline"
+        onPress={() => router.push('/settings/routine')}
+      />
       <Card>
         <SwitchRow
           label={t('preferences.dailyCheckin')}

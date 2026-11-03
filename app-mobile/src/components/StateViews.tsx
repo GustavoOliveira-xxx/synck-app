@@ -1,20 +1,19 @@
+import { useScreenFocus } from '@/hooks/useScreenFocus';
+import { SyncLoader } from './SyncLoader';
 import { StyleSheet, View } from 'react-native';
 
-import { useScreenFocus } from '@/hooks/useScreenFocus';
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { spacing } from '@/theme/tokens';
 
 import { AppText } from './AppText';
-import { BrandMark } from './brand/BrandMark';
-import { GlassSphere, Kairo, OrbitRings, OrbitSymbol, useDecorSize } from './brand/Decor';
+import { GlassSphere, Kairo, OrbitSymbol, useDecorSize } from './brand/Decor';
 import { Button } from './Button';
 import { Icon, type IconName } from './Icon';
 import { EnterItem } from './motion';
 
-/** Carregando: o personagem SynCK flutua dentro dos anéis de órbita. */
+/** Carregando: dois arcos vetoriais giram enquanto a operação está em andamento. */
 export function LoadingState({ message }: { message?: string }) {
-  const focused = useScreenFocus();
   return (
     <View
       style={styles.center}
@@ -22,8 +21,7 @@ export function LoadingState({ message }: { message?: string }) {
       accessibilityLabel={message ?? t('common.loading')}
     >
       <View style={styles.loader}>
-        <OrbitRings size={120} paused={!focused} style={StyleSheet.absoluteFill} />
-        <BrandMark size={72} halo={false} />
+        <SyncLoader size={72} />
       </View>
       <AppText tone="muted">{message ?? t('common.loading')}</AppText>
     </View>

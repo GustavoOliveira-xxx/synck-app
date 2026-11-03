@@ -77,6 +77,13 @@ export default function ProfileScreen() {
           onPress={() => router.push('/settings/edit-profile')}
         />
         <ListItem
+          icon="time-outline"
+          title="Minha rotina"
+          subtitle="Trabalho, estudos, sono e seus horários livres"
+          onPress={() => router.push('/settings/routine')}
+        />
+
+        <ListItem
           icon="options-outline"
           title={t('profile.preferences')}
           onPress={() => router.push('/settings/preferences')}

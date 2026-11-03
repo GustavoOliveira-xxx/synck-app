@@ -65,6 +65,7 @@ export interface RecurrenceException {
 
 /** Campos de um evento que o app pode enviar ao servidor. */
 export interface EventFields {
+  decoration?: string | null;
   title: string;
   description: string | null;
   location: string | null;
@@ -195,7 +196,19 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export type DateFormat = 'dd/MM/yyyy' | 'yyyy-MM-dd' | 'MM/dd/yyyy';
 export type TimeFormat = '24h' | '12h';
 
+export interface RoutinePeriod {
+  id: string;
+  title: string;
+  kind: 'work' | 'school' | 'sleep' | 'commute' | 'meal' | 'exercise' | 'care' | 'custom';
+  days: number[];
+  start: string;
+  end: string;
+  timezone: string;
+  enabled: boolean;
+}
+
 export interface UserPreferences {
+  routine_periods?: RoutinePeriod[];
   locale: 'pt-BR';
   timezone: string;
   use_device_timezone: boolean;
@@ -344,6 +357,7 @@ export interface ChecklistItem {
 
 /** Campos de uma tarefa que o app pode enviar ao servidor. */
 export interface TaskFields {
+  decoration?: string | null;
   item_type: ItemType;
   calendar_id: string | null;
   list_id: string | null;
@@ -404,6 +418,7 @@ export interface TaskList {
 }
 
 export interface Note {
+  decoration?: string | null;
   id: string;
   calendar_id: string | null;
   title: string | null;
@@ -423,6 +438,7 @@ export interface Note {
 export type HabitStatus = 'active' | 'paused' | 'archived';
 
 export interface Habit {
+  decoration?: string | null;
   id: string;
   calendar_id: string | null;
   title: string;
