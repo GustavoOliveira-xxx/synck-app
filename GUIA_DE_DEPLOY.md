@@ -1,6 +1,6 @@
 # Guia de deploy: colocar o app no ar
 
-Este guia leva o projeto do código até o app funcionando no **Android** (APK), no **iPhone e no computador** (versão web instalável), **sem programar**. Tudo é feito pelo navegador, nos painéis do Supabase e do GitHub. A única parte que usa o terminal é opcional (chave de assinatura própria, parte 3).
+Este guia leva o projeto do código até o app funcionando no **Android** (APK), no **iPhone e no computador** (versão web instalável), **sem programar**. Tudo é feito pelo navegador, nos painéis do Supabase e do GitHub. A assinatura própria é obrigatória para publicar APKs. Neste repositório ela já está configurada; preserve a chave existente (parte 3).
 
 ```mermaid
 flowchart LR
@@ -152,7 +152,7 @@ Use a aba **Variables** (não Secrets) para essas duas: elas não são secretas 
 
 - **Bolinha verde (✓)** ao lado da execução: build aprovada. O APK estará em **Releases** (página inicial do repositório, coluna da direita) com instruções de instalação.
 - **Aviso amarelo "Servidor não configurado":** as Variables do passo 2.1 estão faltando ou com outro nome. O APK é gerado, mas abre na tela "Servidor não configurado".
-- **Aviso "Chave de testes":** normal enquanto você não fizer a parte 3. A release fica marcada como "Pre-release".
+- **Erro de assinatura:** desde a 3.5.0, faltar qualquer um dos quatro segredos impede compilar e publicar. Não existe substituição por chave de testes.
 - **X vermelho:** clique na execução > clique no passo com X para ver o erro > veja [TROUBLESHOOTING.md](TROUBLESHOOTING.md#github-actions).
 
 **Onde mais baixar:** cada execução (inclusive as automáticas, que rodam quando o código do app muda) guarda o APK e o AAB por 30 dias em **Actions > execução > Artifacts** (precisa estar logado no GitHub). A página **Releases** é melhor para mandar o link a outras pessoas.
@@ -163,11 +163,13 @@ Siga o [COMO_INSTALAR.md](COMO_INSTALAR.md). Depois, use o roteiro de teste manu
 
 ## Parte 3: chave de assinatura própria
 
-Todo APK é "assinado" por uma chave. O Android só aceita **atualizar** um app se a nova versão tiver a **mesma assinatura**. Sem configurar nada, o workflow usa a **chave de testes** do Android, que é pública (qualquer pessoa poderia gerar um APK "atualização" falso). Para distribuir de verdade, crie a sua.
+Todo APK é "assinado" por uma chave. O Android só aceita **atualizar** um app se a nova versão tiver a **mesma assinatura**. Desde a 3.5.0, o workflow exige a chave própria e compara o certificado com `docs/android-signing.sha256`. A chave do synCK já está configurada: não gere outra nem substitua os segredos existentes. Veja [Assinatura própria](docs/ASSINATURA_ANDROID.md).
 
 **Faça isso antes de distribuir para muitas pessoas.** Quem instalou a versão de testes precisará desinstalar e instalar a versão com a chave nova uma única vez.
 
-### 3.1 Criar a chave (uma vez na vida do app)
+### 3.1 Criar a chave (somente em um projeto novo)
+
+As instruções abaixo são uma referência para novos projetos. Para o synCK, use a cópia de segurança da chave já existente. A geração de uma chave é gratuita.
 
 Precisa de um computador com Java. O jeito mais simples é instalar o [Android Studio](https://developer.android.com/studio), que já traz o programa `keytool`.
 
@@ -225,7 +227,7 @@ Repositório > **Settings** > **Secrets and variables** > **Actions** > aba **Se
 | `ANDROID_KEY_ALIAS` | `agenda` (o valor de `-alias`) |
 | `ANDROID_KEY_PASSWORD` | A mesma senha do passo 3.1 (chaves PKCS12 usam uma senha só) |
 
-Secrets nunca aparecem de novo depois de salvos, nem nos registros do Actions. Rode a parte 2.2 de novo: a release deixa de ser "Pre-release" e o registro mostra "Assinatura: chave própria".
+Secrets não podem ser recuperados pelo painel depois de salvos. Em um projeto novo, registre também a impressão SHA-256 pública do certificado em `docs/android-signing.sha256` (hexadecimal minúsculo, sem dois-pontos). No synCK, preserve a impressão já registrada. Rode a parte 2.2: o workflow só publica se o certificado do APK corresponder a ela.
 
 ## Parte 4: lançar novas versões
 

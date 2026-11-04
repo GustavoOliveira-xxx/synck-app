@@ -160,13 +160,13 @@ npm ci && npm run preparar && CHROMIUM_PATH=/caminho/do/chrome npm test
 npm run preparar:site && CHROMIUM_PATH=/caminho/do/chrome npm run test:site
 ```
 
-São 299 testes automáticos (92 do banco, 190 do app, 10 de tela e 7 da versão instalável). Os mesmos rodam sozinhos no GitHub a cada envio (workflow **Qualidade**). Estratégia, números e roteiro de teste manual em [docs/TESTES.md](docs/TESTES.md).
+Os testes do banco, app, telas e versão instalável rodam automaticamente no GitHub. Os resultados atualizados ficam na aba Actions; o roteiro de testes no aparelho está em [docs/TESTES.md](docs/TESTES.md).
 
 ## Build, APK e AAB
 
 - O **APK** (arquivo que se instala direto no celular) e o **AAB** (formato que a Google Play Store pede) são gerados pelo GitHub Actions, no workflow **Gerar APK Android**.
 - Para gerar e publicar um APK com link de download: GitHub > **Actions** > **Gerar APK Android** > **Run workflow**. Em cerca de 20 minutos o arquivo aparece em **Releases**.
-- Sem uma chave de assinatura própria, o APK sai assinado com uma **chave de testes** (marcado como "pré-lançamento"). Serve para testar entre pessoas conhecidas. Para distribuir de verdade, configure sua chave: [GUIA_DE_DEPLOY.md, parte 3](GUIA_DE_DEPLOY.md#parte-3-chave-de-assinatura-própria).
+- A partir da versão 3.5.0, os lançamentos exigem a chave própria já configurada. A compilação confere o certificado e bloqueia APK depurável. Migração da instalação antiga e cópia da chave: [docs/ASSINATURA_ANDROID.md](docs/ASSINATURA_ANDROID.md).
 
 Tamanho (build 4): APK de 48 MB e AAB de 37 MB. Android mínimo: 7.0. Permissões pedidas (e o porquê de cada uma): [DECISOES.md, D22](DECISOES.md#d22-lista-fechada-de-permissões-do-android).
 
@@ -187,12 +187,11 @@ Integrações futuras (Google Calendar, exportação ICS, push remoto, anexos, l
 
 ## Limitações conhecidas
 
-- **Servidor pausado:** o projeto Supabase da conta está pausado e não pôde ser reativado automaticamente porque a conta já tem 2 projetos gratuitos ativos (limite do plano). Enquanto isso, o app instalado abre na tela "Servidor não configurado" ou não conecta. Como resolver: [GUIA_DE_DEPLOY.md, parte 1](GUIA_DE_DEPLOY.md#parte-1-servidor-supabase).
 - **Não testado em celular físico** nem com o Supabase real: a lógica foi testada automaticamente (banco e app), as telas principais foram testadas automaticamente na versão web contra uma cópia local do banco, e o APK compila no GitHub. O uso no celular ainda precisa do roteiro manual de [docs/TESTES.md](docs/TESTES.md) (login real, notificações, offline, tempo real).
 - **E-mail:** sem um servidor de e-mail próprio (SMTP), o Supabase só envia e-mails para membros da equipe do projeto. Por isso o guia recomenda desligar a confirmação de e-mail no começo.
 - **Convite por e-mail não envia e-mail:** o convite fica registrado e aparece para a pessoa quando ela entra com aquele e-mail. O jeito principal de convidar é o código.
-- **Lembretes são locais:** cada celular Android agenda os próprios lembretes; não há push remoto do servidor nesta versão. **Na versão web (iPhone, iPad e computador) os lembretes não tocam.**
-- **APK de testes:** sem configurar sua chave, o APK usa a chave pública de testes do Android.
+- **Lembretes:** o Android agenda os próprios alertas localmente; na versão web, o recebimento depende de permissão de notificações, assinatura ativa e suporte do navegador ao Web Push.
+- **Troca da chave de testes:** sincronize e confirme os dados no site antes de desinstalar o APK antigo. A primeira instalação com a chave própria exige essa troca; as atualizações seguintes preservam a assinatura.
 - **Somente português do Brasil** nesta versão (a estrutura de tradução está pronta).
 - **App nativo de iPhone** não foi compilado nem testado (exige conta paga da Apple). No iPhone, use a versão web instalável.
 - **Versão web:** testada automaticamente no Chrome (tamanhos de celular, tablet e computador); ainda não conferida num iPhone de verdade.

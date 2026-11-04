@@ -46,7 +46,7 @@ synck-v1.0.0-build4.apk
 ```
 
 - Confira se o nome começa com **`synck`** e se a versão é a mais recente da página Releases.
-- Se a versão estiver marcada como **"Pre-release"**, ela foi assinada com a chave de testes: funciona normalmente, mas é para testes.
+- A partir da versão **3.5.0**, os APKs oficiais usam a chave própria de distribuição. Versões antigas de testes precisam da migração descrita em [Assinatura própria](docs/ASSINATURA_ANDROID.md).
 
 ### Passo 3. Abrir o arquivo
 
@@ -110,7 +110,7 @@ O app do Android **não se atualiza sozinho** (ele não vem da Play Store). A pa
 
 1. Baixe o APK mais novo pelo aviso ou pela página Releases (passos 1 a 5). O Android vai perguntar **"Deseja instalar uma atualização?"**. Toque em **Instalar**.
 2. Seus dados continuam: eles ficam no servidor e o app sincroniza de novo. Da 2.0 para a 3.0 nada muda nos seus eventos e agendas: aparece a aba **Tarefas** e, na primeira abertura do dia, a pergunta **"O que você pretende fazer hoje?"** (dá para desligar em **Perfil > Preferências**).
-3. Se aparecer **"App não instalado"** ou **"o pacote está em conflito"**, o APK novo foi assinado com outra chave (por exemplo, a versão de testes foi trocada pela versão com chave própria). Desinstale a versão antiga e instale a nova. Os dados estão no servidor; alterações feitas offline e ainda não enviadas serão perdidas, então abra o app com internet antes de desinstalar.
+3. Se aparecer **"App não instalado"** ou **"o pacote está em conflito"**, o APK novo foi assinado com outra chave (por exemplo, a versão de testes foi trocada pela versão com chave própria). Antes de desinstalar, abra **Sincronização** e confirme que não há operações pendentes nem com erro. Confira no site que seus dados chegaram à conta. Só então desinstale a versão antiga, instale a nova e entre na mesma conta. Alterações ainda não enviadas e preferências locais podem ser perdidas.
 
 ### Como ver a versão instalada
 
