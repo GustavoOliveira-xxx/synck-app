@@ -1,3 +1,4 @@
+import { RoutineCancelled } from '@/services/routineGuard';
 import { AvailableTimes } from '@/components/AvailableTimes';
 import { useFreeSlots } from '@/hooks/usePlanning';
 import { startOptions } from '@/utils/freeTime';
@@ -148,7 +149,8 @@ function Form({
       toast(online ? (event ? t('events.updated') : t('events.created')) : t('events.savedOffline'));
       allowLeave();
       goBack();
-    } catch {
+    } catch (error) {
+      if (error instanceof RoutineCancelled) return;
       toast(t('errors.generic'), 'error');
     } finally {
       setSaving(false);

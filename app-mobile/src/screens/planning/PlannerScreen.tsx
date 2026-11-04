@@ -1,6 +1,7 @@
 // "Planejar minha semana": sugere blocos de tempo para as tarefas com prazo
 // nos próximos dias, explica cada sugestão e só reserva depois da revisão.
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

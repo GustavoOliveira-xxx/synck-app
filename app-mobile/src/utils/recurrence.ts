@@ -304,7 +304,9 @@ function buildOccurrence(
 ): Occurrence {
   return {
     key: `${event.id}:${originalDate}`,
-    event: event as CalendarEvent,
+    event: exception?.status
+      ? ({ ...event, status: exception.status, completed_at: null } as CalendarEvent)
+      : (event as CalendarEvent),
     originalDate,
     start: exception?.starts_at ? new Date(exception.starts_at) : start,
     end: exception?.ends_at ? new Date(exception.ends_at) : end,

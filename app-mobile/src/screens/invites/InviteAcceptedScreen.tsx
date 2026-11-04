@@ -1,4 +1,5 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

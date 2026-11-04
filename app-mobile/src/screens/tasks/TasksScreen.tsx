@@ -1,7 +1,7 @@
 // Aba Tarefas: adição rápida, visões inteligentes (Hoje, Próximos 7 dias,
 // Atrasadas...), listas e as tarefas e lembretes da visão escolhida. Em telas
 // largas, as visões ficam numa coluna à esquerda.
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect, useRef, useState } from 'react';
 
 import { StyleSheet, View } from 'react-native';

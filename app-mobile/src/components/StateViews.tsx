@@ -1,5 +1,7 @@
 import { useScreenFocus } from '@/hooks/useScreenFocus';
-import { SyncLoader } from './SyncLoader';
+import { useEffect } from 'react';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
+import { useNavigationLoading } from '@/stores/navigationLoadingStore';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '@/i18n';
@@ -12,8 +14,18 @@ import { Button } from './Button';
 import { Icon, type IconName } from './Icon';
 import { EnterItem } from './motion';
 
-/** Carregando: dois arcos vetoriais giram enquanto a operação está em andamento. */
+/** O Kairo acompanha esperas reais; telas rápidas não piscam um carregamento. */
 export function LoadingState({ message }: { message?: string }) {
+  const focused = useScreenFocus();
+  const visible = useDelayedLoading(focused);
+  useEffect(() => {
+    if (!focused) return;
+    useNavigationLoading.setState((s) => ({ inline: s.inline + 1 }));
+    return () => {
+      useNavigationLoading.setState((s) => ({ inline: Math.max(0, s.inline - 1) }));
+    };
+  }, [focused]);
+  if (!visible) return <View style={styles.center} />;
   return (
     <View
       style={styles.center}
@@ -21,7 +33,7 @@ export function LoadingState({ message }: { message?: string }) {
       accessibilityLabel={message ?? t('common.loading')}
     >
       <View style={styles.loader}>
-        <SyncLoader size={72} />
+        <Kairo size={112} paused={!focused} />
       </View>
       <AppText tone="muted">{message ?? t('common.loading')}</AppText>
     </View>

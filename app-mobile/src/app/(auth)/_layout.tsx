@@ -1,5 +1,6 @@
 import { IconButton } from '@/components/IconButton';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';

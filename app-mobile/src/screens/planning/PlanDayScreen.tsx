@@ -2,7 +2,8 @@
 // pretende fazer hoje?". Mostra o que já está marcado, o que ficou para trás,
 // deixa escrever o que mais vai fazer e sugere o que a pessoa costuma fazer.
 // As escolhas entram no "Meu dia" (task_plans): pessoal, não muda prazos.
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';

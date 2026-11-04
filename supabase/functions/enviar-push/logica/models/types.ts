@@ -54,6 +54,7 @@ export interface Calendar {
 }
 
 export interface RecurrenceException {
+  status?: EventStatus | null;
   original_date: DateKey;
   is_cancelled: boolean;
   title: string | null;
@@ -112,6 +113,7 @@ export interface CalendarEvent extends Omit<EventFields, 'title'> {
 
 /** Uma ocorrência concreta de um evento (eventos recorrentes geram várias). */
 export interface Occurrence {
+  routine?: { periodId: string; date: DateKey };
   key: string;
   event: CalendarEvent;
   /** Data local (no fuso do evento) da ocorrência original na série. */
@@ -196,7 +198,15 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export type DateFormat = 'dd/MM/yyyy' | 'yyyy-MM-dd' | 'MM/dd/yyyy';
 export type TimeFormat = '24h' | '12h';
 
+export interface RoutineException {
+  original_date: DateKey;
+  action: 'skip' | 'move';
+  starts_at?: string;
+  ends_at?: string;
+}
+
 export interface RoutinePeriod {
+  exceptions?: RoutineException[];
   id: string;
   title: string;
   kind: 'work' | 'school' | 'sleep' | 'commute' | 'meal' | 'exercise' | 'care' | 'custom';

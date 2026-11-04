@@ -1,6 +1,6 @@
 // Apresentação em 3 passos, mostrada só na primeira vez:
 // 1. personagem do logo em destaque; 2. órbita de avatares; 3. esfera de vidro.
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {

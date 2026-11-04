@@ -2,7 +2,8 @@
 // endereço (link, recarregar a página, ícone da tela de início) não tem tela
 // anterior: nesse caso o app sobe para a tela "mãe" (a que normalmente leva
 // até ela), em vez de jogar a pessoa sempre na tela Hoje.
-import { router, type Href } from 'expo-router';
+import { type Href } from 'expo-router';
+import { router } from '@/services/router';
 
 /** Endereço atual, atualizado pelo layout do app (usePathname). */
 let currentPath = '/';
@@ -44,6 +45,8 @@ export function parentRoute(pathname: string): Href {
       return '/tasks';
     case 'sync':
       return id ? '/sync' : '/profile';
+    case 'routine':
+      return '/settings/routine';
     case 'settings':
     case 'diagnostics':
     case 'help':

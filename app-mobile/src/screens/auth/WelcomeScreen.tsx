@@ -1,7 +1,7 @@
 // Boas-vindas: logo SynCK com o halo da marca, a frase do produto e as três
 // saídas (criar conta, Google, já tenho conta). Mesma estrutura visual das
 // demais telas de entrada.
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

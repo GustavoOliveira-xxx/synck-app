@@ -1,3 +1,6 @@
+import { router as original } from 'expo-router';
+import { router } from '../router';
+import { endNavigation } from '@/stores/navigationLoadingStore';
 import { parentRoute, pathFromRoute } from '../navigation';
 
 jest.mock('expo-router', () => ({ router: { canGoBack: () => false, back: jest.fn(), replace: jest.fn() } }));
@@ -18,6 +21,7 @@ describe('tela mãe (voltar sem histórico)', () => {
     ['/notes', '/tasks'],
     ['/habits', '/tasks'],
     ['/settings/password', '/profile'],
+    ['/routine/day', '/settings/routine'],
     ['/sync/op1', '/sync'],
     ['/sync', '/profile'],
     ['/invites/accept', '/calendars'],
@@ -33,4 +37,15 @@ describe('tela mãe (voltar sem histórico)', () => {
     );
     expect(pathFromRoute('task/[id]/index', { id: 't' })).toBe('/task/t');
   });
+});
+
+it('consulta os métodos do Expo após a inicialização', () => {
+  const ready = jest.fn(() => true);
+  original.canGoBack = ready;
+  expect(router.canGoBack()).toBe(true);
+  const back = jest.fn();
+  original.back = back;
+  router.back();
+  expect(back).toHaveBeenCalledTimes(1);
+  endNavigation();
 });

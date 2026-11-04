@@ -80,6 +80,7 @@ async function reminders(from: Date, to: Date): Promise<Push[]> {
     // Ocorrências que começam dentro da janela deslocada pela antecedência.
     const occurrences = expandEvent(row.event, new Date(from.getTime() + ms - 86_400_000), new Date(to.getTime() + ms + 1));
     for (const occ of occurrences) {
+      if (occ.event.status === 'completed' || occ.event.status === 'cancelled') continue;
       const at = occ.start.getTime() - ms;
       if (at <= from.getTime() || at > to.getTime()) continue;
       const details = row.show_details && row.access === 'full';

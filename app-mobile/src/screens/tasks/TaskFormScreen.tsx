@@ -1,3 +1,4 @@
+import { RoutineCancelled } from '@/services/routineGuard';
 import { AvailableTimes } from '@/components/AvailableTimes';
 import { useFreeSlots } from '@/hooks/usePlanning';
 import { DecorationPicker } from '@/components/DecorationPicker';
@@ -140,7 +141,8 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
       );
       allowLeave();
       goBack();
-    } catch {
+    } catch (error) {
+      if (error instanceof RoutineCancelled) return;
       toast(t('errors.generic'), 'error');
     } finally {
       setSaving(false);

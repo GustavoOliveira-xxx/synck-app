@@ -55,6 +55,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Exigir chave própria antes de compilar
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KS_PASS" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASS" ]; then
+            echo "::error::Configure os quatro segredos de assinatura. APKs de testes não são publicados."
+            exit 1
+          fi
+
       - name: Instalar dependências
         run: npm ci
 
@@ -90,7 +102,7 @@ jobs:
         # Deixar de fora x86/x86_64 (emuladores e poucos Chromebooks) reduz o APK pela metade.
         run: ./gradlew assembleRelease bundleRelease --no-daemon -PreactNativeArchitectures=armeabi-v7a,arm64-v8a
 
-      - name: Assinar com a chave própria (se configurada nos Secrets)
+      - name: Assinar com a chave própria
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -113,10 +125,8 @@ jobs:
             rm -f "$RUNNER_TEMP/release.keystore"
             echo "ASSINATURA=propria" >> "$GITHUB_ENV"
           else
-            echo "::warning title=Chave de testes::APK assinado com a chave de testes (debug). Bom para testar; para distribuir, configure sua chave (GUIA_DE_DEPLOY.md)."
-            cp "$APK" "../saida/$NOME.apk"
-            cp "$AAB" "../saida/$NOME.aab"
-            echo "ASSINATURA=teste" >> "$GITHUB_ENV"
+            echo "::error::Chave própria ausente."
+            exit 1
           fi
           echo "NOME=$NOME" >> "$GITHUB_ENV"
           ls -la ../saida
@@ -137,6 +147,11 @@ jobs:
             exit 1
           fi
           echo "Assinatura:"
+          EXPECTED=$(tr -d '\r\n' < ../docs/android-signing.sha256)
+          ACTUAL=$("$BT/apksigner" verify --print-certs "../saida/$NOME.apk" | sed -n 's/Signer #1 certificate SHA-256 digest: //p' | head -1)
+          [ "$EXPECTED" = "$ACTUAL" ] || { echo "::error::Certificado inesperado no APK."; exit 1; }
+          "$BT/aapt2" dump badging "../saida/$NOME.apk" > badging.txt
+          if grep -q "application-debuggable" badging.txt; then echo "::error::APK de distribuição não pode permitir depuração."; exit 1; fi
           "$BT/apksigner" verify --print-certs "../saida/$NOME.apk" | head -4
           echo "Tamanho:"
           du -h ../saida/*
@@ -168,6 +183,7 @@ jobs:
 
           - Versão: $VERSAO (build $GITHUB_RUN_NUMBER)
           - Android mínimo: 7.0
+          - Migração da versão de testes: sincronize os dados antes de desinstalar o APK antigo; a chave própria exige uma instalação nova.
           - Assinatura: $([ "$ASSINATURA" = "teste" ] && echo "chave de testes (versão de teste)" || echo "chave própria")
           - O arquivo .aab serve apenas para enviar à Google Play Store.
           NOTAS

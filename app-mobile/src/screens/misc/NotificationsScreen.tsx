@@ -1,4 +1,5 @@
-import { router, useNavigation } from 'expo-router';
+import { useNavigation } from 'expo-router';
+import { router } from '@/services/router';
 import { useLayoutEffect } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 

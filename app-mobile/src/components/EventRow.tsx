@@ -1,3 +1,4 @@
+import { EventCompletion } from './EventCompletion';
 import { Decoration } from './DecorationPicker';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -111,64 +112,69 @@ export const EventRow = memo(function EventRow({
   ].filter(Boolean);
 
   return (
-    <PressableScale
-      onPress={() => onPress(occ)}
-      scaleTo={0.98}
-      accessibilityRole="button"
-      accessibilityLabel={labels.join(', ')}
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface },
-        dark ? { borderColor: colors.border } : elevation(1, colors),
-        isNow && { borderColor: colors.primary, borderWidth: 2 },
-      ]}
-    >
-      <View style={styles.time}>
-        <AppText variant="time" maxFontSizeMultiplier={1.3} style={occ.allDay && styles.allDay}>
-          {top}
-        </AppText>
-        {bottom ? (
-          <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3} style={styles.tabular}>
-            {bottom}
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <PressableScale
+        onPress={() => onPress(occ)}
+        scaleTo={0.98}
+        accessibilityRole="button"
+        accessibilityLabel={labels.join(', ')}
+        style={[
+          styles.card,
+          { flex: 1 },
+          occ.routine && { borderStyle: 'dashed', borderWidth: 1, borderColor: colors.border },
+          { backgroundColor: colors.surface },
+          dark ? { borderColor: colors.border } : elevation(1, colors),
+          isNow && { borderColor: colors.primary, borderWidth: 2 },
+        ]}
+      >
+        <View style={styles.time}>
+          <AppText variant="time" maxFontSizeMultiplier={1.3} style={occ.allDay && styles.allDay}>
+            {top}
           </AppText>
-        ) : null}
-      </View>
-      <View style={[styles.bar, { backgroundColor: color, opacity: cancelled ? 0.4 : 1 }]} />
-      <View style={styles.body}>
-        <View style={styles.titleRow}>
-          {!e.is_masked && <Decoration name={e.decoration} color={color} size={22} />}
-          <AppText
-            variant="eventTitle"
-            numberOfLines={1}
-            style={[
-              styles.flex,
-              (cancelled || done) && { textDecorationLine: 'line-through', color: colors.textMuted },
-            ]}
-          >
-            {title}
-          </AppText>
-          {isNow && <Badge label={t('today.now')} tone="strong" />}
+          {bottom ? (
+            <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3} style={styles.tabular}>
+              {bottom}
+            </AppText>
+          ) : null}
         </View>
-        {calendarName ? (
-          <View style={styles.meta}>
-            <View style={[styles.dot, { backgroundColor: color }]} />
-            <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.flex}>
-              {calendarName}
-              {occ.isRecurring ? ` · ${t('events.recurring')}` : ''}
+        <View style={[styles.bar, { backgroundColor: color, opacity: cancelled ? 0.4 : 1 }]} />
+        <View style={styles.body}>
+          <View style={styles.titleRow}>
+            {!e.is_masked && <Decoration name={e.decoration} color={color} size={22} />}
+            <AppText
+              variant="eventTitle"
+              numberOfLines={1}
+              style={[
+                styles.flex,
+                (cancelled || done) && { textDecorationLine: 'line-through', color: colors.textMuted },
+              ]}
+            >
+              {title}
             </AppText>
+            {isNow && <Badge label={t('today.now')} tone="strong" />}
           </View>
-        ) : null}
-        {occ.location || people.length ? (
-          <View style={styles.meta}>
-            <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.flex}>
-              {occ.location ?? ''}
-            </AppText>
-            <AvatarStack people={people} size={26} />
-          </View>
-        ) : null}
-        {badges.length ? <View style={styles.badges}>{badges}</View> : null}
-      </View>
-    </PressableScale>
+          {calendarName ? (
+            <View style={styles.meta}>
+              <View style={[styles.dot, { backgroundColor: color }]} />
+              <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.flex}>
+                {calendarName}
+                {occ.isRecurring ? ` · ${t('events.recurring')}` : ''}
+              </AppText>
+            </View>
+          ) : null}
+          {occ.location || people.length ? (
+            <View style={styles.meta}>
+              <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.flex}>
+                {occ.location ?? ''}
+              </AppText>
+              <AvatarStack people={people} size={26} />
+            </View>
+          ) : null}
+          {badges.length ? <View style={styles.badges}>{badges}</View> : null}
+        </View>
+      </PressableScale>
+      <EventCompletion occurrence={occ} compact />
+    </View>
   );
 });
 

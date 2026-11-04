@@ -1,7 +1,8 @@
 import { Decoration } from '@/components/DecorationPicker';
 // Detalhes de uma tarefa ou lembrete: conclusão, etapas com progresso,
 // prazo e repetição, blocos de tempo no calendário, comentários e histórico.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';

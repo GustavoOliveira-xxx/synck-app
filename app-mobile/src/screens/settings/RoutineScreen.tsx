@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { AppText } from '@/components/AppText';
@@ -15,7 +16,7 @@ import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { strings } from '@/i18n';
 import { newId } from '@/offline/storage';
-import { savePreferences } from '@/services/account';
+import { saveRoutines } from '@/services/routines';
 import { goBack } from '@/services/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { spacing } from '@/theme/tokens';
@@ -23,8 +24,16 @@ import { ROUTINE_KINDS, validRoutine, type RoutinePeriod } from '@/utils/routine
 
 export default function RoutineScreen() {
   const saved = useAuthStore((s) => s.account?.preferences.routine_periods);
-  const [base] = useState(() => saved ?? []);
+  const [base, setBase] = useState(() => saved ?? []);
   const [periods, setPeriods] = useState<RoutinePeriod[]>(base);
+  // Atualiza uma tela intacta ao voltar de uma exceção salva, sem apagar edições locais.
+  if (
+    JSON.stringify(base) === JSON.stringify(periods) &&
+    JSON.stringify(saved ?? []) !== JSON.stringify(base)
+  ) {
+    setBase(saved ?? []);
+    setPeriods(saved ?? []);
+  }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const display = useDisplaySettings();
@@ -56,12 +65,15 @@ export default function RoutineScreen() {
     }
     setSaving(true);
     try {
-      await savePreferences({ routine_periods: periods.map((p) => ({ ...p, title: p.title.trim() })) });
+      await saveRoutines(
+        periods.map((p) => ({ ...p, title: p.title.trim() })),
+        base,
+      );
       toast('Rotina salva. Seus horários livres já foram atualizados.');
       allowLeave();
       goBack();
-    } catch {
-      toast('Não foi possível salvar a rotina. Confira sua conexão e tente novamente.', 'error');
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Não foi possível salvar a rotina.', 'error');
     } finally {
       setSaving(false);
     }
@@ -71,11 +83,13 @@ export default function RoutineScreen() {
       <Stack.Screen options={{ title: 'Minha rotina' }} />
       <AppText variant="heading">Um dia que respeita seu ritmo</AppText>
       <AppText tone="muted">
-        Reserve os períodos em que você costuma estar ocupado. Eles ajustam suas sugestões de horários, sem
-        adicionar eventos à agenda. Você continua livre para marcar um encaixe.
+        Reserve os períodos em que você costuma estar ocupado. Eles aparecem como blocos fixos na agenda e
+        protegem seus horários. Para um dia diferente, toque no bloco e escolha liberar ou reagendar só aquela
+        ocorrência.
       </AppText>
       <AppText variant="small" tone="muted">
-        Sua rotina é privada. Para compartilhar um compromisso, crie um evento na agenda.
+        Sua rotina é privada. Alterar esta tela muda o padrão semanal; as exceções por dia são preservadas.
+        Compromissos já existentes não são movidos nem apagados.
       </AppText>
       {periods.map((p, index) => (
         <Card key={p.id}>
@@ -139,6 +153,25 @@ export default function RoutineScreen() {
             value={p.enabled}
             onChange={(enabled) => change(p.id, { enabled })}
           />
+          {(p.exceptions ?? []).length > 0 && (
+            <View>
+              <AppText variant="label">Exceções por dia</AppText>
+              {(p.exceptions ?? [])
+                .slice()
+                .sort((a, b) => b.original_date.localeCompare(a.original_date))
+                .map((e) => (
+                  <Button
+                    key={e.original_date}
+                    title={e.original_date + (e.action === 'skip' ? ' · liberado' : ' · reagendado')}
+                    variant="ghost"
+                    compact
+                    onPress={() =>
+                      router.push({ pathname: '/routine/day', params: { id: p.id, date: e.original_date } })
+                    }
+                  />
+                ))}
+            </View>
+          )}
           <Button
             title="Remover período"
             variant="ghost"

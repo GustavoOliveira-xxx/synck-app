@@ -1,6 +1,7 @@
 // Peças das telas de entrada: estrutura comum (AuthShell), voltar no topo,
 // divisória "ou" e link em linha.
-import { router, type Href } from 'expo-router';
+import { type Href } from 'expo-router';
+import { router } from '@/services/router';
 import type { ReactNode } from 'react';
 import {
   KeyboardAvoidingView,

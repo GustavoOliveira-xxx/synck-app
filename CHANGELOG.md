@@ -1,5 +1,12 @@
 # Histórico de versões
 
+## 3.5.0 — 04/11/2026
+
+- Assinatura própria obrigatória no Android, com conferência do certificado e bloqueio de APK depurável.
+- Rotina visível na agenda, exceções por dia, reagendamento e confirmação de sobreposições.
+- Conclusão rápida de eventos; séries preservam as próximas ocorrências.
+- Carregamento proporcional com Kairo na navegação e nos dados.
+
 ## 3.4.0 — 03/11/2026
 
 - Minha rotina: períodos semanais de trabalho, escola, sono, deslocamento, refeições, atividade física e cuidados, com horários editáveis e opção de pausar. A rotina é privada e ajusta sugestões sem criar eventos.

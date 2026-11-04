@@ -1,6 +1,6 @@
 // Ações rápidas de tarefas usadas em várias telas: concluir com "Desfazer",
 // menu do toque longo (fazer hoje, adiar, prioridade, excluir).
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useCallback, useState, type ReactNode } from 'react';
 
 import { useFeedback } from '@/components/Feedback';

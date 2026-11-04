@@ -1,3 +1,4 @@
+import { beginNavigation } from '@/stores/navigationLoadingStore';
 // Navegação principal SynCK: Hoje, Calendário, Tarefas, Agendas e Perfil.
 // Celular: barra embaixo; a pílula `primarySoft` escorrega até o item novo e o
 // ícone pula 2 dp. Tablet e computador: menu lateral com o logo no topo.
@@ -96,6 +97,7 @@ export function SynckTabBar({
     const event = emitter.emit({ type: 'tabPress', target: key, canPreventDefault: true });
     if (!focused && !event.defaultPrevented) {
       tapFeedback('select');
+      beginNavigation();
       navigateToTab(key);
     }
   };

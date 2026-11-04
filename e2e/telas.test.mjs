@@ -539,6 +539,36 @@ test('3.4: rotina pessoal, primeira vaga e decoração editável persistem entre
   await page.context().close();
 });
 
+
+test('3.5: conflito exige decisão, exceção libera só o dia e reunião conclui pela lista',async()=>{
+ const page=await abrirSessao();await entrar(page,'bruno.demo@exemplo.test');
+ await ir(page,'/settings/routine');await page.getByText('Trabalho',{exact:true}).click();
+ await page.getByRole('textbox',{name:'Nome do período',exact:true}).fill('Academia de teste');
+ await page.getByTestId('routine-save').click();await page.waitForURL('**/profile');
+ const future=new Date();future.setDate(future.getDate()+((8-future.getDay())%7||7)+7);const day=future.toISOString().slice(0,10);
+ await ir(page,'/month?date='+day);await page.getByRole('button',{name:/Academia de teste · Rotina/}).first().scrollIntoViewIfNeeded();await foto(page,'26-rotina-visivel');
+ await ir(page,'/event/new?date='+day+'&start=09:00&calendarId='+AGENDA);await page.getByTestId('event-title').fill('Reunião rápida de teste');await page.getByTestId('event-save').click();
+ await page.getByText('Este horário encontra sua rotina',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Escolher outro horário',exact:true}).click();assert.ok(page.url().includes('/event/new'));
+ await page.getByTestId('event-save').click();await page.getByRole('button',{name:'Liberar só estas ocorrências',exact:true}).click();await page.waitForURL(url=>!url.pathname.endsWith('/event/new'));
+ await ir(page,'/month?date='+day);await page.getByRole('button',{name:'Concluir evento: Reunião rápida de teste',exact:true}).click();await page.getByRole('button',{name:'Reabrir evento: Reunião rápida de teste',exact:true}).waitFor();await foto(page,'27-conclusao-rapida');
+ await ir(page,'/settings/routine');await page.getByRole('button',{name:day+' · liberado',exact:true}).click();
+ await page.getByRole('button',{name:'Restaurar padrão neste dia',exact:true}).click();await page.getByText('Há outro compromisso neste horário',{exact:true}).waitFor();await page.getByRole('button',{name:'Manter os dois',exact:true}).click();await page.waitForURL('**/settings/routine');
+ await ir(page,'/month?date='+day);await page.getByRole('button',{name:/Academia de teste · Rotina/}).first().waitFor();await page.context().close();
+});
+
+
+test('3.5: Kairo acompanha espera de dados e some ao terminar',async()=>{
+ const page=await abrirSessao();await entrar(page,'carla.demo@exemplo.test');
+ await ir(page,'/calendars');
+ let release;const waiting=new Promise(resolve=>{release=resolve});
+ await page.route(API+'/rest/v1/rpc/my_invitations',async route=>{await waiting;await route.fulfill(await servidor.responder(route.request()));});
+ await page.getByRole('button',{name:/^Convites/}).first().click();
+ await page.getByRole('progressbar').waitFor({state:'visible',timeout:8000});await foto(page,'28-carregamento-kairo');
+ assert.equal(await page.getByRole('progressbar').count(),1,'uma espera não duplica indicadores');release();
+ await page.getByRole('progressbar').waitFor({state:'detached',timeout:8000});await page.context().close();
+});
+
 test('nenhum erro de JavaScript em nenhuma tela', () => {
   assert.deepEqual(erros, []);
   const falhas = servidor.registro.filter((r) => r.includes('ERRO'));

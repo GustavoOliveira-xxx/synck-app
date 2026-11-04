@@ -1,5 +1,6 @@
 // Ações de eventos usadas pelas telas. Todas passam pela fila offline:
 // funcionam sem internet e são enviadas assim que possível.
+import { useDataStore } from '@/stores/dataStore';
 import { TIME_GROUP } from '@/offline/merge';
 import { makeOp, type OutboxOp } from '@/offline/outbox';
 import { newId } from '@/offline/storage';
@@ -456,4 +457,52 @@ export async function deleteEventsById(list: { id: string; calendarId: string }[
       }),
     );
   }
+}
+
+/** Conclusão rápida: em séries, altera apenas a ocorrência exibida. */
+export async function setOccurrenceCompleted(occurrence: Occurrence, completed: boolean): Promise<void> {
+  const event = occurrence.event;
+  if (!event.recurrence_rule) return setEventStatus(event, completed ? 'completed' : 'planned');
+  const previous = event.exceptions.find((e) => e.original_date === occurrence.originalDate);
+  await enqueueOp(
+    makeOp({
+      id: newId(),
+      kind: 'exception_upsert',
+      entityId: event.id,
+      calendarId: event.calendar_id,
+      payload: {
+        ...previous,
+        original_date: occurrence.originalDate,
+        is_cancelled: false,
+        status: completed ? 'completed' : 'planned',
+      },
+    }),
+  );
+}
+
+/** Desfazer recupera o estado anterior, inclusive confirmado e a herança da série. */
+export async function restoreOccurrenceCompletion(occurrence: Occurrence): Promise<void> {
+  const event = occurrence.event;
+  if (!event.recurrence_rule) {
+    const current = useDataStore.getState().events[event.id] ?? event;
+    return setEventStatus(
+      { ...current, status: event.status === 'completed' ? 'planned' : 'completed' },
+      event.status,
+    );
+  }
+  const previous = event.exceptions.find((e) => e.original_date === occurrence.originalDate);
+  await enqueueOp(
+    makeOp({
+      id: newId(),
+      kind: 'exception_upsert',
+      entityId: event.id,
+      calendarId: event.calendar_id,
+      payload: {
+        ...previous,
+        original_date: occurrence.originalDate,
+        is_cancelled: false,
+        status: previous?.status ?? null,
+      },
+    }),
+  );
 }

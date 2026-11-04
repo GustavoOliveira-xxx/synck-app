@@ -1,3 +1,4 @@
+import { RouteLoading } from '@/components/RouteLoading';
 // Raiz do app: provedores (tema, mensagens), sessão e proteção de rotas.
 // Quem não está logado só acessa as telas de (auth); quem está, as de (app).
 import {
@@ -68,6 +69,7 @@ function Navigation() {
           <Stack.Screen name="(app)" />
         </Stack.Protected>
       </Stack>
+      <RouteLoading />
     </NavThemeProvider>
   );
 }

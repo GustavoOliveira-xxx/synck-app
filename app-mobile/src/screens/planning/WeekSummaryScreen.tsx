@@ -1,6 +1,7 @@
 // "Minha semana em sintonia": compromissos, prazos, pendências, tempo livre,
 // agendas compartilhadas e sobreposições da semana, com sugestões neutras.
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

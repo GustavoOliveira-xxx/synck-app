@@ -1,4 +1,5 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useState } from 'react';
 
 import { Button } from '@/components/Button';

@@ -1,4 +1,5 @@
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 
 import { Button } from '@/components/Button';
 import { AppText } from '@/components/AppText';

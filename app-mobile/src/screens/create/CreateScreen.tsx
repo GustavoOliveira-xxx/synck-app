@@ -1,6 +1,7 @@
 // "O que você deseja adicionar?": adição rápida (texto livre) com prévia
 // editável e atalhos para cada tipo: evento, tarefa, lembrete, anotação e hábito.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

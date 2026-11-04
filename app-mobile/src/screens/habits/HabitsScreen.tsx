@@ -1,7 +1,8 @@
 import { Decoration } from '@/components/DecorationPicker';
 // Hábitos e rotinas: registrar quando fizer, ver as últimas semanas, pausar
 // e arquivar. Não ocupam horário na agenda. Sequência só se a pessoa ligar.
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { router } from '@/services/router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

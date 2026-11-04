@@ -1,7 +1,8 @@
 // Uma agenda: cabeçalho na cor dela, atalhos para o que mais se faz (marcar,
 // convidar, ver no calendário, achar horário), os próximos compromissos e,
 // por último, as ferramentas e ajustes.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

@@ -1,5 +1,7 @@
+import { EventCompletion } from '@/components/EventCompletion';
 import { Decoration } from '@/components/DecorationPicker';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect, useMemo, useState } from 'react';
 import { Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
 
@@ -412,9 +414,13 @@ export default function EventDetailScreen() {
   const { confirm, toast } = useFeedback();
   const events = useEventsMap();
   const calendars = useCalendarsMap();
-  const event = events[id];
-  const people = useCalendarMembers(event?.calendar_id);
-  const occurrence = useMemo(() => (event ? findOccurrence(event, date) : undefined), [event, date]);
+  const baseEvent = events[id];
+  const people = useCalendarMembers(baseEvent?.calendar_id);
+  const occurrence = useMemo(
+    () => (baseEvent ? findOccurrence(baseEvent, date) : undefined),
+    [baseEvent, date],
+  );
+  const event = occurrence?.event ?? baseEvent;
   const [reminders, setReminderState] = useState<number[] | null>(null);
 
   if (!event || !occurrence) {
@@ -622,6 +628,7 @@ export default function EventDetailScreen() {
       </View>
 
       {amAttendee && !event.is_masked && userId ? <Rsvp event={event} userId={userId} /> : null}
+      {editable && <EventCompletion occurrence={occurrence} />}
       {widgetsSupported && !event.is_masked && event.status !== 'cancelled' ? (
         <CountdownButton
           event={{ ...event, color: event.color ?? calendar?.color ?? null }}
@@ -693,21 +700,6 @@ export default function EventDetailScreen() {
       {editable ? (
         <View style={styles.gap}>
           <Button title={t('common.edit')} icon="create-outline" onPress={edit} testID="event-edit" />
-          {event.status !== 'completed' ? (
-            <Button
-              title={t('events.markDone')}
-              icon="checkmark-done-outline"
-              variant="secondary"
-              onPress={() => changeStatus('completed', t('events.markedDone'))}
-            />
-          ) : (
-            <Button
-              title={t('events.reopen')}
-              icon="refresh"
-              variant="secondary"
-              onPress={() => changeStatus('confirmed', t('common.saved'))}
-            />
-          )}
           {event.status !== 'cancelled' && (
             <Button
               title={t('events.cancelEvent')}

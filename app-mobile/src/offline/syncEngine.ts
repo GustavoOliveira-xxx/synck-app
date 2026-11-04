@@ -1,3 +1,4 @@
+import { guardRoutine } from '@/services/routineGuard';
 // Motor de sincronização.
 //
 // Quando a conexão volta (ou a cada alteração, se houver internet):
@@ -109,6 +110,7 @@ async function setOutbox(next: OutboxOp[]): Promise<void> {
 
 /** Adiciona uma operação à fila e dispara o envio. */
 export async function enqueueOp(op: OutboxOp): Promise<void> {
+  await guardRoutine(op);
   await setOutbox(enqueue(useSyncStore.getState().outbox, op));
   requestSync({ pull: false });
 }

@@ -1,5 +1,8 @@
+import { beginNavigation, endNavigation } from '@/stores/navigationLoadingStore';
+import { RoutineGuard } from '@/components/RoutineGuard';
 import * as Notifications from 'expo-notifications';
-import { router, Stack, usePathname } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
+import { router } from '@/services/router';
 import { useEffect } from 'react';
 import { Linking, Platform } from 'react-native';
 
@@ -108,55 +111,59 @@ export default function AppLayout() {
   useUpdateNotice();
   useWidgetSync();
   return (
-    <Stack
-      screenOptions={({ navigation, route }) => {
-        const isSheet = SHEETS.has(route.name);
-        return {
-          headerStyle: { backgroundColor: colors.background },
-          headerShadowVisible: false,
-          headerTintColor: colors.text,
-          headerTitleStyle: { ...fonte('titulo'), fontSize: 19 },
-          headerTitleAlign: 'left',
-          headerBackButtonDisplayMode: 'minimal',
-          headerBackVisible: false,
-          contentStyle: { backgroundColor: colors.background },
-          animation: reduceMotion ? 'none' : isSheet ? 'slide_from_bottom' : 'slide_from_right',
-          animationDuration: 280,
-          gestureEnabled: true,
-          // Sempre há para onde voltar: a tela anterior ou, se a tela foi aberta
-          // direto por um link (ou depois de recarregar a página), a tela mãe.
-          headerLeft: () => (
-            <IconButton
-              icon={isSheet ? 'close' : 'chevron-back'}
-              label={isSheet ? t('common.close') : t('common.back')}
-              onPress={() => {
-                if (navigation.canGoBack()) navigation.goBack();
-                else
-                  router.replace(
-                    parentRoute(pathFromRoute(route.name, route.params as Record<string, unknown>)),
-                  );
-              }}
-            />
-          ),
-        };
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="notifications" options={{ title: t('notificationsInbox.title') }} />
-      <Stack.Screen
-        name="task-filters"
-        options={{
-          presentation: 'modal',
-          title: t('tasks.filter'),
+    <>
+      <RoutineGuard />
+      <Stack
+        screenListeners={{ transitionStart: beginNavigation, transitionEnd: endNavigation }}
+        screenOptions={({ navigation, route }) => {
+          const isSheet = SHEETS.has(route.name);
+          return {
+            headerStyle: { backgroundColor: colors.background },
+            headerShadowVisible: false,
+            headerTintColor: colors.text,
+            headerTitleStyle: { ...fonte('titulo'), fontSize: 19 },
+            headerTitleAlign: 'left',
+            headerBackButtonDisplayMode: 'minimal',
+            headerBackVisible: false,
+            contentStyle: { backgroundColor: colors.background },
+            animation: reduceMotion ? 'none' : isSheet ? 'slide_from_bottom' : 'slide_from_right',
+            animationDuration: 280,
+            gestureEnabled: true,
+            // Sempre há para onde voltar: a tela anterior ou, se a tela foi aberta
+            // direto por um link (ou depois de recarregar a página), a tela mãe.
+            headerLeft: () => (
+              <IconButton
+                icon={isSheet ? 'close' : 'chevron-back'}
+                label={isSheet ? t('common.close') : t('common.back')}
+                onPress={() => {
+                  if (navigation.canGoBack()) navigation.goBack();
+                  else
+                    router.replace(
+                      parentRoute(pathFromRoute(route.name, route.params as Record<string, unknown>)),
+                    );
+                }}
+              />
+            ),
+          };
         }}
-      />
-      <Stack.Screen
-        name="filters"
-        options={{
-          presentation: 'modal',
-          title: t('filters.title'),
-        }}
-      />
-    </Stack>
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ title: t('notificationsInbox.title') }} />
+        <Stack.Screen
+          name="task-filters"
+          options={{
+            presentation: 'modal',
+            title: t('tasks.filter'),
+          }}
+        />
+        <Stack.Screen
+          name="filters"
+          options={{
+            presentation: 'modal',
+            title: t('filters.title'),
+          }}
+        />
+      </Stack>
+    </>
   );
 }

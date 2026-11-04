@@ -2,7 +2,7 @@ import { Decoration } from './DecorationPicker';
 // Mural de anotações: cartões lado a lado, na cor da agenda, com as fixadas
 // primeiro. Tocar abre a anotação; tocar e segurar fixa ou desafixa (as
 // fixadas também aparecem na tela Hoje). O primeiro cartão cria uma nova.
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useCalendarsMap } from '@/hooks/useEventsView';

@@ -1,6 +1,6 @@
 // Agendas: cartões com a inicial da agenda, papel, próximo compromisso e os
 // avatares de quem participa. Filtros em chips e anéis de órbita no topo.
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

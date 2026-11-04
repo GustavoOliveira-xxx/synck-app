@@ -1,6 +1,7 @@
-import { routineBusy } from '@/utils/routine';
+import { routineBusy, routineOccurrences } from '@/utils/routine';
 // Tela principal: calendário em visão mensal, semanal, diária ou lista.
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PanResponder, RefreshControl, ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { FadeIn, FadeOut, SlideInLeft, SlideInRight } from 'react-native-reanimated';
@@ -144,7 +145,13 @@ export default function CalendarScreen() {
   const from = useMemo(() => startOfDayInstant(firstDay, tz), [firstDay, tz]);
   const to = useMemo(() => startOfDayInstant(addDaysToKey(lastDay, 1), tz), [lastDay, tz]);
   const rawOccurrences = useOccurrences(from, to, filters);
-  const occurrences = useMemo(() => (layers.events ? rawOccurrences : []), [rawOccurrences, layers.events]);
+  const occurrences = useMemo(
+    () =>
+      [...(layers.events ? rawOccurrences : []), ...routineOccurrences(routines ?? [], from, to)].sort(
+        (a, b) => +a.start - +b.start,
+      ),
+    [rawOccurrences, layers.events, routines, from, to],
+  );
   // Tarefas e lembretes com prazo no período, conforme as camadas ligadas.
   const periodTasks = useMemo(
     () =>
@@ -215,6 +222,7 @@ export default function CalendarScreen() {
     />
   );
   const canMove = (occ: Occurrence) => {
+    if (occ.routine) return false;
     const cal = calendarsMap[occ.event.calendar_id];
     return !!cal && canEditEvent(cal, occ.event, userId);
   };
@@ -273,7 +281,12 @@ export default function CalendarScreen() {
 
   const openEvent = useCallback(
     (occ: Occurrence) =>
-      router.push({ pathname: '/event/[id]', params: { id: occ.event.id, date: occ.originalDate } }),
+      occ.routine
+        ? router.push({
+            pathname: '/routine/day',
+            params: { id: occ.routine.periodId, date: occ.routine.date },
+          })
+        : router.push({ pathname: '/event/[id]', params: { id: occ.event.id, date: occ.originalDate } }),
     [],
   );
 

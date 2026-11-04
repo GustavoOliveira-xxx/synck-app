@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';

@@ -1,6 +1,7 @@
 // Anotações: pessoais e das agendas (ideias, endereços, combinados), com
 // busca e as fixadas no topo. ?calendarId= mostra só as de uma agenda.
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { router } from '@/services/router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 

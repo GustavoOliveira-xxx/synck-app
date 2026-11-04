@@ -1,9 +1,9 @@
-import { routineBusy } from '@/utils/routine';
+import { routineBusy, routineOccurrences } from '@/utils/routine';
 // Tela Hoje: central do dia. Data e saudação, semana compacta, faixa de
 // sincronização, a pergunta "O que você pretende fazer hoje?", o próximo
 // compromisso e seções recolhíveis (agenda, tarefas, atrasadas, lembretes,
 // movimento nas agendas, horários livres e o resumo da semana).
-import { router } from 'expo-router';
+import { router } from '@/services/router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -286,7 +286,12 @@ function NextUp({ occ, now, timezone }: { occ: Occurrence; now: number; timezone
     <Card
       outlined={happening}
       onPress={() =>
-        router.push({ pathname: '/event/[id]', params: { id: occ.event.id, date: occ.originalDate } })
+        occ.routine
+          ? router.push({
+              pathname: '/routine/day',
+              params: { id: occ.routine.periodId, date: occ.routine.date },
+            })
+          : router.push({ pathname: '/event/[id]', params: { id: occ.event.id, date: occ.originalDate } })
       }
       accessibilityLabel={`${t('todayHub.next')}: ${occ.event.is_masked ? t('events.maskedTitle') : occ.title}. ${when}`}
       style={[styles.next, { backgroundColor: colors.tide }]}
@@ -347,7 +352,11 @@ export default function TodayScreen() {
   const days = useMemo(() => weekKeys(selected, display.weekStartsOn), [selected, display.weekStartsOn]);
   const from = useMemo(() => startOfDayInstant(days[0], tz), [days, tz]);
   const to = useMemo(() => startOfDayInstant(addDaysToKey(days[6], 1), tz), [days, tz]);
-  const occurrences = useOccurrences(from, to);
+  const events = useOccurrences(from, to);
+  const occurrences = useMemo(
+    () => [...events, ...routineOccurrences(routines ?? [], from, to)].sort((a, b) => +a.start - +b.start),
+    [events, routines, from, to],
+  );
   const conflicts = useMemo(() => conflictingKeys(occurrences), [occurrences]);
 
   useEffect(() => {
@@ -434,7 +443,12 @@ export default function TodayScreen() {
 
   const openEvent = useCallback(
     (occ: Occurrence) =>
-      router.push({ pathname: '/event/[id]', params: { id: occ.event.id, date: occ.originalDate } }),
+      occ.routine
+        ? router.push({
+            pathname: '/routine/day',
+            params: { id: occ.routine.periodId, date: occ.routine.date },
+          })
+        : router.push({ pathname: '/event/[id]', params: { id: occ.event.id, date: occ.originalDate } }),
     [],
   );
   const openTask = useCallback(
