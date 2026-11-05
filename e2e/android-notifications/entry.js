@@ -4,14 +4,13 @@ import React,{useEffect,useState} from 'react';
 import {Text} from 'react-native';
 import {getAllScheduledNotificationsAsync} from 'expo-notifications';
 import {configureNotifications,rescheduleReminders} from './src/services/localNotifications';
-import {makeEvent} from './src/utils/__tests__/fixtures';
 import {expandEvent} from './src/utils/recurrence';
 configureNotifications();
 function AlarmProbe(){
  const [state,setState]=useState('Preparando');
  useEffect(()=>{(async()=>{
   const start=Date.now()+90000;
-  const event=makeEvent({id:'probe',title:'SynCKLockProbe',starts_at:new Date(start).toISOString(),ends_at:new Date(start+60000).toISOString(),my_reminders:[0]});
+  const event={timezone:'UTC',status:'planned',all_day:false,exceptions:[],recurrence_rule:null,is_masked:false,id:'probe',title:'SynCKLockProbe',starts_at:new Date(start).toISOString(),ends_at:new Date(start+60000).toISOString(),my_reminders:[0]};
   const occ=expandEvent(event,new Date(),new Date(start+60001));
   const count=await rescheduleReminders(occ,null,'UTC','24h');
   const pending=await getAllScheduledNotificationsAsync();
