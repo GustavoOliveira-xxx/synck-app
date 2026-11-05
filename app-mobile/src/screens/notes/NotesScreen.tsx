@@ -1,3 +1,4 @@
+import { NoteRecords } from '@/components/NoteRecords';
 // Anotações: pessoais e das agendas (ideias, endereços, combinados), com
 // busca e as fixadas no topo. ?calendarId= mostra só as de uma agenda.
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -129,6 +130,7 @@ export default function NotesScreen() {
             {others.map(card)}
           </>
         )}
+        <NoteRecords key={calendarId ?? 'all'} calendar={calendarId} />
       </Screen>
       <FAB
         label={t('notes.new')}

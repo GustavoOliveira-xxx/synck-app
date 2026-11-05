@@ -336,3 +336,19 @@ describe('resumo da semana', () => {
     expect(summary.suggestions.map((s) => s.key)).toEqual(['plan', 'overdue']);
   });
 });
+
+it('preserva a sequência anterior durante uma pausa e após mudar a frequência', () => {
+  const habit = {
+    status: 'active',
+    start_date: '2026-11-01',
+    recurrence_rule: 'FREQ=WEEKLY;BYDAY=FR',
+    schedule_history: [
+      { until: '2026-11-04', status: 'active', start_date: '2026-11-01', recurrence_rule: 'FREQ=DAILY' },
+      { until: '2026-11-06', status: 'paused', start_date: '2026-11-01', recurrence_rule: 'FREQ=DAILY' },
+    ],
+    logs: ['2026-11-02', '2026-11-03', '2026-11-06'].map((day) => ({ day, user_id: 'a' })),
+  } as Habit;
+  expect(habitDueOn(habit, '2026-11-03')).toBe(true);
+  expect(habitDueOn(habit, '2026-11-05')).toBe(false);
+  expect(habitStreak(habit, '2026-11-06', 'a')).toBe(3);
+});

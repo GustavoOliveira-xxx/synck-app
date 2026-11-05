@@ -569,6 +569,19 @@ test('3.5: Kairo acompanha espera de dados e some ao terminar',async()=>{
  await page.getByRole('progressbar').waitFor({state:'detached',timeout:8000});await page.context().close();
 });
 
+test('3.6: reunião no expediente aparece no contexto pessoal',async()=>{
+ const page=await abrirSessao();await entrar(page,'carla.demo@exemplo.test');
+ await ir(page,'/settings/routine');await page.getByText('Trabalho',{exact:true}).click();await page.getByTestId('routine-save').click();await page.waitForURL('**/profile');
+ const future=new Date();future.setDate(future.getDate()+((8-future.getDay())%7||7)+7);const day=future.toISOString().slice(0,10);
+ await ir(page,'/event/new?date='+day+'&start=09:00&calendarId='+AGENDA);
+ await page.getByTestId('event-title').fill('Reunião no expediente');
+ await page.getByRole('button',{name:'Meu contexto: Sem contexto'}).click();
+ await page.getByRole('radio',{name:'Trabalho',exact:true}).click();
+ await page.getByTestId('event-save').click();await page.waitForURL(url=>!url.pathname.endsWith('/event/new'));
+ await ir(page,'/settings/contexts');await page.getByRole('button',{name:'Evento · Reunião no expediente',exact:true}).waitFor();
+ await page.context().close();
+});
+
 test('nenhum erro de JavaScript em nenhuma tela', () => {
   assert.deepEqual(erros, []);
   const falhas = servidor.registro.filter((r) => r.includes('ERRO'));

@@ -16,7 +16,7 @@ import { useCalendar } from '@/hooks/useCalendar';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
 import { useEventsMap } from '@/hooks/useEventsView';
 import { t } from '@/i18n';
-import { createEvent } from '@/services/eventActions';
+import { importSeries } from '@/services/eventActions';
 import { goBack } from '@/services/navigation';
 import { pickTextFile } from '@/services/share';
 import { spacing } from '@/theme/tokens';
@@ -67,7 +67,7 @@ export default function ImportIcsScreen() {
     setSaving(true);
     try {
       for (const e of fresh) {
-        await createEvent(
+        await importSeries(
           {
             ...newEventForm(calendar.id, e.timezone, e.startDate),
             title: e.title,
@@ -81,11 +81,14 @@ export default function ImportIcsScreen() {
             endTime: e.endTime,
             recurrence: e.recurrence,
           },
-          { external_uid: e.uid },
+          e.uid,
+          e.recurrence ? e.exceptions : [],
         );
       }
       toast(t('ics.imported', { n: fresh.length }));
       goBack();
+    } catch {
+      toast('Confira a agenda e tente novamente.', 'error');
     } finally {
       setSaving(false);
     }

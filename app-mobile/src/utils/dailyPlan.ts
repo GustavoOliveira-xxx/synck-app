@@ -22,10 +22,11 @@ export function shouldAskToday(options: {
 
 /** O hábito tem dia hoje? */
 export function habitDueOn(habit: Habit, day: DateKey): boolean {
-  if (habit.status !== 'active') return false;
-  const rule = parseRule(habit.recurrence_rule);
-  if (!rule || compareKeys(day, habit.start_date) < 0) return false;
-  for (const d of seriesDates(rule, habit.start_date, addDaysToKey(day, -7))) {
+  const schedule = habit.schedule_history?.find((s) => day < s.until) ?? habit;
+  if (schedule.status !== 'active') return false;
+  const rule = parseRule(schedule.recurrence_rule);
+  if (!rule || compareKeys(day, schedule.start_date) < 0) return false;
+  for (const d of seriesDates(rule, schedule.start_date, addDaysToKey(day, -7))) {
     if (d === day) return true;
     if (compareKeys(d, day) > 0) return false;
   }
@@ -40,13 +41,14 @@ export function habitDoneOn(habit: Habit, day: DateKey, userId: string | null): 
 export function habitStreak(habit: Habit, today: DateKey, userId: string | null): number {
   let n = 0;
   let day = today;
-  for (let i = 0; i < 400; i++) {
+  const dates = new Set(habit.logs.filter((l) => l.user_id === userId && l.day <= today).map((l) => l.day));
+  const first = [...dates].sort()[0];
+  while (first && day >= first) {
     if (habitDueOn(habit, day)) {
-      if (habitDoneOn(habit, day, userId)) n += 1;
+      if (dates.has(day)) n += 1;
       else if (day !== today) break;
     }
     day = addDaysToKey(day, -1);
-    if (compareKeys(day, habit.start_date) < 0) break;
   }
   return n;
 }

@@ -59,10 +59,19 @@ export async function guardRoutine(op: OutboxOp): Promise<void> {
     start = Date.parse(String(data.starts_at));
     end = Date.parse(String(data.ends_at));
   }
-  const conflicts = routineConflicts(periods, start, end);
+  const context =
+    fields.personal_context ??
+    account?.contexts?.[op.entity + ':' + op.entityId] ??
+    useSyncStore
+      .getState()
+      .outbox.find((o) => o.kind === 'create' && o.entity === op.entity && o.entityId === op.entityId)
+      ?.payload.personal_context;
+  const conflicts = routineConflicts(periods, start, end).filter(
+    (b) => !(context !== 'custom' && b.period.kind === context && b.start <= start && b.end >= end),
+  );
   const recurring = !!data.recurrence_rule && op.kind !== 'exception_upsert';
   // Uma série ilimitada não é declarada livre com base apenas no primeiro dia.
-  if (!conflicts.length && !recurring) return;
+  if (!conflicts.length && (!recurring || periods.every((p) => !p.enabled || p.kind === context))) return;
   if (!confirm) throw new RoutineCancelled('Confira a rotina antes de continuar.');
   const describe = (b: RoutineBlock) => b.period.title + ' (' + formatShortDate(b.date) + ')';
   const choice = await confirm({
@@ -74,7 +83,13 @@ export async function guardRoutine(op: OutboxOp): Promise<void> {
         : 'Escolha outro horário, libere apenas esta ocorrência da rotina ou confirme um encaixe. O padrão semanal permanece.'),
     cancelLabel: 'Escolher outro horário',
     confirmLabel: 'Manter os dois',
-    choices: !recurring && conflicts.length ? [{ value: 'skip', label: 'Liberar só estas ocorrências' }] : [],
+    choices:
+      !recurring && conflicts.length
+        ? [
+            { value: 'skip', label: 'Liberar só estas ocorrências' },
+            { value: 'keep', label: 'Manter os dois' },
+          ]
+        : undefined,
   });
   if (!choice) throw new RoutineCancelled('Horário não alterado.');
   if (choice === 'skip') {

@@ -1,3 +1,4 @@
+import { ContextField, type PersonalContext } from '@/components/ContextField';
 import { RoutineCancelled } from '@/services/routineGuard';
 import { AvailableTimes } from '@/components/AvailableTimes';
 import { useFreeSlots } from '@/hooks/usePlanning';
@@ -89,6 +90,7 @@ function Form({
   const display = useDisplaySettings();
   const { dark } = useAppTheme();
   const userId = useUserId();
+  const [context, setContext] = useState<PersonalContext | null>(null);
   const { toast } = useFeedback();
   const online = useSyncStore((s) => s.online);
   const [base] = useState(initial);
@@ -145,7 +147,7 @@ function Form({
     try {
       if (form.reminders.length) await requestPermission().catch(() => false);
       if (event) await updateEvent(event, form, scope, occurrence);
-      else await createEvent(form);
+      else await createEvent(form, context ? { personal_context: context } : {});
       toast(online ? (event ? t('events.updated') : t('events.created')) : t('events.savedOffline'));
       allowLeave();
       goBack();
@@ -169,6 +171,7 @@ function Form({
         autoFocus={!event && !initial.title}
         testID="event-title"
       />
+      {!event && <ContextField value={context} onChange={setContext} />}
       {!onlyThis && (
         <DecorationPicker
           value={form.decoration}
@@ -271,6 +274,7 @@ function Form({
       )}
       {!form.allDay && (
         <AvailableTimes
+          context={context}
           day={form.startDate}
           minutes={Math.max(1, duration)}
           timezone={form.timezone}

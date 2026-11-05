@@ -77,6 +77,11 @@ export default function ProfileScreen() {
           onPress={() => router.push('/settings/edit-profile')}
         />
         <ListItem
+          icon="list-outline"
+          title="Meus contextos"
+          onPress={() => router.push('/settings/contexts')}
+        />
+        <ListItem
           icon="time-outline"
           title="Minha rotina"
           subtitle="Trabalho, estudos, sono e seus horários livres"

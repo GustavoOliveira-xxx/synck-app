@@ -1,3 +1,4 @@
+import { ContextField, type PersonalContext } from '@/components/ContextField';
 import { DecorationPicker } from '@/components/DecorationPicker';
 // Criar e editar hábitos: frequência (todo dia, dias da semana, um dia do
 // mês), de quem é a rotina (só minha ou de uma agenda) e sequência opcional.
@@ -35,6 +36,7 @@ export default function HabitFormScreen() {
   const { habits } = useItems();
   const habit = id ? habits[id] : undefined;
   const display = useDisplaySettings();
+  const [context, setContext] = useState<PersonalContext | null>(null);
   const { toast } = useFeedback();
   const calendars = useDataStore((s) => s.calendars).filter(
     (c) => canCreateEvents(c) && c.kind !== 'personal',
@@ -99,7 +101,13 @@ export default function HabitFormScreen() {
       decoration,
     };
     if (habit) await updateHabit(habit, fields);
-    else await createHabit({ ...fields, calendar_id: calendarId, start_date: todayKey(display.timezone) });
+    else
+      await createHabit({
+        ...fields,
+        personal_context: context ?? undefined,
+        calendar_id: calendarId,
+        start_date: todayKey(display.timezone),
+      });
     toast(t('habits.saved'));
     allowLeave();
     goBack();
@@ -171,6 +179,7 @@ export default function HabitFormScreen() {
         multiline
         maxLength={1000}
       />
+      {!habit && <ContextField value={context} onChange={setContext} />}
       <DecorationPicker value={decoration} onChange={setDecoration} />
       <ColorPicker
         label={t('calendars.color')}

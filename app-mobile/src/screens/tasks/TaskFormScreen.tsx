@@ -1,3 +1,4 @@
+import { ContextField, type PersonalContext } from '@/components/ContextField';
 import { RoutineCancelled } from '@/services/routineGuard';
 import { AvailableTimes } from '@/components/AvailableTimes';
 import { useFreeSlots } from '@/hooks/usePlanning';
@@ -82,6 +83,7 @@ function quickDates(today: string): { key: 'today' | 'tomorrow' | 'nextWeek'; da
 function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolean; taskId?: string }) {
   const display = useDisplaySettings();
   const userId = useUserId();
+  const [context, setContext] = useState<PersonalContext | null>(null);
   const { toast } = useFeedback();
   const online = useSyncStore((s) => s.online);
   const calendars = useDataStore((s) => s.calendars);
@@ -129,7 +131,11 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
     try {
       if (next.alerts.length && next.dueDate) await requestPermission().catch(() => false);
       if (editing && task) await updateTask(task, next);
-      else await createTask(next, { planDay: plan && isValidDateKey(plan) ? plan : null });
+      else
+        await createTask(next, {
+          personal_context: context ?? undefined,
+          planDay: plan && isValidDateKey(plan) ? plan : null,
+        });
       toast(
         !online
           ? t('events.savedOffline')
@@ -272,6 +278,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
         autoFocus={!editing}
         testID="task-title"
       />
+      {!editing && <ContextField value={context} onChange={setContext} />}
       <DecorationPicker value={form.decoration} onChange={(v) => set('decoration', v)} />
       <AppText variant="label">{reminder ? t('tasks.reminderDate') : t('tasks.due')}</AppText>
       <View style={styles.chips}>
@@ -293,6 +300,7 @@ function Form({ initial, editing, taskId }: { initial: TaskForm; editing: boolea
       {dueBlock}
       {form.dueDate && form.dueTime && (
         <AvailableTimes
+          context={context}
           day={form.dueDate}
           minutes={reminder ? 1 : (form.estimatedMinutes ?? 30)}
           timezone={form.timezone}

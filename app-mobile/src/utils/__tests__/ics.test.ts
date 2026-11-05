@@ -179,6 +179,31 @@ describe('parseIcs', () => {
     expect(events[1].endDate).toBe('2026-11-01');
   });
 
+  it('mantém EXDATE e liga uma remarcação anterior à série pelo UID', () => {
+    const text = [
+      'BEGIN:VEVENT',
+      'UID:m',
+      'RECURRENCE-ID:20261109T120000Z',
+      'DTSTART:20261110T120000Z',
+      'DTEND:20261110T130000Z',
+      'SUMMARY:Remarcada',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:m',
+      'DTSTART:20261102T120000Z',
+      'RRULE:FREQ=WEEKLY',
+      'EXDATE:20261116T120000Z',
+      'SUMMARY:Equipe',
+      'END:VEVENT',
+    ].join('\n');
+    const [meeting] = parseIcs(text, 'UTC');
+    expect(meeting.exceptions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ original_date: '2026-11-09', title: 'Remarcada' }),
+        expect.objectContaining({ original_date: '2026-11-16', is_cancelled: true }),
+      ]),
+    );
+  });
   it('ignora eventos sem início e texto que não é .ics', () => {
     expect(parseIcs('BEGIN:VEVENT\nSUMMARY:x\nEND:VEVENT', TZ)).toEqual([]);
     expect(parseIcs('qualquer coisa', TZ)).toEqual([]);

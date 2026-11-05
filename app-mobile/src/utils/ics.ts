@@ -3,7 +3,7 @@
 // inteiro, regras de repetição simples e exclusões de ocorrências.
 import { DateTime } from 'luxon';
 
-import type { CalendarEvent, DateKey } from '@/models/types';
+import type { CalendarEvent, DateKey, RecurrenceException } from '@/models/types';
 
 import { addDaysToKey, instantToLocal, isValidTimezone } from './dates';
 import { parseRule, serializeRule, type RecurrenceRule } from './recurrence';
@@ -70,17 +70,12 @@ export function toIcs(events: CalendarEvent[], calendarName: string, now: Date =
     `X-WR-CALNAME:${escapeText(calendarName)}`,
   ];
   const stamp = utcStamp(now);
-  const block = (
-    e: CalendarEvent,
-    uid: string,
-    extra: string[],
-    over?: { starts_at: string; ends_at: string; title: string | null },
-  ) => {
-    const start = new Date(over?.starts_at ?? e.starts_at);
-    const end = new Date(over?.ends_at ?? e.ends_at);
-    const title = over?.title ?? e.title ?? '';
+  const block = (e: CalendarEvent, uid: string, extra: string[]) => {
+    const start = new Date(e.starts_at);
+    const end = new Date(e.ends_at);
+    const title = e.title ?? '';
     lines.push('BEGIN:VEVENT', `UID:${uid}`, `DTSTAMP:${stamp}`);
-    if (e.all_day && e.start_date && e.end_date && !over) {
+    if (e.all_day && e.start_date && e.end_date) {
       lines.push(`DTSTART;VALUE=DATE:${compactDate(e.start_date)}`);
       lines.push(`DTEND;VALUE=DATE:${compactDate(addDaysToKey(e.end_date, 1))}`);
     } else if (isValidTimezone(e.timezone) && e.timezone !== 'UTC') {
@@ -106,6 +101,7 @@ export function toIcs(events: CalendarEvent[], calendarName: string, now: Date =
     if (e.recurrence_rule) {
       extra.push(`RRULE:${ruleForExport(e.recurrence_rule, e.all_day, e.timezone)}`);
       for (const x of e.exceptions) {
+        if (!x.is_cancelled) continue;
         if (e.all_day) extra.push(`EXDATE;VALUE=DATE:${compactDate(x.original_date)}`);
         else {
           const local = instantToLocal(new Date(e.starts_at), e.timezone);
@@ -115,14 +111,43 @@ export function toIcs(events: CalendarEvent[], calendarName: string, now: Date =
       }
     }
     block(e, uid, extra);
-    // Ocorrências alteradas saem como eventos avulsos (a original fica excluída).
     for (const x of e.exceptions) {
-      if (x.is_cancelled || !x.starts_at || !x.ends_at) continue;
-      block(e, `${e.id}-${x.original_date}@synck`, [], {
-        starts_at: x.starts_at,
-        ends_at: x.ends_at,
-        title: x.title ?? e.title,
-      });
+      if (x.is_cancelled) continue;
+      const tz = e.timezone,
+        local = instantToLocal(new Date(e.starts_at), tz);
+      const original = DateTime.fromISO(x.original_date + 'T' + local.time, { zone: tz });
+      const recId = e.all_day
+        ? 'RECURRENCE-ID;VALUE=DATE:' + compactDate(x.original_date)
+        : 'RECURRENCE-ID:' + utcStamp(original.toJSDate());
+      const at = x.starts_at ?? original.toUTC().toISO()!;
+      const until =
+        x.ends_at ?? new Date(Date.parse(at) + Date.parse(e.ends_at) - Date.parse(e.starts_at)).toISOString();
+      const props = [recId];
+      if (x.status) props.push('X-SYNCK-STATUS:' + x.status);
+      const durationDays =
+        e.all_day && e.start_date && e.end_date
+          ? Math.round(
+              DateTime.fromISO(e.end_date, { zone: 'UTC' }).diff(
+                DateTime.fromISO(e.start_date, { zone: 'UTC' }),
+                'days',
+              ).days,
+            )
+          : 0;
+      block(
+        {
+          ...e,
+          title: x.title ?? e.title,
+          description: x.description ?? e.description,
+          location: x.location ?? e.location,
+          starts_at: at,
+          ends_at: until,
+          start_date: x.original_date,
+          end_date: addDaysToKey(x.original_date, durationDays),
+          all_day: e.all_day && !x.starts_at,
+        },
+        uid,
+        props,
+      );
     }
   }
   lines.push('END:VCALENDAR');
@@ -147,6 +172,7 @@ export interface ImportedEvent {
   endTime: string;
   recurrence: RecurrenceRule | null;
   /** A regra de repetição do arquivo não é suportada: entra como evento único. */
+  exceptions: RecurrenceException[];
   simplified: boolean;
   cancelled: boolean;
 }
@@ -239,6 +265,7 @@ function importRule(value: string): RecurrenceRule | null {
 export function parseIcs(text: string, timezone: string): ImportedEvent[] {
   const out: ImportedEvent[] = [];
   const seen = new Set<string>();
+  const detached: Property[][] = [];
   let current: Property[] | null = null;
   let depth = 0;
   for (const raw of unfold(text)) {
@@ -260,6 +287,7 @@ export function parseIcs(text: string, timezone: string): ImportedEvent[] {
       continue;
     }
     if (upper === 'END:VEVENT') {
+      if (current.some((p) => p.name === 'RECURRENCE-ID')) detached.push(current);
       const event = buildEvent(current, timezone);
       if (event && !seen.has(event.uid)) {
         seen.add(event.uid);
@@ -271,6 +299,44 @@ export function parseIcs(text: string, timezone: string): ImportedEvent[] {
     if (depth > 0) continue;
     const prop = parseLine(line);
     if (prop) current.push(prop);
+  }
+  const series = new Map(out.filter((e) => e.recurrence).map((e) => [e.uid, e]));
+  for (const props of detached) {
+    const get = (name: string) => props.find((p) => p.name === name);
+    const parent = series.get(get('UID')?.value.trim() ?? '');
+    const origin = get('RECURRENCE-ID');
+    if (!parent || !origin) continue;
+    const date = parseTime(origin, parent.timezone)?.date;
+    if (!date) continue;
+    const cancelled = get('STATUS')?.value.toUpperCase() === 'CANCELLED';
+    const move = buildEvent(
+      props.filter((p) => p !== origin),
+      parent.timezone,
+    );
+    if (!cancelled && !move) continue;
+    const when = (day: string, time: string) =>
+      DateTime.fromISO(day + 'T' + time, { zone: parent.timezone })
+        .toUTC()
+        .toISO();
+    const sameAllDay = move?.allDay && move.startDate === date && parent.allDay;
+    const status = get('X-SYNCK-STATUS')?.value;
+    const change: RecurrenceException = {
+      original_date: date,
+      is_cancelled: cancelled,
+      title: move?.title ?? null,
+      description: move?.description ?? null,
+      location: move?.location ?? null,
+      starts_at: move && !sameAllDay ? when(move.startDate, move.allDay ? '00:00' : move.startTime) : null,
+      ends_at:
+        move && !sameAllDay
+          ? when(
+              move.allDay ? addDaysToKey(move.endDate, 1) : move.endDate,
+              move.allDay ? '00:00' : move.endTime,
+            )
+          : null,
+      status: status === 'completed' || status === 'planned' ? status : null,
+    };
+    parent.exceptions = parent.exceptions.filter((x) => x.original_date !== date).concat(change);
   }
   return out;
 }
@@ -312,6 +378,22 @@ function buildEvent(props: Property[], timezone: string): ImportedEvent | null {
   const uid = get('UID')?.value.trim() || `${start.instant.toISO()}-${title}`;
   return {
     uid: uid.slice(0, 255),
+    exceptions: Array.from(
+      new Set(
+        props
+          .filter((p) => p.name === 'EXDATE')
+          .flatMap((p) => p.value.split(',').map((value) => parseTime({ ...p, value }, timezone)?.date))
+          .filter((d): d is string => !!d),
+      ),
+    ).map((original_date) => ({
+      original_date,
+      is_cancelled: true,
+      title: null,
+      description: null,
+      location: null,
+      starts_at: null,
+      ends_at: null,
+    })),
     title: title || '(sem título)',
     description: unescapeText(get('DESCRIPTION')?.value ?? '').slice(0, 5000),
     location: unescapeText(get('LOCATION')?.value ?? '').slice(0, 200),

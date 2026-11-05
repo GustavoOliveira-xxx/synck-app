@@ -52,7 +52,10 @@ function snapshotOf(task: Task, changes: Record<string, unknown>): Record<string
 
 // ------------------------------------------------------------------ tarefas
 
-export async function createTask(form: TaskForm, extra: { planDay?: DateKey | null } = {}): Promise<string> {
+export async function createTask(
+  form: TaskForm,
+  extra: { personal_context?: string; planDay?: DateKey | null } = {},
+): Promise<string> {
   const id = newId();
   const fields = formToTaskFields(form);
   const payload: Record<string, unknown> = { ...fields, position: Date.now() / 1000 };
@@ -63,6 +66,7 @@ export async function createTask(form: TaskForm, extra: { planDay?: DateKey | nu
       .filter((c) => c.title.trim())
       .map((c, i) => ({ id: c.id, title: c.title.trim(), done: c.done, position: i + 1 }));
   }
+  if (extra.personal_context) payload.personal_context = extra.personal_context;
   if (extra.planDay) payload.plan_day = extra.planDay;
   await queue('task', 'create', id, fields.calendar_id, payload);
   return id;
@@ -210,10 +214,11 @@ export async function deleteList(list: TaskList): Promise<void> {
 
 export async function createNote(
   input: Pick<Note, 'title' | 'body' | 'calendar_id' | 'pinned'> &
-    Partial<Pick<Note, 'event_id' | 'task_id' | 'decoration'>>,
+    Partial<Pick<Note, 'event_id' | 'task_id' | 'decoration'>> & { personal_context?: string },
 ): Promise<string> {
   const id = newId();
   await queue('note', 'create', id, input.calendar_id, {
+    personal_context: input.personal_context,
     title: input.title?.trim() || null,
     body: input.body,
     decoration: input.decoration ?? null,
@@ -252,7 +257,7 @@ export async function createHabit(
     | 'show_streak'
     | 'color'
     | 'decoration'
-  >,
+  > & { personal_context?: string },
 ): Promise<string> {
   const id = newId();
   await queue('habit', 'create', id, input.calendar_id, { ...input });

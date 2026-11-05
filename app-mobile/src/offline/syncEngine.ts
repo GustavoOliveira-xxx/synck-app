@@ -108,6 +108,16 @@ async function setOutbox(next: OutboxOp[]): Promise<void> {
 // Fila
 // ---------------------------------------------------------------------
 
+/** A revisão de um plano só entra na fila depois que todos os blocos forem aceitos. */
+export async function enqueuePlan(ops: OutboxOp[]): Promise<void> {
+  if (!ops.length) return;
+  const user = uid();
+  for (const op of ops) await guardRoutine(op);
+  if (!user || user !== uid()) throw Error('Conta alterada');
+  await setOutbox(ops.reduce(enqueue, useSyncStore.getState().outbox));
+  requestSync({ pull: false });
+}
+
 /** Adiciona uma operação à fila e dispara o envio. */
 export async function enqueueOp(op: OutboxOp): Promise<void> {
   await guardRoutine(op);
@@ -179,6 +189,21 @@ function countMetric(key: 'sent' | 'failed' | 'conflicts'): void {
 }
 
 /** Tarefas, listas, anotações, hábitos e plano do dia: mesmo ciclo dos eventos. */
+async function rememberCreatedContext(op: OutboxOp) {
+  const account = useAuthStore.getState().account;
+  if (!account || op.kind !== 'create' || typeof op.payload.personal_context !== 'string') return;
+  const updated = {
+    ...account,
+    contexts: {
+      ...account.contexts,
+      [op.entity + ':' + op.entityId]: op.payload
+        .personal_context as import('@/models/types').RoutinePeriod['kind'],
+    },
+  };
+  useAuthStore.getState().setAccount(updated);
+  await writeJSON(storageKeys.account(account.id), updated);
+}
+
 async function processItemOp(op: OutboxOp): Promise<'continue' | 'stop'> {
   const res = await api.applyItemOp({
     opId: op.id,
@@ -250,6 +275,7 @@ async function processItemOp(op: OutboxOp): Promise<'continue' | 'stop'> {
     return 'continue';
   }
 
+  await rememberCreatedContext(op);
   if (item && kind) useDataStore.getState().upsertItems(kind, [item]);
   if (op.entity === 'checkin') {
     const day = op.payload.day as DateKey;
@@ -356,6 +382,7 @@ async function processOp(op: OutboxOp): Promise<'continue' | 'stop'> {
         return 'continue';
       }
 
+      await rememberCreatedContext(op);
       if (res.event) mergeServerEvent(res.event);
       if (res.new_event) mergeServerEvent(res.new_event);
       if (op.kind === 'delete') mergeServerEvent({ id: op.entityId, deleted_at: new Date().toISOString() });

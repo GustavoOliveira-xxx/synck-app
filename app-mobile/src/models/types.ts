@@ -106,6 +106,7 @@ export interface CalendarEvent extends Omit<EventFields, 'title'> {
   pending?: boolean;
   /** Bloco de tempo: a tarefa que este evento reserva. */
   task_id?: string | null;
+  task_occurrence_date?: DateKey | null;
   /** Identificador do evento de origem (importação de arquivo .ics). */
   external_uid?: string | null;
 }
@@ -251,6 +252,7 @@ export interface NotificationPreferences {
 }
 
 export interface Account {
+  contexts?: Record<string, RoutinePeriod['kind']>;
   id: string;
   email: string;
   email_confirmed: boolean;
@@ -447,6 +449,7 @@ export interface Note {
 export type HabitStatus = 'active' | 'paused' | 'archived';
 
 export interface Habit {
+  schedule_history?: { until: DateKey; status: HabitStatus; start_date: DateKey; recurrence_rule: string }[];
   decoration?: string | null;
   id: string;
   calendar_id: string | null;
@@ -479,6 +482,7 @@ export interface TaskComment {
 }
 
 export interface TaskHistoryEntry {
+  steps?: { id: string; title: string; done: boolean }[] | null;
   kind: 'activity' | 'completion';
   action?: string;
   details?: Record<string, unknown>;

@@ -1,3 +1,5 @@
+import { supabase } from '@/services/supabase';
+import { syncNow as refreshSteps } from '@/offline/syncEngine';
 import { Decoration } from '@/components/DecorationPicker';
 // Detalhes de uma tarefa ou lembrete: conclusão, etapas com progresso,
 // prazo e repetição, blocos de tempo no calendário, comentários e histórico.
@@ -143,6 +145,35 @@ function Checklist({ task, canEdit, canTick }: { task: Task; canEdit: boolean; c
           </AppText>
           {canEdit && (
             <>
+              <IconButton
+                icon="open-outline"
+                disabled={item.done}
+                label={'Transformar em tarefa: ' + item.title}
+                onPress={async () => {
+                  if (
+                    !(await confirm({
+                      title: 'Transformar etapa em tarefa?',
+                      message:
+                        'A etapa sai do checklist. Você poderá definir prazo, responsável e lembretes na nova tarefa.',
+                      confirmLabel: 'Transformar',
+                    }))
+                  )
+                    return;
+                  const { data, error } = await supabase.rpc('promote_checklist_step', {
+                    p_task: task.id,
+                    p_step: item.id,
+                  });
+                  if (error) {
+                    toast(
+                      'Não foi possível transformar a etapa. Confira a sincronização e tente novamente.',
+                      'error',
+                    );
+                    return;
+                  }
+                  await refreshSteps();
+                  router.push({ pathname: '/task/[id]/edit', params: { id: String(data) } });
+                }}
+              />
               <IconButton
                 icon="chevron-up"
                 label={`${t('tasks.moveUp')}: ${item.title}`}
@@ -298,6 +329,11 @@ function History({ task }: { task: Task }) {
                   })
                 : tDynamic(`activity.items.${h.action}`, { actor: h.actor_name })}
             </AppText>
+            {h.steps?.map((step) => (
+              <AppText key={step.id} variant="caption">
+                {step.done ? '✓' : '○'} {step.title}
+              </AppText>
+            ))}
             <AppText variant="caption" tone="muted">
               {formatDateTime(new Date(h.at), display.timezone, display.dateFormat, display.timeFormat)}
             </AppText>

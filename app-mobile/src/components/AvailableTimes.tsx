@@ -14,6 +14,7 @@ export function AvailableTimes({
   day,
   minutes,
   timezone,
+  context,
   excludeEventId,
   selected,
   onChoose,
@@ -21,6 +22,7 @@ export function AvailableTimes({
   day: string;
   minutes: number;
   timezone: string;
+  context?: string | null;
   excludeEventId?: string;
   selected?: string;
   onChoose: (start: Date, end: Date) => void;
@@ -33,6 +35,7 @@ export function AvailableTimes({
     Math.max(1, minutes),
     excludeEventId,
     timezone,
+    context,
   );
   const options = startOptions(slots, Math.max(1, minutes), 15, 96);
   if (!validDay || !Number.isFinite(minutes) || minutes <= 0) return null;

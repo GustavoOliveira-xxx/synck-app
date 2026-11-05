@@ -1,3 +1,5 @@
+import { NoteRecords } from '@/components/NoteRecords';
+import { ContextField, type PersonalContext } from '@/components/ContextField';
 import { Decoration, DecorationPicker } from '@/components/DecorationPicker';
 // Editar uma anotação: título, texto, fixar e, ao criar, onde guardar.
 // Links (https://) no texto aparecem como botões para abrir.
@@ -28,10 +30,13 @@ const LINK = /https?:\/\/[^\s)]+/g;
 
 export default function NoteEditorScreen() {
   const { id, calendarId } = useLocalSearchParams<{ id?: string; calendarId?: string }>();
-  const { notes } = useItems();
+  const { notes, tasks } = useItems();
+  const events = useDataStore((s) => s.events);
+  const [reference, setReference] = useState('');
   const note = id ? notes[id] : undefined;
   const userId = useUserId();
   const calendars = useDataStore((s) => s.calendars);
+  const [context, setContext] = useState<PersonalContext | null>(null);
   const { toast, confirm } = useFeedback();
   const [title, setTitle] = useState(note?.title ?? '');
   const [body, setBody] = useState(note?.body ?? '');
@@ -79,7 +84,16 @@ export default function NoteEditorScreen() {
       if (note.pinned !== pinned) changes.pinned = pinned;
       if (Object.keys(changes).length) await updateNote(note, changes);
     } else {
-      await createNote({ title: title.trim() || null, body, calendar_id: where, pinned, decoration });
+      await createNote({
+        event_id: reference.startsWith('event:') ? reference.slice(6) : null,
+        task_id: reference.startsWith('task:') ? reference.slice(5) : null,
+        personal_context: context ?? undefined,
+        title: title.trim() || null,
+        body,
+        calendar_id: where,
+        pinned,
+        decoration,
+      });
     }
     toast(t('notes.saved'));
     allowLeave();
@@ -124,6 +138,7 @@ export default function NoteEditorScreen() {
           {t('notes.readOnly')}
         </AppText>
       )}
+      {!note && <ContextField value={context} onChange={setContext} />}
       {canEdit ? (
         <DecorationPicker value={decoration} onChange={setDecoration} />
       ) : (
@@ -156,7 +171,10 @@ export default function NoteEditorScreen() {
         <SelectField<string | null>
           label={t('notes.calendar')}
           value={where}
-          onChange={setWhere}
+          onChange={(value) => {
+            setWhere(value);
+            setReference('');
+          }}
           options={[
             { value: null, label: t('tasks.personal') },
             ...writable.map((c) => ({
@@ -167,7 +185,36 @@ export default function NoteEditorScreen() {
           ]}
         />
       )}
+      {!note && (
+        <SelectField
+          label="Referência da anotação"
+          searchable
+          value={reference}
+          onChange={setReference}
+          options={[
+            { value: '', label: 'Anotação geral' },
+            ...Object.values(events)
+              .filter(
+                (e) =>
+                  !e.is_masked &&
+                  !e.deleted_at &&
+                  (!where || (e.calendar_id === where && e.privacy === 'members')),
+              )
+              .map((e) => ({ value: 'event:' + e.id, label: e.title ?? 'Evento', description: 'Evento' })),
+            ...Object.values(tasks)
+              .filter(
+                (t) => !t.deleted_at && (!where || (t.calendar_id === where && t.privacy === 'members')),
+              )
+              .map((t) => ({ value: 'task:' + t.id, label: t.title, description: 'Tarefa' })),
+          ]}
+        />
+      )}
+      {note?.event_id && events[note.event_id] && !events[note.event_id].is_masked && (
+        <AppText>Evento · {events[note.event_id].title}</AppText>
+      )}
+      {note?.task_id && tasks[note.task_id] && <AppText>Tarefa · {tasks[note.task_id].title}</AppText>}
       {canEdit && <SwitchRow label={t('notes.pin')} value={pinned} onChange={setPinned} />}
+      {note && <NoteRecords id={note.id} />}
       {links.length > 0 && (
         <View style={styles.gap}>
           <AppText variant="label">{t('tasks.links')}</AppText>

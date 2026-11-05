@@ -4,7 +4,7 @@ import { useDataStore } from '@/stores/dataStore';
 import { TIME_GROUP } from '@/offline/merge';
 import { makeOp, type OutboxOp } from '@/offline/outbox';
 import { newId } from '@/offline/storage';
-import { enqueueOp, discardOperation, replaceOperation } from '@/offline/syncEngine';
+import { enqueuePlan, enqueueOp, discardOperation, replaceOperation } from '@/offline/syncEngine';
 import type { CalendarEvent, EventFields, EventStatus, Occurrence } from '@/models/types';
 import {
   addDaysToKey,
@@ -64,7 +64,7 @@ async function queueExtras(eventId: string, calendarId: string, form: EventForm,
 /** `extra`: campos além do formulário (ex.: task_id de um bloco de tempo, external_uid de importação). */
 export async function createEvent(
   form: EventForm,
-  extra: { task_id?: string; external_uid?: string } = {},
+  extra: { personal_context?: string; task_id?: string; external_uid?: string } = {},
 ): Promise<string> {
   const id = newId();
   const fields = formToFields(form);
@@ -457,6 +457,36 @@ export async function deleteEventsById(list: { id: string; calendarId: string }[
       }),
     );
   }
+}
+
+export async function importSeries(form: EventForm, uid: string, exceptions: CalendarEvent['exceptions']) {
+  const entityId = newId(),
+    calendarId = form.calendarId;
+  const create = makeOp({
+    id: newId(),
+    kind: 'create',
+    entityId,
+    calendarId,
+    payload: { ...formToFields(form), calendar_id: calendarId, external_uid: uid },
+  });
+  const changes = exceptions.map((x) =>
+    makeOp({ id: newId(), kind: 'exception_upsert', entityId, calendarId, payload: { ...x } }),
+  );
+  await enqueuePlan([create, ...changes]);
+}
+
+export async function reservePlan(entries: { form: EventForm; taskId: string }[]) {
+  const ops = entries.map(({ form, taskId }) =>
+    makeOp({
+      id: newId(),
+      kind: 'create',
+      entityId: newId(),
+      calendarId: form.calendarId,
+      payload: { ...formToFields(form), calendar_id: form.calendarId, task_id: taskId },
+    }),
+  );
+  await enqueuePlan(ops);
+  return ops.map((op) => ({ id: op.entityId, calendarId: op.calendarId! }));
 }
 
 /** Conclusão rápida: em séries, altera apenas a ocorrência exibida. */

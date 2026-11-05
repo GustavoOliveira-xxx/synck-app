@@ -1,5 +1,12 @@
 # Histórico de versões
 
+## 3.6.0
+
+- Contextos pessoais em eventos, tarefas, hábitos e notas, com agrupamento no Perfil.
+- Referências, restauração e histórico de notas; promoção de etapas e histórico de checklist por ocorrência.
+- Fuso editável e aviso de períodos sobrepostos na rotina. O planejador enfileira juntos os blocos confirmados e distingue as ocorrências das tarefas.
+- Importação e exportação ICS preservam cancelamentos e remarcações das séries suportadas.
+
 ## 3.5.1
 
 - Blocos de tarefas pessoais ficam privados. Notas compartilhadas só aceitam vínculos com tarefas visíveis a toda a mesma agenda.

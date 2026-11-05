@@ -30,6 +30,7 @@ export function useFreeSlots(
   minMinutes = 30,
   excludeEventId?: string,
   timezone?: string,
+  context?: string | null,
 ): { slots: FreeSlot[]; occurrences: Occurrence[]; loading: boolean; complete: boolean } {
   const settings = useDisplaySettings();
   const display = { ...settings, timezone: timezone ?? settings.timezone };
@@ -69,7 +70,10 @@ export function useFreeSlots(
             occurrences.filter((o) => o.event.id !== excludeEventId),
             userId,
           ),
-          ...routineBusy(routines ?? [], key.split(',')),
+          ...routineBusy(
+            (routines ?? []).filter((p) => context === 'custom' || p.kind !== context),
+            key.split(','),
+          ),
         ],
         key.split(','),
         display.timezone,
@@ -89,6 +93,7 @@ export function useFreeSlots(
       display.dayEnd,
       minMinutes,
       routines,
+      context,
       excludeEventId,
       now,
     ],

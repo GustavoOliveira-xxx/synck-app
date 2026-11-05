@@ -1,3 +1,6 @@
+import { routineBlocks } from '@/utils/routine';
+import { todayKey, addDaysToKey } from '@/utils/dates';
+import { timezoneOptions } from '@/utils/timezones';
 import { Stack } from 'expo-router';
 import { router } from '@/services/router';
 import { useState } from 'react';
@@ -63,6 +66,30 @@ export default function RoutineScreen() {
       );
       return;
     }
+    const today = todayKey(display.timezone);
+    const blocks = routineBlocks(
+      periods,
+      Array.from({ length: 8 }, (_, i) => addDaysToKey(today, i)),
+    );
+    const pair = blocks.find((block, i) =>
+      blocks
+        .slice(i + 1)
+        .some(
+          (other) =>
+            other.period.id !== block.period.id && other.start < block.end && other.end > block.start,
+        ),
+    );
+    if (
+      pair &&
+      !(await confirm({
+        title: 'Períodos de rotina coincidem',
+        message:
+          'Há uma sobreposição com ' + pair.period.title + ' perto desta semana. Manter os dois períodos?',
+        confirmLabel: 'Manter os dois',
+        cancelLabel: 'Rever horários',
+      }))
+    )
+      return;
     setSaving(true);
     try {
       await saveRoutines(
@@ -145,9 +172,13 @@ export default function RoutineScreen() {
               Termina no dia seguinte. Selecione os dias em que este período começa.
             </AppText>
           )}
-          <AppText variant="caption" tone="muted">
-            Fuso: {p.timezone}
-          </AppText>
+          <SelectField
+            label="Fuso do período"
+            value={p.timezone}
+            options={timezoneOptions(p.timezone)}
+            searchable
+            onChange={(timezone) => change(p.id, { timezone })}
+          />
           <SwitchRow
             label="Considerar nos horários livres"
             value={p.enabled}

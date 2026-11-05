@@ -1,3 +1,4 @@
+import { RoutineCancelled } from '@/services/routineGuard';
 // "Planejar minha semana": sugere blocos de tempo para as tarefas com prazo
 // nos próximos dias, explica cada sugestão e só reserva depois da revisão.
 import { Stack } from 'expo-router';
@@ -21,7 +22,7 @@ import { useTasks } from '@/hooks/useItems';
 import { useNow } from '@/hooks/useNow';
 import { useFreeSlots } from '@/hooks/usePlanning';
 import { strings, t } from '@/i18n';
-import { createEvent, deleteEventsById } from '@/services/eventActions';
+import { reservePlan, deleteEventsById } from '@/services/eventActions';
 import { goBack } from '@/services/navigation';
 import { useDataStore } from '@/stores/dataStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -90,6 +91,12 @@ export default function PlannerScreen() {
       if (!o.event.task_id || o.end.getTime() < now) continue;
       const task = byId.get(o.event.task_id);
       if (!task || ['cancelled', 'archived'].includes(o.event.status)) continue;
+      if (
+        task.recurrence_rule &&
+        o.event.task_occurrence_date &&
+        o.event.task_occurrence_date !== task.due_date
+      )
+        continue;
       const window = executionWindow(task);
       const minutes =
         Math.max(0, Math.min(+o.end, window.end) - Math.max(+o.start, now, window.start)) / 60_000;
@@ -117,33 +124,37 @@ export default function PlannerScreen() {
     if (!calendarId || privateBlocked || !chosen.length) return;
     setSaving(true);
     try {
-      const created: { id: string; calendarId: string }[] = [];
-      for (const s of chosen) {
+      const entries = chosen.map((s) => {
         const start = instantToLocal(s.start, display.timezone);
         const end = instantToLocal(s.end, display.timezone);
         const base = newEventForm(calendarId, display.timezone, start.dateKey);
-        const id = await createEvent(
-          {
+        return {
+          taskId: s.task.id,
+          form: {
             ...base,
             title: s.parts > 1 ? `${s.task.title} (${s.part}/${s.parts})` : s.task.title,
             startDate: start.dateKey,
             startTime: start.time.slice(0, 5),
             endDate: end.dateKey,
             endTime: end.time.slice(0, 5),
-            eventType: 'custom',
+            eventType: 'custom' as const,
             privacy:
-              s.task.calendar_id === calendarId && s.task.privacy === 'members' ? 'members' : 'private',
+              s.task.calendar_id === calendarId && s.task.privacy === 'members'
+                ? ('members' as const)
+                : ('private' as const),
             reminders: [],
           },
-          { task_id: s.task.id },
-        );
-        created.push({ id, calendarId });
-      }
+        };
+      });
+      const created = await reservePlan(entries);
       toast(t('planner.reserved', { n: created.length }), 'success', {
         label: t('planner.undo'),
         onPress: () => void deleteEventsById(created).then(() => toast(t('planner.undone'))),
       });
       goBack();
+    } catch (error) {
+      if (!(error instanceof RoutineCancelled))
+        toast('Não foi possível reservar o plano. Confira a sincronização.', 'error');
     } finally {
       setSaving(false);
     }
