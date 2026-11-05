@@ -36,22 +36,29 @@ export default function TimeBlockScreen() {
   const task = useTask(id);
   const display = useDisplaySettings();
   const { toast } = useFeedback();
-  const calendars = useDataStore((s) => s.calendars).filter((c) => canCreateEvents(c));
+  const calendars = useDataStore((s) => s.calendars).filter(
+    (c) =>
+      canCreateEvents(c) &&
+      (c.allow_private_events || (task?.calendar_id === c.id && task.privacy === 'members')),
+  );
   const today = todayKey(display.timezone);
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDaysToKey(today, i)), [today]);
   const [duration, setDuration] = useState(Math.min(180, task?.estimated_minutes ?? 60));
   const { slots } = useFreeSlots(days, duration);
   const options = useMemo(() => startOptions(slots, duration, 30, 6), [slots, duration]);
   // Agenda pessoal por padrão: tarefas privadas não vão para agendas compartilhadas sem a pessoa escolher.
-  const [calendarId, setCalendarId] = useState(
-    calendars.find((c) => c.kind === 'personal')?.id ?? calendars[0]?.id ?? '',
-  );
+  const [selectedId, setCalendarId] = useState('');
+  const calendarId =
+    calendars.find((c) => c.id === selectedId)?.id ??
+    calendars.find((c) => c.kind === 'personal')?.id ??
+    calendars[0]?.id ??
+    '';
   const first = options[0] ? instantToLocal(new Date(options[0].start), display.timezone) : null;
   const [date, setDate] = useState(first?.dateKey ?? today);
   const [time, setTime] = useState(first?.time.slice(0, 5) ?? '19:00');
   const [saving, setSaving] = useState(false);
 
-  if (!task || !calendarId) {
+  if (!task || !calendars.some((c) => c.id === calendarId)) {
     return (
       <Screen>
         <EmptyState
@@ -78,7 +85,7 @@ export default function TimeBlockScreen() {
           endDate,
           endTime: `${pad(Math.floor((endTotal % 1440) / 60))}:${pad(endTotal % 60)}`,
           eventType: 'custom',
-          privacy: 'members',
+          privacy: task.calendar_id === calendarId && task.privacy === 'members' ? 'members' : 'private',
           reminders: [],
         },
         { task_id: task.id },
@@ -145,6 +152,9 @@ export default function TimeBlockScreen() {
           />
         </View>
       </View>
+      {(!task.calendar_id || task.calendar_id !== calendarId || task.privacy !== 'members') && (
+        <AppText tone="muted">Somente você verá este bloco.</AppText>
+      )}
       <SelectField<string>
         label={t('planner.calendar')}
         value={calendarId}

@@ -1,5 +1,11 @@
 # Histórico de versões
 
+## 3.5.1
+
+- Blocos de tarefas pessoais ficam privados. Notas compartilhadas só aceitam vínculos com tarefas visíveis a toda a mesma agenda.
+- O planejador respeita início, data e hora do prazo no fuso da tarefa e aguarda a agenda sincronizar antes de sugerir reservas.
+- Enquetes encerradas distinguem a opção votada do horário vigente da reunião e indicam cancelamento ou indisponibilidade.
+
 ## 3.5.0 — 04/11/2026
 
 - Assinatura própria obrigatória no Android, com conferência do certificado e bloqueio de APK depurável.

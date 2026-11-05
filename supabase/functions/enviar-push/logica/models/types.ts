@@ -491,6 +491,14 @@ export interface TaskHistoryEntry {
 export type PollAnswer = 'yes' | 'maybe' | 'no';
 
 export interface Poll {
+  meeting?: {
+    starts_at: string;
+    ends_at: string;
+    status: EventStatus;
+    all_day: boolean;
+    start_date: DateKey | null;
+    end_date: DateKey | null;
+  } | null;
   id: string;
   calendar_id: string;
   title: string;

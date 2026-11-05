@@ -13,6 +13,8 @@ import { useFeedback } from '@/components/Feedback';
 import { OptionSheet } from '@/components/OptionSheet';
 import { Screen } from '@/components/Screen';
 import { EmptyState, ErrorState } from '@/components/StateViews';
+import { useScreenFocus } from '@/hooks/useScreenFocus';
+import { useDataStore } from '@/stores/dataStore';
 import { useAction } from '@/hooks/useAction';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useDisplaySettings } from '@/hooks/useDisplaySettings';
@@ -34,7 +36,19 @@ export default function PollsScreen() {
   const display = useDisplaySettings();
   const { toast } = useFeedback();
   const { run } = useAction();
-  const { data, error, reload, refresh, refreshing } = useRemoteData(() => api.listPolls(id), [id], []);
+  const focused = useScreenFocus();
+  const calendarRevision = useDataStore((state) =>
+    Object.values(state.events)
+      .filter((event) => event.calendar_id === id)
+      .map((event) => event.id + ':' + event.version)
+      .sort()
+      .join(','),
+  );
+  const { data, error, reload, refresh, refreshing } = useRemoteData(
+    () => (focused ? api.listPolls(id) : Promise.resolve([])),
+    [id, focused, calendarRevision],
+    [],
+  );
   const [closing, setClosing] = useState<Poll | null>(null);
 
   const vote = async (optionId: string, answer: PollAnswer) => {
@@ -73,6 +87,30 @@ export default function PollsScreen() {
             <AppText variant="caption" tone="muted">
               {t('polls.by', { name: poll.created_by_name })}
             </AppText>
+            {poll.status === 'scheduled' && (
+              <AppText variant="label">
+                {!poll.meeting
+                  ? 'Reunião indisponível'
+                  : poll.meeting.status === 'cancelled'
+                    ? 'Reunião cancelada'
+                    : poll.meeting.all_day
+                      ? 'Reunião de dia inteiro · ' + poll.meeting.start_date
+                      : 'Horário atual · ' +
+                        formatDateTime(
+                          new Date(poll.meeting.starts_at),
+                          display.timezone,
+                          display.dateFormat,
+                          display.timeFormat,
+                        ) +
+                        ' até ' +
+                        formatDateTime(
+                          new Date(poll.meeting.ends_at),
+                          display.timezone,
+                          display.dateFormat,
+                          display.timeFormat,
+                        )}
+              </AppText>
+            )}
             {poll.options.map((o) => {
               const myVote = o.votes.find((v) => v.user_id === userId)?.answer;
               const yes = o.votes.filter((v) => v.answer === 'yes').length;
@@ -80,7 +118,10 @@ export default function PollsScreen() {
               const chosen = poll.chosen_option_id === o.id;
               return (
                 <View key={o.id} style={[styles.option, chosen && styles.chosen]}>
-                  <AppText variant="label">{when(o)}</AppText>
+                  <AppText variant="label">
+                    {chosen ? 'Opção votada · ' : ''}
+                    {when(o)}
+                  </AppText>
                   <AppText variant="caption" tone="muted">
                     {t('polls.votes', { yes, maybe })}
                   </AppText>

@@ -176,6 +176,30 @@ describe('planejar minha semana', () => {
     ).toEqual([]);
   });
 
+  it('respeita início, prazo vencido e hora-limite no fuso da tarefa', () => {
+    const task = makeTask({
+      id: 't',
+      start_date: '2026-11-06',
+      due_date: '2026-11-06',
+      due_time: '10:00',
+      timezone: 'America/Sao_Paulo',
+      estimated_minutes: 60,
+    });
+    const run = (start: string, end: string) =>
+      planWeek({
+        today: '2026-11-04',
+        lastDay: '2026-11-10',
+        tasks: [task],
+        slots: [{ day: '2026-11-06', start: new Date(start), end: new Date(end), minutes: 120 }],
+      }).suggestions;
+    expect(run('2026-11-04T12:00Z', '2026-11-04T14:00Z')).toHaveLength(0);
+    expect(run('2026-11-07T12:00Z', '2026-11-07T14:00Z')).toHaveLength(0);
+    expect(run('2026-11-06T12:00Z', '2026-11-06T14:00Z')[0].end.toISOString()).toBe(
+      '2026-11-06T13:00:00.000Z',
+    );
+    expect(run('2026-11-06T12:01Z', '2026-11-06T14:00Z')).toHaveLength(0);
+  });
+
   it('divide tarefas longas em blocos de até 1 hora', () => {
     expect(chunks(30)).toEqual([30]);
     expect(chunks(90)).toEqual([90]);

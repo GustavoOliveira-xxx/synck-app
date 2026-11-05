@@ -4,7 +4,7 @@
 
 Aplicativo de **agenda, tarefas e planejamento compartilhados** para **Android, iPhone, iPad e computador**: você cria agendas, convida pessoas e todo mundo vê os mesmos compromissos, tarefas e lembretes, sincronizados pela internet, cada pessoa com o nível de acesso que você escolher. Funciona para casal, família, amigos, república, equipe pequena, grupo de estudo, cuidadores e viagens.
 
-**Versão atual: 3.5.0.** O que mudou está no [CHANGELOG.md](CHANGELOG.md); o que já foi validado e o que ainda depende de teste no aparelho, em [docs/VALIDACAO_3.0.md](docs/VALIDACAO_3.0.md).
+**Versão atual: 3.5.1.** O que mudou está no [CHANGELOG.md](CHANGELOG.md); o que já foi validado e o que ainda depende de teste no aparelho, em [docs/VALIDACAO_3.0.md](docs/VALIDACAO_3.0.md).
 
 > **Comece aqui (para quem não programa)**
 >

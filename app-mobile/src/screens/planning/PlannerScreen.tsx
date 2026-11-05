@@ -36,7 +36,7 @@ import {
   todayKey,
 } from '@/utils/dates';
 import { canCreateEvents } from '@/utils/permissions';
-import { planWeek, type BlockSuggestion, type PlanReason } from '@/utils/planner';
+import { planWeek, executionWindow, type BlockSuggestion, type PlanReason } from '@/utils/planner';
 import { describeDue } from '@/utils/tasks';
 import { newEventForm } from '@/validation/event';
 
@@ -73,7 +73,7 @@ export default function PlannerScreen() {
   const calendars = useDataStore((s) => s.calendars).filter((c) => canCreateEvents(c));
   const today = todayKey(display.timezone);
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDaysToKey(today, i)), [today]);
-  const { slots, occurrences } = useFreeSlots(days, 15);
+  const { slots, occurrences, complete } = useFreeSlots(days, 15);
   const [excluded, setExcluded] = useState<string[]>([]);
   const [skipped, setSkipped] = useState<string[]>([]);
   const [calendarId, setCalendarId] = useState(
@@ -85,19 +85,28 @@ export default function PlannerScreen() {
   const now = useNow(5 * 60_000);
   const reserved = useMemo(() => {
     const map: Record<string, number> = {};
+    const byId = new Map(tasks.map((task) => [task.id, task]));
     for (const o of occurrences) {
       if (!o.event.task_id || o.end.getTime() < now) continue;
-      map[o.event.task_id] = (map[o.event.task_id] ?? 0) + (o.end.getTime() - o.start.getTime()) / 60_000;
+      const task = byId.get(o.event.task_id);
+      if (!task || ['cancelled', 'archived'].includes(o.event.status)) continue;
+      const window = executionWindow(task);
+      const minutes =
+        Math.max(0, Math.min(+o.end, window.end) - Math.max(+o.start, now, window.start)) / 60_000;
+      map[task.id] = (map[task.id] ?? 0) + Math.floor(minutes);
     }
     return map;
-  }, [occurrences, now]);
+  }, [occurrences, now, tasks]);
 
   const plan = useMemo(
-    () => planWeek({ tasks, slots, lastDay: days[DAYS - 1], today, reserved, excluded }),
-    [tasks, slots, days, today, reserved, excluded],
+    () =>
+      planWeek({ tasks, slots: complete ? slots : [], lastDay: days[DAYS - 1], today, reserved, excluded }),
+    [tasks, slots, complete, days, today, reserved, excluded],
   );
   const chosen = plan.suggestions.filter((s) => !skipped.includes(s.id));
 
+  const needsPrivate = chosen.some((s) => s.task.calendar_id !== calendarId || s.task.privacy !== 'members');
+  const privateBlocked = needsPrivate && !calendars.find((c) => c.id === calendarId)?.allow_private_events;
   const byDay = new Map<string, BlockSuggestion[]>();
   for (const s of plan.suggestions) {
     const day = instantToLocal(s.start, display.timezone).dateKey;
@@ -105,7 +114,7 @@ export default function PlannerScreen() {
   }
 
   const reserve = async () => {
-    if (!calendarId || !chosen.length) return;
+    if (!calendarId || privateBlocked || !chosen.length) return;
     setSaving(true);
     try {
       const created: { id: string; calendarId: string }[] = [];
@@ -122,7 +131,8 @@ export default function PlannerScreen() {
             endDate: end.dateKey,
             endTime: end.time.slice(0, 5),
             eventType: 'custom',
-            privacy: 'members',
+            privacy:
+              s.task.calendar_id === calendarId && s.task.privacy === 'members' ? 'members' : 'private',
             reminders: [],
           },
           { task_id: s.task.id },
@@ -157,7 +167,7 @@ export default function PlannerScreen() {
             icon="calendar-outline"
             onPress={() => void reserve()}
             loading={saving}
-            disabled={!calendarId}
+            disabled={!calendarId || privateBlocked}
           />
         ) : undefined
       }
@@ -208,6 +218,12 @@ export default function PlannerScreen() {
           })}
 
           <SectionHeader title={t('planner.suggestions')} />
+          {!complete && <AppText tone="muted">Sincronize a agenda para conferir os horários livres.</AppText>}
+          {chosen.some((s) => s.task.calendar_id !== calendarId || s.task.privacy !== 'members') && (
+            <AppText tone="muted">
+              Blocos de tarefas pessoais ou de outra agenda ficam visíveis só para você.
+            </AppText>
+          )}
           {[...byDay.entries()].map(([day, list]) => (
             <View key={day} style={styles.gap}>
               <AppText variant="overline" tone="muted">
@@ -256,6 +272,9 @@ export default function PlannerScreen() {
                 {t('planner.unplacedHint')}
               </AppText>
             </Card>
+          )}
+          {privateBlocked && (
+            <AppText tone="warning">Selecione uma agenda que permita blocos privados.</AppText>
           )}
           {calendars.length > 0 ? (
             <SelectField<string>
