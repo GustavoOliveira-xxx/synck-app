@@ -27,7 +27,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         id: app
         with:
           path: app-mobile/android/app/build/outputs/apk/release/app-release.apk
@@ -40,6 +40,11 @@ jobs:
           npx expo prebuild --platform android --no-install
           cd android
           ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
+      - uses: actions/cache/save@v4
+        if: steps.app.outputs.cache-hit != 'true'
+        with:
+          path: app-mobile/android/app/build/outputs/apk/release/app-release.apk
+          key: ${{ steps.app.outputs.cache-primary-key }}
       - name: Iniciar Android 14 no emulador
         run: |
           export PATH="$ANDROID_HOME/platform-tools:$PATH"
@@ -47,7 +52,13 @@ jobs:
           sudo chmod 666 /dev/kvm
           image='system-images;android-34;google_apis;x86_64'
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "$image" emulator platform-tools
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n synck -k "$image" --force
+          export ANDROID_USER_HOME="$RUNNER_TEMP/synck-android"
+          export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n synck -k "$image" -p "$ANDROID_AVD_HOME/synck.avd" --device pixel_2 --force
+          test -s "$ANDROID_AVD_HOME/synck.avd/config.ini"
+          printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android-34\n' "$ANDROID_AVD_HOME/synck.avd" > "$ANDROID_AVD_HOME/synck.ini"
+          "$ANDROID_HOME/emulator/emulator" -list-avds | grep -x synck
           "$ANDROID_HOME/emulator/emulator" -avd synck -no-window -no-audio -no-snapshot -gpu swiftshader_indirect -no-boot-anim -partition-size 2048 -memory 2048 -cores 2 > /tmp/synck-emulator.log 2>&1 &
           timeout 150 adb wait-for-device || { tail -100 /tmp/synck-emulator.log; df -h .; exit 1; }
           timeout 300 bash -c 'until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done' || { tail -100 /tmp/synck-emulator.log; exit 1; }
