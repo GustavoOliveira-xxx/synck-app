@@ -46,6 +46,7 @@ async function reminders(from: Date, to: Date): Promise<Push[]> {
       minutes_before: number;
       event: CalendarEvent;
       access: string;
+      sound: boolean;
       show_details: boolean;
       timezone: string;
       time_format: '24h' | '12h';
@@ -58,12 +59,12 @@ async function reminders(from: Date, to: Date): Promise<Push[]> {
              (select jsonb_agg(to_jsonb(x)) from public.recurrence_exceptions x where x.event_id = e.id), '[]'::jsonb))
              as event,
            private.event_access_for(cm.role, r.user_id, e.id, e.created_by, e.privacy) as access,
-           np.show_details_on_lock_screen as show_details,
+           np.sound, np.show_details_on_lock_screen as show_details,
            up.timezone, up.time_format,
            np.quiet_hours_start::text as quiet_start, np.quiet_hours_end::text as quiet_end
       from public.reminders r
       join public.events e on e.id = r.event_id and e.deleted_at is null
-                          and e.status not in ('cancelled', 'completed')
+                          and e.status not in ('cancelled', 'completed', 'archived')
       join public.calendars c on c.id = e.calendar_id and c.deleted_at is null
       join public.calendar_members cm on cm.calendar_id = c.id and cm.user_id = r.user_id and cm.status = 'active'
       join public.notification_preferences np on np.user_id = r.user_id and np.enabled and np.notify_reminders
@@ -93,7 +94,7 @@ async function reminders(from: Date, to: Date): Promise<Push[]> {
           : t('reminders.lockedBody'),
         path: `event/${row.event.id}?date=${occ.originalDate}`,
         tag: `rem:${occ.key}:${row.minutes_before}`,
-        silent: isWithinQuietHours(new Date(at), row.timezone, row.quiet_start, row.quiet_end),
+        silent: !row.sound || isWithinQuietHours(new Date(at), row.timezone, row.quiet_start, row.quiet_end),
       });
     }
   }
@@ -114,6 +115,7 @@ async function taskAlerts(from: Date, to: Date): Promise<Push[]> {
       due_time: string | null;
       task_timezone: string;
       access: boolean;
+      sound: boolean;
       show_details: boolean;
       timezone: string;
       time_format: '24h' | '12h';
@@ -125,7 +127,7 @@ async function taskAlerts(from: Date, to: Date): Promise<Push[]> {
            t.timezone as task_timezone,
            private.task_access_for(a.user_id, cm.role, t.calendar_id, t.id, t.created_by, t.assignee_id, t.privacy)
              as access,
-           np.show_details_on_lock_screen as show_details,
+           np.sound, np.show_details_on_lock_screen as show_details,
            up.timezone, up.time_format,
            np.quiet_hours_start::text as quiet_start, np.quiet_hours_end::text as quiet_end
       from public.task_alerts a
@@ -155,7 +157,7 @@ async function taskAlerts(from: Date, to: Date): Promise<Push[]> {
       body: row.show_details ? when : t('reminders.lockedBody'),
       path: `task/${row.task_id}`,
       tag: `task:${row.task_id}:${row.due_date}:${row.minutes_before}`,
-      silent: isWithinQuietHours(new Date(at), row.timezone, row.quiet_start, row.quiet_end),
+      silent: !row.sound || isWithinQuietHours(new Date(at), row.timezone, row.quiet_start, row.quiet_end),
     });
   }
   return pushes;
@@ -176,28 +178,34 @@ async function notices(from: Date, to: Date): Promise<Push[]> {
     {
       id: string;
       user_id: string;
+      timezone: string;
+      quiet_start: string | null;
+      quiet_end: string | null;
       type: string;
       title: string;
       body: string | null;
       event_id: string | null;
       calendar_id: string | null;
       data: Record<string, unknown>;
+      sound: boolean;
       show_details: boolean;
     }[]
   >`
-    select n.id, n.user_id, n.type, n.title, n.body, n.event_id, n.calendar_id, n.data,
-           np.show_details_on_lock_screen as show_details
+    select n.id, n.user_id, n.type, n.title, n.body, n.event_id, n.calendar_id, n.data, up.timezone,
+           np.quiet_hours_start::text as quiet_start, np.quiet_hours_end::text as quiet_end,
+           np.sound, np.show_details_on_lock_screen as show_details
       from public.notifications n
+      join public.user_preferences up on up.user_id=n.user_id
       join public.notification_preferences np on np.user_id = n.user_id and np.enabled
      where n.created_at > ${from} and n.created_at <= ${to} and n.read_at is null
        and exists (select 1 from public.push_subscriptions s where s.user_id = n.user_id)`;
   return rows.map((n) => ({
     userId: n.user_id,
-    title: n.title,
+    title: n.show_details ? n.title : t('reminders.lockedContent'),
     body: n.show_details ? (n.body ?? '') : t('reminders.lockedBody'),
     path: noticePath(n),
     tag: `aviso:${n.id}`,
-    silent: false,
+    silent: !n.sound || isWithinQuietHours(to, n.timezone, n.quiet_start, n.quiet_end),
   }));
 }
 

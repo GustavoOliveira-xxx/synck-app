@@ -1,0 +1,48 @@
+name: Notificação Android com tela bloqueada
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['app-mobile/src/services/localNotifications.ts', 'e2e/android-notifications/**', '.github/workflows/notificacoes.yml']
+permissions:
+  contents: read
+jobs:
+  alarme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    defaults:
+      run:
+        working-directory: app-mobile
+    env:
+      EXPO_NO_TELEMETRY: 1
+      CI: 1
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app-mobile/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Compilar o teste com o agendador do aplicativo
+        run: |
+          npm ci
+          cp ../e2e/android-notifications/entry.js index.js
+          npx expo prebuild --platform android --no-install
+          cd android
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
+      - name: Iniciar Android 14 no emulador
+        run: |
+          sudo chmod 666 /dev/kvm
+          image='system-images;android-34;google_apis;x86_64'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "$image" emulator
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n synck -k "$image" --force
+          "$ANDROID_HOME/emulator/emulator" -avd synck -no-window -no-audio -no-snapshot -gpu swiftshader_indirect -no-boot-anim > /tmp/synck-emulator.log 2>&1 &
+          adb wait-for-device
+          timeout 300 bash -c 'until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
+          adb shell input keyevent 82
+      - name: Verificar entrega depois de fechar e bloquear
+        run: bash ../e2e/android-notifications/check.sh

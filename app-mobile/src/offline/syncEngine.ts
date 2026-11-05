@@ -115,6 +115,7 @@ export async function enqueuePlan(ops: OutboxOp[]): Promise<void> {
   for (const op of ops) await guardRoutine(op);
   if (!user || user !== uid()) throw Error('Conta alterada');
   await setOutbox(ops.reduce(enqueue, useSyncStore.getState().outbox));
+  await afterSync?.();
   requestSync({ pull: false });
 }
 
@@ -122,6 +123,7 @@ export async function enqueuePlan(ops: OutboxOp[]): Promise<void> {
 export async function enqueueOp(op: OutboxOp): Promise<void> {
   await guardRoutine(op);
   await setOutbox(enqueue(useSyncStore.getState().outbox, op));
+  if (op.entity === 'event' || op.entity === 'task') await afterSync?.();
   requestSync({ pull: false });
 }
 

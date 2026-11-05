@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 3.6.1
+
+- Android agenda lembretes ao salvar, inclusive offline, mantém alarmes válidos na sincronização e permite autorizar horários exatos.
+- Ativação de Web Push pelo toque no iPhone, conferência da inscrição e respeito ao silêncio nos avisos.
+
 ## 3.6.0
 
 - Contextos pessoais em eventos, tarefas, hábitos e notas, com agrupamento no Perfil.

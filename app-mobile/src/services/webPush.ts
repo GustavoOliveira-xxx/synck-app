@@ -17,8 +17,15 @@ const supported = () =>
 async function registration(): Promise<ServiceWorkerRegistration | null> {
   if (!supported()) return null;
   // O service worker é registrado pelo index.html; espera ficar pronto.
-  const timeout = new Promise<null>((ok) => setTimeout(() => ok(null), 4000));
-  return Promise.race([navigator.serviceWorker.ready, timeout]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timeout = new Promise<null>((ok) => {
+      timer = setTimeout(() => ok(null), 4000);
+    });
+    return await Promise.race([navigator.serviceWorker.ready, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Converte a chave pública (base64 de URL) no formato que o navegador pede. */
@@ -34,19 +41,23 @@ export async function getWebPushState(): Promise<WebPushState> {
   if (!supported()) return 'unsupported';
   if (Notification.permission === 'denied') return 'blocked';
   const reg = await registration();
-  if (!reg) return 'unsupported';
+  if (!reg) return 'unavailable';
   const sub = await reg.pushManager.getSubscription();
-  return sub && Notification.permission === 'granted' ? 'on' : 'off';
+  if (!sub || Notification.permission !== 'granted') return 'off';
+  const { data, error } = await supabase.rpc('my_push_subscription_active', { p_endpoint: sub.endpoint });
+  if (error) return 'unavailable';
+  return data ? 'on' : 'off';
 }
 
 export async function enableWebPush(): Promise<WebPushState> {
   if (!supported()) return 'unsupported';
+  const permission =
+    Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  if (permission !== 'granted') return permission === 'denied' ? 'blocked' : 'off';
   const publicKey = unwrap(await supabase.rpc('web_push_public_key')) as string | null;
   if (!publicKey) return 'unavailable';
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return permission === 'denied' ? 'blocked' : 'off';
   const reg = await registration();
-  if (!reg) return 'unsupported';
+  if (!reg) return 'unavailable';
   let sub = await reg.pushManager.getSubscription();
   if (!sub) {
     sub = await reg.pushManager.subscribe({
@@ -70,8 +81,9 @@ export async function disableWebPush(): Promise<WebPushState> {
   const reg = await registration();
   const sub = await reg?.pushManager.getSubscription();
   if (sub) {
-    await supabase.rpc('unregister_push_subscription', { p_endpoint: sub.endpoint });
-    await sub.unsubscribe().catch(() => false);
+    const { error } = await supabase.rpc('unregister_push_subscription', { p_endpoint: sub.endpoint });
+    const removed = await sub.unsubscribe();
+    if (error && !removed) throw error;
   }
   return 'off';
 }

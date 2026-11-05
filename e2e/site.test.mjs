@@ -124,6 +124,41 @@ test('sem internet, o app abre mesmo assim', async () => {
   await ctx.setOffline(false);
 });
 
+test('Chrome aceita a notificação de push com a aba do aplicativo fechada',async()=>{
+  await ctx.grantPermissions(['notifications'],{origin:origem});
+  const controle=await ctx.newPage();
+  await controle.route(origem+'/fora-do-aplicativo',r=>r.fulfill({status:200,contentType:'text/html',body:'<title>Controle</title>'}));
+  await controle.goto(origem+'/fora-do-aplicativo');
+  const cdp=await ctx.newCDPSession(controle);
+  let registrationId;
+  cdp.on('ServiceWorker.workerRegistrationUpdated',({registrations})=>{
+    const registration=registrations.find(r=>r.scopeURL===origem+BASE && !r.isDeleted);
+    if(registration)registrationId=registration.registrationId;
+  });
+  await cdp.send('ServiceWorker.enable');
+  if(!page.url().startsWith(origem+BASE))await page.goto(origem+BASE);
+  await page.evaluate(()=>navigator.serviceWorker.ready.then(()=>true));
+  for(let i=0; i<100&&!registrationId;i++)await new Promise(done=>setTimeout(done,100));
+  assert.ok(registrationId,'registro do service worker');
+  const worker=ctx.serviceWorkers().find(w=>w.url().startsWith(origem+BASE));
+  await worker.evaluate(()=>{
+    self.probe={};
+    self.addEventListener('push',()=>{self.probe.received=true});
+    const show=self.registration.showNotification.bind(self.registration);
+    self.registration.showNotification=async(title,options)=>{try{await show(title,options);self.probe.shown=[title,options.body,options.data.path,options.silent]}catch(e){self.probe.error=e.message;throw e}};
+  });
+  await page.close();
+  const data={title:'synCK · teste',body:'Evento de demonstração',tag:'teste-local',path:'notifications',silent:true};
+  await cdp.send('ServiceWorker.deliverPushMessage',{origin:origem,registrationId,data:JSON.stringify(data)});
+  let result;
+  for(let attempt=0;attempt<75&&!result;attempt++){
+    const probe=await worker.evaluate(()=>self.probe);
+    if(probe.error)throw Error(probe.error);
+    result=probe.shown;
+    if(!result)await new Promise(done=>setTimeout(done,200));
+  }
+  assert.deepEqual(result,[data.title,data.body,data.path,true]);await controle.close();
+});
 test('nenhum erro de JavaScript', () => {
   assert.deepEqual(erros, []);
 });

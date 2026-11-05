@@ -13,7 +13,8 @@ import { useSyncStore } from '@/stores/syncStore';
 import { clearWidgets } from '@/widgets/update';
 import { getDeviceTimezone } from '@/hooks/useDeviceTimezone';
 import { todayKey } from '@/utils/dates';
-import { expandEvents } from '@/utils/recurrence';
+import { isOpen } from '@/utils/tasks';
+import { expandEvent, expandEvents } from '@/utils/recurrence';
 
 import * as api from './api';
 import { signOutThisDevice } from './auth';
@@ -25,7 +26,18 @@ import { forgetWebPush } from './webPush';
 let activeUser: string | null = null;
 
 /** Reagenda os lembretes locais a partir do estado atual. */
-export async function refreshReminders(): Promise<void> {
+let scheduling = Promise.resolve();
+export function refreshReminders(): Promise<void> {
+  if (Platform.OS === 'web') return Promise.resolve();
+  const user = activeUser;
+  scheduling = scheduling
+    .catch(() => undefined)
+    .then(async () => {
+      if (user && activeUser === user) await refreshCurrentReminders();
+    });
+  return scheduling;
+}
+async function refreshCurrentReminders(): Promise<void> {
   const userId = useAuthStore.getState().session?.user.id ?? null;
   const account = useAuthStore.getState().account;
   const events = overlayPending(useDataStore.getState().events, useSyncStore.getState().outbox, userId);
@@ -46,6 +58,28 @@ export async function refreshReminders(): Promise<void> {
     tz,
     account?.preferences.time_format ?? '24h',
     Object.values(items.tasks),
+    (snooze) => {
+      const { taskId, eventId, occurrence, originalDate, startsAt } = snooze.data;
+      if (typeof taskId === 'string') {
+        const task = items.tasks[taskId];
+        return !!task && !task.deleted_at && isOpen(task) && task.due_date === occurrence;
+      }
+      if (typeof eventId === 'string') {
+        const event = events[eventId];
+        if (!event || event.deleted_at || ['cancelled', 'completed', 'archived'].includes(event.status))
+          return false;
+        const exception = event.exceptions.find((e) => e.original_date === originalDate);
+        if (exception?.is_cancelled || exception?.status === 'completed') return false;
+        if (typeof startsAt === 'string') {
+          const start = new Date(startsAt);
+          return expandEvent(event, start, new Date(+start + 1)).some(
+            (o) => o.originalDate === originalDate && +o.start === +start,
+          );
+        }
+        return true;
+      }
+      return false;
+    },
   );
 }
 
@@ -54,6 +88,7 @@ export async function startSession(userId: string): Promise<void> {
   activeUser = userId;
   await loadLocalState(userId);
   setAfterSyncHook(refreshReminders);
+  void refreshReminders();
   startRealtime(userId);
   void registerThisDevice();
   void syncNow();
@@ -93,6 +128,7 @@ async function doEndSession(): Promise<void> {
   activeUser = null;
   setAfterSyncHook(null);
   stopRealtime();
+  await scheduling.catch(() => undefined);
   await cancelAllReminders();
   await forgetWebPush();
   if (userId) await clearUserData(userId);

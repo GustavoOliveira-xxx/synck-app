@@ -25,6 +25,8 @@ test('notificações do navegador: cada um só vê e apaga a própria inscriçã
   const endpoint = 'https://push.exemplo.test/abc';
   await db.rpc(ana, 'register_push_subscription', [endpoint, 'chave', 'segredo', 'Safari']);
 
+  assert.equal(await db.rpc(ana,'my_push_subscription_active',[endpoint]),true);
+  assert.equal(await db.rpc(bruno,'my_push_subscription_active',[endpoint]),false);
   let mine = await db.as(ana, 'select endpoint from public.push_subscriptions');
   assert.equal(mine.rows.length, 1);
   const others = await db.as(bruno, 'select endpoint from public.push_subscriptions');
@@ -45,6 +47,7 @@ test('notificações do navegador: cada um só vê e apaga a própria inscriçã
   await db.rpc(ana, 'unregister_push_subscription', [endpoint]);
   assert.equal((await db.as(bruno, 'select 1 from public.push_subscriptions')).rows.length, 1);
   await db.rpc(bruno, 'unregister_push_subscription', [endpoint]);
+  assert.equal(await db.rpc(bruno,'my_push_subscription_active',[endpoint]),false);
   assert.equal((await db.as(bruno, 'select 1 from public.push_subscriptions')).rows.length, 0);
 
   // Sem login não inscreve; a chave pública pode ser lida, a privada fica escondida.

@@ -38,10 +38,10 @@ export const notificationsSupported = Platform.OS !== 'web';
 export function configureNotifications(): void {
   if (!notificationsSupported) return;
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
+    handleNotification: async (notification) => ({
       shouldShowBanner: true,
       shouldShowList: true,
-      shouldPlaySound: true,
+      shouldPlaySound: notification.request.content.data?.silent !== true,
       shouldSetBadge: false,
     }),
   });
@@ -124,7 +124,7 @@ async function scheduleSnooze(s: Snooze): Promise<void> {
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: new Date(s.at),
-      channelId: CHANNEL_PRIVATE,
+      channelId: typeof s.data.channelId === 'string' ? s.data.channelId : CHANNEL_PRIVATE,
     },
   });
 }
@@ -140,7 +140,7 @@ export async function snoozeReminder(request: Notifications.NotificationRequest)
     at: new Date(Date.now() + SNOOZE_MINUTES * 60_000).toISOString(),
     title: content.title ?? t('reminders.lockedContent'),
     body: content.body ?? null,
-    data: (content.data ?? {}) as Record<string, unknown>,
+    data: Object.fromEntries(Object.entries(content.data ?? {}).filter(([key]) => key !== 'synckPlan')),
     category: content.categoryIdentifier ?? REMINDER_CATEGORY,
   };
   const previous = await readSnoozes();
@@ -222,7 +222,7 @@ export function planReminders(occurrences: Occurrence[], now: Date = new Date())
   const horizon = now.getTime() + HORIZON_DAYS * 86_400_000;
   const list: ReminderCandidate[] = [];
   for (const occ of occurrences) {
-    if (occ.event.status === 'cancelled' || occ.event.status === 'completed') continue;
+    if (['cancelled', 'completed', 'archived'].includes(occ.event.status) || occ.event.deleted_at) continue;
     for (const minutes of occ.event.my_reminders ?? []) {
       const at = new Date(occ.start.getTime() - minutes * 60_000);
       if (at.getTime() > now.getTime() && at.getTime() <= horizon) list.push({ at, occ, minutes });
@@ -258,7 +258,7 @@ export function combinePlans(
     ...tasks.map((t) => ({ at: t.at.getTime(), t })),
   ]
     .sort((a, b) => a.at - b.at)
-    .slice(0, max);
+    .slice(0, Math.max(0, max));
   return {
     events: all.flatMap((x) => ('e' in x && x.e ? [x.e] : [])),
     tasks: all.flatMap((x) => ('t' in x && x.t ? [x.t] : [])),
@@ -271,22 +271,64 @@ export async function rescheduleReminders(
   timezone: string,
   timeFormat: TimeFormat,
   tasks: Task[] = [],
+  keepSnooze: (s: Snooze) => boolean = () => true,
 ): Promise<number> {
   if (!notificationsSupported) return 0;
   try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    if (prefs && (!prefs.enabled || !prefs.notify_reminders)) return 0;
-    if ((await getPermissionStatus()) !== 'granted') return 0;
+    if (
+      (prefs && (!prefs.enabled || !prefs.notify_reminders)) ||
+      (await getPermissionStatus()) !== 'granted'
+    ) {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      return 0;
+    }
+    const pending = await Notifications.getAllScheduledNotificationsAsync();
+    const existing = new Map(pending.map((r) => [r.identifier, r.content.data?.synckPlan]));
+    const keep = new Set<string>();
+    const schedule = async (request: Notifications.NotificationRequestInput & { identifier: string }) => {
+      const signature = JSON.stringify([request.trigger, request.content]);
+      keep.add(request.identifier);
+      if (existing.get(request.identifier) === signature) return;
+      await Notifications.scheduleNotificationAsync({
+        ...request,
+        content: { ...request.content, data: { ...request.content.data, synckPlan: signature } },
+      });
+    };
     await ensureChannels();
 
-    const snoozes = activeSnoozes(await readSnoozes());
+    const snoozes = activeSnoozes(await readSnoozes())
+      .filter(keepSnooze)
+      .slice(0, MAX_SCHEDULED);
     await writeSnoozes(snoozes);
+    const normal = prefs?.show_details_on_lock_screen ? CHANNEL_PUBLIC : CHANNEL_PRIVATE;
+    const mute = prefs?.sound === false,
+      noVibration = prefs?.vibration === false;
+    const normalChannel =
+      mute || noVibration ? normal + (mute ? '-sem-som' : '') + (noVibration ? '-sem-vibracao' : '') : normal;
+    if (Platform.OS === 'android' && normalChannel !== normal)
+      await Notifications.setNotificationChannelAsync(normalChannel, {
+        name:
+          'Lembretes' +
+          (mute ? ' sem som' : '') +
+          (noVibration ? ' sem vibração' : '') +
+          (normal === CHANNEL_PUBLIC ? ' (detalhes visíveis)' : ''),
+        importance: AndroidImportance.HIGH,
+        lockscreenVisibility:
+          normal === CHANNEL_PUBLIC
+            ? AndroidNotificationVisibility.PUBLIC
+            : AndroidNotificationVisibility.PRIVATE,
+        sound: mute ? null : 'default',
+        enableVibrate: !noVibration,
+      });
     const plan = combinePlans(
       planReminders(occurrences),
       planTaskAlerts(tasks),
       MAX_SCHEDULED - snoozes.length,
     );
-    for (const s of snoozes) await scheduleSnooze(s);
+    for (const s of snoozes) {
+      keep.add(s.identifier);
+      if (!existing.has(s.identifier)) await scheduleSnooze(s);
+    }
     const today = todayKey(timezone);
     for (const { at, task, minutes } of plan.tasks) {
       const quiet = isWithinQuietHours(
@@ -295,17 +337,13 @@ export async function rescheduleReminders(
         prefs?.quiet_hours_start ?? null,
         prefs?.quiet_hours_end ?? null,
       );
-      const channelId = quiet
-        ? CHANNEL_QUIET
-        : prefs?.show_details_on_lock_screen
-          ? CHANNEL_PUBLIC
-          : CHANNEL_PRIVATE;
-      await Notifications.scheduleNotificationAsync({
+      const channelId = quiet ? CHANNEL_QUIET : normalChannel;
+      await schedule({
         identifier: `task:${task.id}:${task.due_date}:${minutes}`,
         content: {
           title: task.due_time ? reminderTitle(task.title, minutes) : task.title,
           body: describeDue(task, today, timeFormat) ?? undefined,
-          data: { taskId: task.id, occurrence: task.due_date },
+          data: { taskId: task.id, occurrence: task.due_date, silent: quiet || mute, channelId },
           sound: !quiet && prefs?.sound !== false ? 'default' : false,
           color: marca.cores.claro.primary,
           categoryIdentifier: TASK_CATEGORY,
@@ -320,21 +358,23 @@ export async function rescheduleReminders(
         prefs?.quiet_hours_start ?? null,
         prefs?.quiet_hours_end ?? null,
       );
-      const channelId = quiet
-        ? CHANNEL_QUIET
-        : prefs?.show_details_on_lock_screen
-          ? CHANNEL_PUBLIC
-          : CHANNEL_PRIVATE;
+      const channelId = quiet ? CHANNEL_QUIET : normalChannel;
       const title = occ.event.is_masked
         ? t('reminders.lockedContent')
         : reminderTitle(occ.title ?? t('reminders.lockedContent'), minutes);
       const when = formatOccurrenceTime(occ, timezone, timeFormat);
-      await Notifications.scheduleNotificationAsync({
+      await schedule({
         identifier: `rem:${occ.key}:${minutes}`,
         content: {
           title,
           body: [when, occ.location].filter(Boolean).join(' · '),
-          data: { eventId: occ.event.id, originalDate: occ.originalDate },
+          data: {
+            eventId: occ.event.id,
+            originalDate: occ.originalDate,
+            startsAt: occ.start.toISOString(),
+            silent: quiet || mute,
+            channelId,
+          },
           sound: !quiet && prefs?.sound !== false ? 'default' : false,
           color: marca.cores.claro.primary,
           categoryIdentifier: REMINDER_CATEGORY,
@@ -342,6 +382,9 @@ export async function rescheduleReminders(
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId },
       });
     }
+    for (const id of existing.keys())
+      if ((id.startsWith('rem:') || id.startsWith('task:')) && !keep.has(id))
+        await Notifications.cancelScheduledNotificationAsync(id);
     return plan.events.length + plan.tasks.length + snoozes.length;
   } catch (error) {
     await logError('lembretes', error);

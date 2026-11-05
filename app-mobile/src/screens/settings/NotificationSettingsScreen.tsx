@@ -1,6 +1,8 @@
+import * as Notifications from 'expo-notifications';
+import { refreshReminders } from '@/services/session';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Platform, AppState, Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
@@ -32,7 +34,9 @@ function WebPushCard() {
   const [busy, setBusy] = useState(false);
   const { toast } = useFeedback();
   useEffect(() => {
-    void getWebPushState().then(setState);
+    void getWebPushState()
+      .then(setState)
+      .catch(() => setState('unavailable'));
   }, []);
   const toggle = async (on: boolean) => {
     setBusy(true);
@@ -75,8 +79,20 @@ export default function NotificationSettingsScreen() {
   const { run } = useAction();
   const [permission, setPermission] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
 
+  const [exact, setExact] = useState<boolean | null>(null);
   useEffect(() => {
-    void getPermissionStatus().then(setPermission);
+    const check = () => {
+      void getPermissionStatus().then(setPermission);
+      if (Platform.OS === 'android')
+        void Notifications.getExactAlarmPermissionsAsync()
+          .then((r) => setExact(r.granted))
+          .catch(() => setExact(null));
+    };
+    check();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') check();
+    });
+    return () => sub.remove();
   }, []);
 
   if (!prefs) return null;
@@ -95,6 +111,19 @@ export default function NotificationSettingsScreen() {
               ? t('notificationSettings.permissionGranted')
               : t('notificationSettings.permissionDenied')}
           </AppText>
+          {exact === false && permission === 'granted' && (
+            <Button
+              variant="secondary"
+              title="Permitir alarmes no horário exato"
+              onPress={() =>
+                run(async () => {
+                  const p = await Notifications.requestExactAlarmPermissionsAsync();
+                  setExact(p.granted);
+                  await refreshReminders();
+                })
+              }
+            />
+          )}
           {permission !== 'granted' && (
             <View style={styles.row}>
               <Button
@@ -104,6 +133,7 @@ export default function NotificationSettingsScreen() {
                   const ok = await requestPermission();
                   setPermission(ok ? 'granted' : 'denied');
                   if (!ok) await Linking.openSettings();
+                  else await refreshReminders();
                 }}
               />
             </View>
