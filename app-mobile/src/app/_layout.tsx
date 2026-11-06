@@ -37,7 +37,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <AppErrorBoundary {...props} />;
 }
 
-function Navigation() {
+function Navigation({ showRouteLoading }: { showRouteLoading: boolean }) {
   const { colors, dark } = useAppTheme();
   const session = useAuthStore((s) => s.session);
   const navTheme = useMemo(
@@ -69,7 +69,7 @@ function Navigation() {
           <Stack.Screen name="(app)" />
         </Stack.Protected>
       </Stack>
-      <RouteLoading />
+      <RouteLoading enabled={showRouteLoading} />
     </NavThemeProvider>
   );
 }
@@ -132,7 +132,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <FeedbackProvider>
-          {ready && <Navigation />}
+          {ready && <Navigation showRouteLoading={minTimeDone && !vinheta} />}
           {(!ready || !minTimeDone) && <BrandSplash />}
           {vinheta && <VinhetaCK onFim={() => setVinheta(false)} />}
         </FeedbackProvider>

@@ -181,31 +181,30 @@ test('interface: fonte local, SVG, toque cancelado e movimento reduzido', async 
   await page.context().close();
 });
 
-test('Kairo fica visível ao navegar, voltar e trocar de aba sem bloquear a tela', async () => {
+test('Kairo ocupa a tela inteira ao navegar, voltar e trocar de aba', async () => {
   const page = await abrirSessao();
   try {
     await ir(page, '/login');
-    const badge = page.getByTestId('route-loading');
+    const loading = page.getByTestId('route-loading');
     await page.getByText('Esqueci a senha', { exact: true }).click();
-    await badge.waitFor({ state: 'visible' });
-    assert.ok(await badge.locator('svg path').count() > 0, 'o desenho do Kairo está na tela');
-    const box = await badge.boundingBox();
-    assert.ok(box && box.x >= 0 && box.x + box.width <= 390 && box.y >= 0 && box.y + box.height <= 844);
-    assert.equal(await badge.evaluate((el) => getComputedStyle(el).pointerEvents), 'none');
-    await badge.waitFor({ state: 'detached' });
+    await loading.waitFor({ state: 'visible' });
+    assert.ok(await loading.getByRole('progressbar').locator('svg path').count() > 0);
+    assert.deepEqual(await loading.boundingBox(), {x: 0, y: 0, ...page.viewportSize()});
+    assert.ok(await loading.evaluate(el => [[1,1], [innerWidth-2,innerHeight-2]].every(([x,y]) => el.contains(document.elementFromPoint(x,y)))));
+    await loading.waitFor({ state: 'detached' });
     await page.getByRole('button', { name: 'Voltar', exact: true }).click();
-    await badge.waitFor({ state: 'visible' });
+    await loading.waitFor({ state: 'visible' });
     await page.waitForURL('**/login');
     await entrar(page, 'carla.demo@exemplo.test');
     const tasks = page.getByRole('tab', { name: 'Tarefas', exact: true });
     await tasks.click();
-    await badge.waitFor({ state: 'visible' });
+    await loading.waitFor({ state: 'visible' });
     await page.getByRole('tab', { name: 'Agendas', exact: true }).click();
     await page.waitForURL('**/calendars');
-    await badge.waitFor({ state: 'visible' });
-    await badge.waitFor({ state: 'detached' });
+    await loading.waitFor({ state: 'visible' });
+    await loading.waitFor({ state: 'detached' });
     await page.getByRole('tab', { name: 'Agendas', exact: true }).click();
-    assert.equal(await badge.count(), 0);
+    assert.equal(await loading.count(), 0);
   } finally {
     await page.context().close();
   }
@@ -595,7 +594,12 @@ test('3.5: Kairo acompanha espera de dados e some ao terminar',async()=>{
  await page.route(API+'/rest/v1/rpc/my_invitations',async route=>{await waiting;await route.fulfill(await servidor.responder(route.request()));});
  await page.getByRole('button',{name:/^Convites/}).first().click();
  await page.getByRole('progressbar').waitFor({state:'visible',timeout:8000});await foto(page,'28-carregamento-kairo');
- assert.equal(await page.getByRole('progressbar').count(),1,'uma espera não duplica indicadores');release();
+ assert.equal(await page.getByRole('progressbar').count(),1,'uma espera não duplica indicadores');
+ const loading=page.getByTestId('route-loading');
+ assert.deepEqual(await loading.boundingBox(),{x:0,y:0,...page.viewportSize()});
+ await loading.getByRole('button',{name:'Mostrar página'}).click();
+ await loading.waitFor({state:'detached'});
+ await page.getByRole('progressbar').waitFor({state:'visible'});release();
  await page.getByRole('progressbar').waitFor({state:'detached',timeout:8000});await page.context().close();
 });
 

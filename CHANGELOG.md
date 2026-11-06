@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 3.6.3
+
+- O Kairo aparece no centro de uma tela de carregamento que cobre toda a página durante a navegação e a espera pelos dados, no site e no Android.
+
 ## 3.6.2
 
 - O Kairo aparece por um instante ao abrir uma página, trocar de aba ou voltar. A tela recebe toques imediatamente. Quando há dados carregando, o Kairo acompanha a espera na própria tela.

@@ -1,7 +1,6 @@
 import { useScreenFocus } from '@/hooks/useScreenFocus';
 import { useEffect } from 'react';
-import { useDelayedLoading } from '@/hooks/useDelayedLoading';
-import { useNavigationLoading } from '@/stores/navigationLoadingStore';
+import { trackScreenLoad, useNavigationLoading } from '@/stores/navigationLoadingStore';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '@/i18n';
@@ -17,25 +16,18 @@ import { EnterItem } from './motion';
 /** O Kairo acompanha esperas reais; telas rápidas não piscam um carregamento. */
 export function LoadingState({ message }: { message?: string }) {
   const focused = useScreenFocus();
-  const visible = useDelayedLoading(focused);
+  const label = message ?? t('common.loading');
+  const revealed = useNavigationLoading((s) => s.revealed);
   useEffect(() => {
-    if (!focused) return;
-    useNavigationLoading.setState((s) => ({ inline: s.inline + 1 }));
-    return () => {
-      useNavigationLoading.setState((s) => ({ inline: Math.max(0, s.inline - 1) }));
-    };
-  }, [focused]);
-  if (!visible) return <View style={styles.center} />;
+    if (focused) return trackScreenLoad(label);
+  }, [focused, label]);
+  if (!focused || !revealed) return <View style={styles.center} />;
   return (
-    <View
-      style={styles.center}
-      accessibilityRole="progressbar"
-      accessibilityLabel={message ?? t('common.loading')}
-    >
+    <View style={styles.center} accessibilityRole="progressbar" accessibilityLabel={label}>
       <View style={styles.loader}>
         <Kairo size={112} paused={!focused} />
       </View>
-      <AppText tone="muted">{message ?? t('common.loading')}</AppText>
+      <AppText tone="muted">{label}</AppText>
     </View>
   );
 }
