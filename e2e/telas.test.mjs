@@ -181,6 +181,36 @@ test('interface: fonte local, SVG, toque cancelado e movimento reduzido', async 
   await page.context().close();
 });
 
+test('Kairo fica visível ao navegar, voltar e trocar de aba sem bloquear a tela', async () => {
+  const page = await abrirSessao();
+  try {
+    await ir(page, '/login');
+    const badge = page.getByTestId('route-loading');
+    await page.getByText('Esqueci a senha', { exact: true }).click();
+    await badge.waitFor({ state: 'visible' });
+    assert.ok(await badge.locator('svg path').count() > 0, 'o desenho do Kairo está na tela');
+    const box = await badge.boundingBox();
+    assert.ok(box && box.x >= 0 && box.x + box.width <= 390 && box.y >= 0 && box.y + box.height <= 844);
+    assert.equal(await badge.evaluate((el) => getComputedStyle(el).pointerEvents), 'none');
+    await badge.waitFor({ state: 'detached' });
+    await page.getByRole('button', { name: 'Voltar', exact: true }).click();
+    await badge.waitFor({ state: 'visible' });
+    await page.waitForURL('**/login');
+    await entrar(page, 'carla.demo@exemplo.test');
+    const tasks = page.getByRole('tab', { name: 'Tarefas', exact: true });
+    await tasks.click();
+    await badge.waitFor({ state: 'visible' });
+    await page.getByRole('tab', { name: 'Agendas', exact: true }).click();
+    await page.waitForURL('**/calendars');
+    await badge.waitFor({ state: 'visible' });
+    await badge.waitFor({ state: 'detached' });
+    await page.getByRole('tab', { name: 'Agendas', exact: true }).click();
+    assert.equal(await badge.count(), 0);
+  } finally {
+    await page.context().close();
+  }
+});
+
 test('primeiro acesso: apresentação e tela de login', async () => {
   const page = await abrirSessao();
   await page.goto(base);

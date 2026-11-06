@@ -1,4 +1,3 @@
-import { beginNavigation, endNavigation } from '@/stores/navigationLoadingStore';
 import { RoutineGuard } from '@/components/RoutineGuard';
 import * as Notifications from 'expo-notifications';
 import { Stack, usePathname } from 'expo-router';
@@ -114,7 +113,6 @@ export default function AppLayout() {
     <>
       <RoutineGuard />
       <Stack
-        screenListeners={{ transitionStart: beginNavigation, transitionEnd: endNavigation }}
         screenOptions={({ navigation, route }) => {
           const isSheet = SHEETS.has(route.name);
           return {

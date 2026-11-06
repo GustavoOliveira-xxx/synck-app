@@ -26,7 +26,7 @@ A ação de concluir aparece na lista e em destaque nos detalhes, apenas para qu
 
 ## Carregamento
 
-O Kairo acompanha esperas reais superiores a 250 ms, na navegação e nas telas que aguardam dados. Não há atraso artificial na abertura de páginas prontas. O indicador de navegação não bloqueia toques, pausa em segundo plano, respeita movimento reduzido e tem limite de 15 segundos para não prender uma navegação cancelada. Estados de erro e ações de tentar novamente continuam pertencendo às telas.
+Ao mudar de página ou aba, inclusive ao voltar, o Kairo aparece no canto superior por 650 ms. A nova página já aceita toques enquanto ele aparece. Tocar novamente na aba atual mantém a tela em repouso. Se a navegação demorar mais de 250 ms, o Kairo aparece durante a espera. Quando a própria página carrega dados, ela assume o indicador. Em segundo plano a animação para, e a preferência por movimento reduzido mantém o desenho estático.
 
 ## Pesquisa que orientou as decisões
 
