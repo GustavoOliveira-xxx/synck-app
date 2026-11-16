@@ -192,7 +192,7 @@ export default function InviteScreen() {
 
       <SectionHeader title={t('invites.list')} />
       {list.loading && !list.data?.length ? (
-        <LoadingState />
+        <LoadingState kind="rows" />
       ) : list.data?.length ? (
         list.data.map((inv) => (
           <Card key={inv.id}>

@@ -7,6 +7,7 @@ import type { ComponentProps } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
@@ -40,15 +41,28 @@ const SIDE_ITEM_H = 48;
 function TabIcon({ icon, focused, color }: { icon: IconName; focused: boolean; color: string }) {
   const { reduceMotion } = useAppTheme();
   const y = useSharedValue(0);
-  const scale = useSharedValue(1);
+  const sx = useSharedValue(1);
+  const sy = useSharedValue(1);
   useEffect(() => {
-    if (focused && !reduceMotion) {
-      y.value = withSequence(withTiming(-3, { duration: 110 }), withSpring(0, motion.molaEntrada));
-      scale.value = withSequence(withTiming(1.14, { duration: 110 }), withSpring(1, motion.molaEntrada));
-    }
-  }, [focused, reduceMotion, y, scale]);
+    if (!focused || reduceMotion) return;
+    // Pulo: sobe esticado, cai achatado e balança até parar.
+    y.value = withSequence(
+      withTiming(-9, { duration: 140, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 130, easing: Easing.in(Easing.quad) }),
+    );
+    sx.value = withSequence(
+      withTiming(0.9, { duration: 140 }),
+      withTiming(1.22, { duration: 130 }),
+      withSpring(1, motion.mola),
+    );
+    sy.value = withSequence(
+      withTiming(1.14, { duration: 140 }),
+      withTiming(0.8, { duration: 130 }),
+      withSpring(1, motion.mola),
+    );
+  }, [focused, reduceMotion, y, sx, sy]);
   const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: y.value }, { scale: scale.value }],
+    transform: [{ translateY: y.value }, { scaleX: sx.value }, { scaleY: sy.value }],
   }));
   return (
     <Animated.View style={style}>
@@ -79,6 +93,8 @@ export function SynckTabBar({
     ? activeIndex * (SIDE_ITEM_H + spacing.xs)
     : activeIndex * itemWidth + (itemWidth - PILL_W) / 2;
   const pos = useSharedValue(target);
+  // Esticada da pílula no caminho: estica no sentido do movimento e achata no outro.
+  const stretch = useSharedValue(0);
   const placed = useRef(false);
   useEffect(() => {
     if (!side && !itemWidth) return;
@@ -87,11 +103,19 @@ export function SynckTabBar({
       pos.value = target;
       return;
     }
-    pos.value = reduceMotion ? target : withSpring(target, motion.mola);
-  }, [target, reduceMotion, pos, side, itemWidth]);
-  const pillStyle = useAnimatedStyle(() =>
-    side ? { transform: [{ translateY: pos.value }] } : { transform: [{ translateX: pos.value }] },
-  );
+    if (reduceMotion) {
+      pos.value = target;
+      return;
+    }
+    pos.value = withSpring(target, motion.molaEntrada);
+    stretch.value = withSequence(withTiming(1, { duration: 120 }), withSpring(0, motion.mola));
+  }, [target, reduceMotion, pos, stretch, side, itemWidth]);
+  const pillStyle = useAnimatedStyle(() => {
+    const k = stretch.value * 0.45;
+    return side
+      ? { transform: [{ translateY: pos.value }, { scaleY: 1 + k }, { scaleX: 1 - k * 0.3 }] }
+      : { transform: [{ translateX: pos.value }, { scaleX: 1 + k }, { scaleY: 1 - k * 0.6 }] };
+  });
 
   const press = (key: string, focused: boolean) => {
     const event = emitter.emit({ type: 'tabPress', target: key, canPreventDefault: true });

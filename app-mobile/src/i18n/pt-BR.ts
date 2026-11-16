@@ -17,6 +17,8 @@ export const ptBR = {
     retry: 'Tentar de novo',
     loading: 'Carregando...',
     opening: 'Abrindo o SynCK',
+    openingSession: 'Conferindo sua sessão',
+    openingData: 'Carregando suas agendas',
     yes: 'Sim',
     no: 'Não',
     done: 'Concluído',

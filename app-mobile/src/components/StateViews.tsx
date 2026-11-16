@@ -1,34 +1,55 @@
 import { useScreenFocus } from '@/hooks/useScreenFocus';
 import { useEffect } from 'react';
-import { trackScreenLoad, useNavigationLoading } from '@/stores/navigationLoadingStore';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
-import { spacing } from '@/theme/tokens';
+import { SCREEN_MARGIN, spacing } from '@/theme/tokens';
 
 import { AppText } from './AppText';
 import { GlassSphere, Kairo, OrbitSymbol, useDecorSize } from './brand/Decor';
 import { Button } from './Button';
 import { Icon, type IconName } from './Icon';
 import { EnterItem } from './motion';
+import { ScreenSkeleton, type SkeletonKind } from './Skeleton';
 
-/** O Kairo acompanha esperas reais; telas rápidas não piscam um carregamento. */
-export function LoadingState({ message }: { message?: string }) {
-  const focused = useScreenFocus();
+/**
+ * Enquanto os dados chegam, o esqueleto da tela aparece no lugar do conteúdo
+ * (nunca uma tela em branco ou um aviso por cima). Esperas curtas quase não
+ * se notam: o esqueleto surge num esmaecer rápido, depois de um instante.
+ */
+export function LoadingState({
+  message,
+  kind = 'list',
+  safeTop,
+}: {
+  message?: string;
+  /** Formato do esqueleto: Hoje, lista (padrão), formulário ou só linhas (dentro de uma tela). */
+  kind?: SkeletonKind;
+  /** A tela não tem barra de título: respeita a área do topo. */
+  safeTop?: boolean;
+}) {
+  const { colors, reduceMotion } = useAppTheme();
   const label = message ?? t('common.loading');
-  const revealed = useNavigationLoading((s) => s.revealed);
+  const shown = useSharedValue(reduceMotion ? 1 : 0);
   useEffect(() => {
-    if (focused) return trackScreenLoad(label);
-  }, [focused, label]);
-  if (!focused || !revealed) return <View style={styles.center} />;
+    shown.set(withDelay(90, withTiming(1, { duration: 180 })));
+  }, [shown]);
+  const fade = useAnimatedStyle(() => ({ opacity: shown.value }));
   return (
-    <View style={styles.center} accessibilityRole="progressbar" accessibilityLabel={label}>
-      <View style={styles.loader}>
-        <Kairo size={112} paused={!focused} />
-      </View>
-      <AppText tone="muted">{label}</AppText>
-    </View>
+    <Animated.View
+      style={[kind === 'rows' ? null : styles.fill, { backgroundColor: colors.background }, fade]}
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+    >
+      {message ? (
+        <AppText variant="small" tone="muted" style={styles.message}>
+          {message}
+        </AppText>
+      ) : null}
+      <ScreenSkeleton kind={kind} safeTop={safeTop && !message} />
+    </Animated.View>
   );
 }
 
@@ -114,6 +135,8 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  message: { paddingHorizontal: SCREEN_MARGIN, paddingTop: spacing.lg },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -123,7 +146,6 @@ const styles = StyleSheet.create({
     minHeight: 240,
   },
   art: { alignItems: 'center', marginBottom: spacing.sm },
-  loader: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center' },
   texts: { gap: spacing.sm, alignItems: 'center', maxWidth: 360 },
   actions: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm },
   iconTile: { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

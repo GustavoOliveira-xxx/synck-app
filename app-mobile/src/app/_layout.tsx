@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { BrandSplash } from '@/components/brand/BrandSplash';
 import { VinhetaCK } from '@/components/brand/vinheta/VinhetaCK';
+import { ConfettiLayer } from '@/components/Confetti';
 import { FeedbackProvider } from '@/components/Feedback';
 import { isSupabaseConfigured } from '@/config/env';
 import { useNetworkSync } from '@/hooks/useNetworkSync';
@@ -26,6 +27,7 @@ import { configureNotifications } from '@/services/localNotifications';
 import { endSession, startSession } from '@/services/session';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { useDataStore } from '@/stores/dataStore';
 import { marca } from '@/theme/marca';
 import { ThemeProvider, useAppTheme } from '@/theme/ThemeProvider';
 import { toFriendlyError } from '@/utils/errors';
@@ -82,14 +84,19 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(marca.fonte.arquivos);
   const fontsReady = fontsLoaded || !!fontError;
   const ready = initialized && fontsReady;
-  // A abertura animada fica pelo menos 0,6 s, para não piscar.
-  const [minTimeDone, setMinTimeDone] = useState(false);
-  // Vinheta de abertura da CK: toca uma vez a cada vez que o app é aberto.
-  const [vinheta, setVinheta] = useState(true);
+  // Dados do aparelho lidos (quem está logado). Se a leitura demorar demais, a
+  // abertura sai assim mesmo e a tela mostra o próprio esqueleto.
+  const hydrated = useDataStore((s) => s.hydrated);
+  const [dataTimeout, setDataTimeout] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setMinTimeDone(true), 600);
+    const timer = setTimeout(() => setDataTimeout(true), 4000);
     return () => clearTimeout(timer);
   }, []);
+  // A esfera da abertura enche conforme cada etapa termina de verdade.
+  const progress = !fontsReady ? 0 : !initialized ? 0.34 : userId && !hydrated && !dataTimeout ? 0.67 : 1;
+  const [opened, setOpened] = useState(false);
+  // Vinheta de abertura da CK: toca uma vez a cada vez que o app é aberto.
+  const [vinheta, setVinheta] = useState(true);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -132,9 +139,10 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <FeedbackProvider>
-          {ready && <Navigation showRouteLoading={minTimeDone && !vinheta} />}
-          {(!ready || !minTimeDone) && <BrandSplash />}
+          {ready && <Navigation showRouteLoading={opened} />}
+          {!opened && <BrandSplash progress={progress} hold={vinheta} onDone={() => setOpened(true)} />}
           {vinheta && <VinhetaCK onFim={() => setVinheta(false)} />}
+          <ConfettiLayer />
         </FeedbackProvider>
       </ThemeProvider>
     </SafeAreaProvider>

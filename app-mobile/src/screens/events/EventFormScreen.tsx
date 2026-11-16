@@ -498,7 +498,7 @@ export default function EventFormScreen() {
   }
 
   if (!params.id && !params.start && loadingSlots)
-    return <LoadingState message="Conferindo os horários do dia…" />;
+    return <LoadingState kind="form" message="Conferindo os horários do dia…" />;
 
   let initial: EventForm;
   if (event) {

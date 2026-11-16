@@ -1,5 +1,13 @@
 # Histórico de versões
 
+## 3.7.0
+
+- Movimento elástico em todo o app: botões e cartões achatam ao tocar e voltam balançando, blocos caem no lugar quicando, a pílula das abas estica no caminho e o ícone da aba pula.
+- Arrastar a tela para o lado troca de aba no celular; arrastar uma tarefa para a direita conclui, com confete nas cores das agendas.
+- Abertura com a esfera de vidro do logo, que enche conforme o app termina de abrir e cresce até revelar a primeira tela.
+- Esperas mostram o esqueleto da própria tela no lugar do conteúdo; trocas de tela demoradas mostram uma barra fina no topo, sem cobrir a página.
+- Modo leve em Android com pouca memória ou com "reduzir movimento": os efeitos decorativos param e o resto continua com mola.
+
 ## 3.6.3
 
 - O Kairo aparece no centro de uma tela de carregamento que cobre toda a página durante a navegação e a espera pelos dados, no site e no Android.

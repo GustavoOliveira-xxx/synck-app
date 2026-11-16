@@ -1,44 +1,44 @@
+// Troca de tela demorada: uma barra fina e elástica corre no topo, sem cobrir
+// nada. A tela nova recebe toques normalmente e mostra o próprio esqueleto
+// enquanto os dados chegam.
 import { useGlobalSearchParams, usePathname } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 import { t } from '@/i18n';
 import { endNavigation, useNavigationLoading } from '@/stores/navigationLoadingStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
-import { AppText } from './AppText';
-import { Kairo, MistRibbons } from './brand/Decor';
-import { Button } from './Button';
+import { motion, radius, spacing } from '@/theme/tokens';
 
 export function RouteLoading({ enabled }: { enabled: boolean }) {
   const path = usePathname();
   const params = useGlobalSearchParams();
   const destination = JSON.stringify([path, params]);
   const previous = useRef(destination);
-  const [arrived, setArrived] = useState(false);
-  const { pending, screens, revealed } = useNavigationLoading();
-  const waiting = useDelayedLoading(pending || screens.length > 0);
-  const visible = enabled && !revealed && (arrived || waiting);
-  const canReveal = useDelayedLoading(visible, 2000);
-  const { colors } = useAppTheme();
-  const { width, height } = useWindowDimensions();
+  const pending = useNavigationLoading((s) => s.pending);
+  const visible = useDelayedLoading(enabled && pending);
 
+  // Chegou na tela nova: a espera da navegação acabou.
   useEffect(() => {
     if (previous.current === destination) return;
     previous.current = destination;
     endNavigation();
-    useNavigationLoading.setState({ revealed: false });
-    setArrived(true);
-    const timer = setTimeout(() => setArrived(false), 650);
-    return () => clearTimeout(timer);
   }, [destination]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state !== 'active') {
-        endNavigation();
-        setArrived(false);
-      }
+      if (state !== 'active') endNavigation();
     });
     return () => {
       sub.remove();
@@ -46,34 +46,55 @@ export function RouteLoading({ enabled }: { enabled: boolean }) {
     };
   }, []);
 
-  if (!visible) return null;
-  const message = screens[screens.length - 1]?.message ?? t('common.loading');
-  const reveal = () => {
-    setArrived(false);
-    endNavigation();
-    useNavigationLoading.setState({ revealed: true });
-  };
+  return visible ? <TopBar /> : null;
+}
 
+function TopBar() {
+  const { colors, reduceMotion } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const run = useSharedValue(0);
+  const show = useSharedValue(0);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    show.set(withSpring(1, motion.molaEntrada));
+    if (!reduceMotion)
+      run.set(withRepeat(withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.cubic) }), -1));
+    return () => cancelAnimation(run);
+  }, [run, show, reduceMotion]);
+  const track = useAnimatedStyle(() => ({
+    opacity: Math.min(show.value, 1),
+    transform: [{ scaleY: show.value }],
+  }));
+  // O trecho cheio corre da esquerda para a direita, esticando no meio do caminho.
+  const bar = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: (run.value * 1.4 - 0.4) * width },
+      { scaleX: 0.6 + Math.sin(run.value * Math.PI) * 0.8 },
+    ],
+  }));
   return (
-    <Modal visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={reveal}>
-      <View testID="route-loading" style={[styles.screen, { backgroundColor: colors.background }]}>
-        <MistRibbons width={width} height={height * 0.2} paused style={styles.ribbons} />
-        <View accessibilityRole="progressbar" accessibilityLabel={message} style={styles.center}>
-          <Kairo size={Math.min(width * 0.38, height * 0.32, 184)} />
-          <AppText tone="muted">{message}</AppText>
-        </View>
-        {canReveal && (
-          <View style={styles.action}>
-            <Button title="Mostrar página" variant="secondary" onPress={reveal} />
-          </View>
-        )}
-      </View>
-    </Modal>
+    <View
+      testID="route-loading"
+      pointerEvents="none"
+      accessibilityRole="progressbar"
+      accessibilityLabel={t('common.loading')}
+      style={[styles.wrap, { top: insets.top + spacing.xs }]}
+    >
+      <Animated.View
+        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+        style={[styles.track, { backgroundColor: colors.primarySoft }, track]}
+      >
+        <Animated.View
+          style={[styles.bar, { backgroundColor: colors.primary }, reduceMotion ? styles.still : bar]}
+        />
+      </Animated.View>
+    </View>
   );
 }
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  center: { alignItems: 'center', gap: 12 },
-  ribbons: { position: 'absolute', bottom: 0 },
-  action: { position: 'absolute', bottom: '10%' },
+  wrap: { position: 'absolute', left: spacing.xl, right: spacing.xl, zIndex: 50 },
+  track: { height: 3, borderRadius: radius.pill, overflow: 'hidden' },
+  bar: { position: 'absolute', top: 0, bottom: 0, left: 0, width: '40%', borderRadius: radius.pill },
+  still: { left: '30%' },
 });

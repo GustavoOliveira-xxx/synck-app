@@ -23,7 +23,7 @@ export function Chip({
   accessibilityLabel?: string;
 }) {
   const { colors } = useAppTheme();
-  const progress = useToggleProgress(selected);
+  const progress = useToggleProgress(selected, 160, true);
   const check = useAnimatedStyle(() => ({
     width: 18 * progress.value,
     opacity: progress.value,

@@ -353,7 +353,7 @@ export default function TasksScreen() {
     </View>
   );
 
-  if (!hydrated) return <LoadingState />;
+  if (!hydrated) return <LoadingState safeTop />;
 
   const list = (
     <SectionList

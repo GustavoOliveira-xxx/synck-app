@@ -176,22 +176,31 @@ export const marca = {
   /** Raios: campos 10, cartões 14, FAB e blocos 22, topo de folhas 28. */
   cantos: { xs: 6, campo: 10, cartao: 14, bloco: 22, folha: 28 },
 
-  /** Movimento: molas no toque, saída suave nas entradas. */
+  /**
+   * Movimento elástico: tudo que se toca achata e volta balançando; o que
+   * entra cai no lugar quicando; o que segue o dedo resiste nas pontas.
+   */
   movimento: {
-    escalaToque: 0.975,
-    escalaCartao: 0.99,
-    mola: { stiffness: 520, damping: 36, mass: 0.7, overshootClamping: true },
+    /** Toque: quanto o elemento achata (largura, altura). Cartões achatam menos. */
+    escalaToque: 0.94,
+    escalaCartao: 0.975,
+    /** Volta do toque: gelatina, passa do ponto e balança até parar. */
+    mola: { stiffness: 380, damping: 11, mass: 1 },
+    /** Entradas e trocas de lugar: quica uma ou duas vezes. */
+    molaEntrada: { stiffness: 300, damping: 15, mass: 1 },
+    /** Saídas e retornos rápidos, com um balanço mínimo. */
+    molaRapida: { stiffness: 420, damping: 30, mass: 1 },
+    /** Sem balanço: recortes e áreas que não podem passar do limite. */
+    molaFirme: { stiffness: 320, damping: 37, mass: 1, overshootClamping: true },
     curva: [0.2, 0.8, 0.2, 1] as const,
-    pressionar: 65,
+    pressionar: 90,
     micro: 120,
     base: 180,
     celebrar: 600,
     /** Intervalo entre itens que entram em sequência. */
     cascata: 45,
-    /** Entrada de telas e blocos: tempo e deslocamento. */
-    entrada: 420,
-    distancia: 18,
-    /** Mola das entradas: assenta com um leve balanço. */
-    molaEntrada: { stiffness: 210, damping: 22, mass: 0.9 },
+    /** Entrada de telas e blocos: tempo do esmaecer e altura de onde caem. */
+    entrada: 220,
+    distancia: 24,
   },
 };

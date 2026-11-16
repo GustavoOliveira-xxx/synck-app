@@ -457,7 +457,7 @@ export default function TodayScreen() {
   );
   const active = calendars.filter((c) => !c.deleted_at && c.status === 'active').length;
 
-  if (!hydrated) return <LoadingState />;
+  if (!hydrated) return <LoadingState kind="today" safeTop />;
 
   const hour = new Date().getHours();
   const dateLine = capitalize(formatLongDate(selected));

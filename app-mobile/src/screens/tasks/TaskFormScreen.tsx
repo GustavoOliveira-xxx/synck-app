@@ -624,7 +624,7 @@ export default function TaskFormScreen() {
   }
 
   if (!params.id && params.type === 'reminder' && loadingSlots)
-    return <LoadingState message="Conferindo os horários do dia…" />;
+    return <LoadingState kind="form" message="Conferindo os horários do dia…" />;
 
   let initial: TaskForm;
   if (task) {

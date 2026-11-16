@@ -50,7 +50,7 @@ export default function DevicesScreen() {
     <Screen refreshing={devices.refreshing} onRefresh={devices.refresh}>
       <Stack.Screen options={{ title: t('devices.title') }} />
       {devices.loading ? (
-        <LoadingState />
+        <LoadingState kind="rows" />
       ) : devices.error ? (
         <AppText tone="danger">{devices.error.message}</AppText>
       ) : (

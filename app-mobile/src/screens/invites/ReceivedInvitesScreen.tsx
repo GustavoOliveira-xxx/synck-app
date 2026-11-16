@@ -50,7 +50,7 @@ export default function ReceivedInvitesScreen() {
         onPress={() => router.push('/invites/accept')}
       />
       {invites.loading ? (
-        <LoadingState />
+        <LoadingState kind="rows" />
       ) : invites.error ? (
         <AppText tone="danger">{invites.error.message}</AppText>
       ) : invites.data?.length ? (

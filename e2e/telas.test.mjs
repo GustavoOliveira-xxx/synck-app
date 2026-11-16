@@ -152,11 +152,15 @@ test('interface: fonte local, SVG, toque cancelado e movimento reduzido', async 
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await page.waitForTimeout(100);
-  const pressed = await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
-  assert.ok(pressed > 0.95 && pressed < 0.995, 'botão responde ao pressionar');
+  const pressed = await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform));
+  assert.ok(pressed.a > 0.92 && pressed.a < 0.97, 'botão achata ao pressionar');
+  assert.ok(pressed.d < pressed.a, 'a altura cede mais que a largura');
   await page.mouse.move(1, 1);
   await page.mouse.up();
-  await page.waitForTimeout(400);
+  // A volta é elástica: passa do tamanho normal e balança até parar.
+  await page.waitForTimeout(120);
+  assert.ok(await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a) > 0.97, 'volta com mola');
+  await page.waitForTimeout(1300);
   assert.ok(Math.abs(await button.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a) - 1) < 0.002, 'toque cancelado retorna ao tamanho normal');
   assert.equal(new URL(page.url()).pathname, SUBPASTA + '/login');
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -181,27 +185,30 @@ test('interface: fonte local, SVG, toque cancelado e movimento reduzido', async 
   await page.context().close();
 });
 
-test('Kairo ocupa a tela inteira ao navegar, voltar e trocar de aba', async () => {
+test('navegar nunca cobre a tela: no máximo uma barra fina no topo', async () => {
   const page = await abrirSessao();
   try {
     await ir(page, '/login');
     const loading = page.getByTestId('route-loading');
+    // Enquanto a troca de tela demora, a barra corre no topo sem cobrir nada.
+    const semCobrir = async () => {
+      for (const box of await loading.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()))) {
+        assert.ok(box.height <= 12, 'a barra de carregamento é fina');
+        assert.ok(box.y < 80, 'a barra fica no topo');
+      }
+    };
     await page.getByText('Esqueci a senha', { exact: true }).click();
-    await loading.waitFor({ state: 'visible' });
-    assert.ok(await loading.getByRole('progressbar').locator('svg path').count() > 0);
-    assert.deepEqual(await loading.boundingBox(), {x: 0, y: 0, ...page.viewportSize()});
-    assert.ok(await loading.evaluate(el => [[1,1], [innerWidth-2,innerHeight-2]].every(([x,y]) => el.contains(document.elementFromPoint(x,y)))));
-    await loading.waitFor({ state: 'detached' });
+    await semCobrir();
+    await page.waitForURL('**/forgot-password');
     await page.getByRole('button', { name: 'Voltar', exact: true }).click();
-    await loading.waitFor({ state: 'visible' });
+    await semCobrir();
     await page.waitForURL('**/login');
     await entrar(page, 'carla.demo@exemplo.test');
-    const tasks = page.getByRole('tab', { name: 'Tarefas', exact: true });
-    await tasks.click();
-    await loading.waitFor({ state: 'visible' });
+    await page.getByRole('tab', { name: 'Tarefas', exact: true }).click();
+    await semCobrir();
     await page.getByRole('tab', { name: 'Agendas', exact: true }).click();
     await page.waitForURL('**/calendars');
-    await loading.waitFor({ state: 'visible' });
+    await semCobrir();
     await loading.waitFor({ state: 'detached' });
     await page.getByRole('tab', { name: 'Agendas', exact: true }).click();
     assert.equal(await loading.count(), 0);
@@ -587,20 +594,21 @@ test('3.5: conflito exige decisão, exceção libera só o dia e reunião conclu
 });
 
 
-test('3.5: Kairo acompanha espera de dados e some ao terminar',async()=>{
+test('3.7: esqueleto acompanha a espera de dados na própria tela e some ao terminar',async()=>{
  const page=await abrirSessao();await entrar(page,'carla.demo@exemplo.test');
  await ir(page,'/calendars');
  let release;const waiting=new Promise(resolve=>{release=resolve});
  await page.route(API+'/rest/v1/rpc/my_invitations',async route=>{await waiting;await route.fulfill(await servidor.responder(route.request()));});
  await page.getByRole('button',{name:/^Convites/}).first().click();
- await page.getByRole('progressbar').waitFor({state:'visible',timeout:8000});await foto(page,'28-carregamento-kairo');
- assert.equal(await page.getByRole('progressbar').count(),1,'uma espera não duplica indicadores');
- const loading=page.getByTestId('route-loading');
- assert.deepEqual(await loading.boundingBox(),{x:0,y:0,...page.viewportSize()});
- await loading.getByRole('button',{name:'Mostrar página'}).click();
- await loading.waitFor({state:'detached'});
- await page.getByRole('progressbar').waitFor({state:'visible'});release();
- await page.getByRole('progressbar').waitFor({state:'detached',timeout:8000});await page.context().close();
+ const esqueleto=page.locator('[role="progressbar"]:not([data-testid="route-loading"])');
+ await esqueleto.waitFor({state:'visible',timeout:8000});await foto(page,'28-carregamento-esqueleto');
+ assert.equal(await esqueleto.count(),1,'uma espera não duplica indicadores');
+ // A barra de título continua por cima e tocável: dá para voltar sem esperar.
+ const box=await esqueleto.boundingBox();
+ assert.ok(box.y>40,'o esqueleto fica abaixo da barra de título');
+ assert.ok(await page.getByRole('button',{name:'Voltar',exact:true}).isVisible());
+ release();
+ await esqueleto.waitFor({state:'detached',timeout:8000});await page.context().close();
 });
 
 test('3.6: reunião no expediente aparece no contexto pessoal',async()=>{

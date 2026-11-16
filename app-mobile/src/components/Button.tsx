@@ -6,7 +6,7 @@ import { fonte, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 import { SyncLoader } from './SyncLoader';
 import { AppText } from './AppText';
 import { Icon, type IconName } from './Icon';
-import { PressableScale } from './motion';
+import { EnterItem, PressableScale } from './motion';
 
 export interface ButtonProps {
   title: string;
@@ -68,7 +68,9 @@ export function Button({
     >
       <View style={styles.row}>
         {loading ? (
-          <SyncLoader color={palette.fg} />
+          <EnterItem distance={8}>
+            <SyncLoader color={palette.fg} />
+          </EnterItem>
         ) : (
           (leading ?? (icon && <Icon name={icon} size={20} color={palette.fg} />))
         )}

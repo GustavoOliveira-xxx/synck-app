@@ -1,14 +1,28 @@
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
+import { useScreenFocus } from '@/hooks/useScreenFocus';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { elevation, motion } from '@/theme/tokens';
 
 import { Icon, type IconName } from './Icon';
 import { PressableScale, tapFeedback } from './motion';
 
-/** Botão flutuante 58 dp, raio 20. O "+" gira 45° ao tocar e a tela nova sobe. */
+/** Intervalo da respiração do botão parado (ms). */
+const BREATH_EVERY = 6000;
+
+/**
+ * Botão flutuante 58 dp, raio 20. Entra quicando, o "+" gira 45° ao tocar e,
+ * parado, o botão respira de vez em quando para lembrar que está ali (só com
+ * a tela em foco e fora do modo leve).
+ */
 export function FAB({
   icon = 'add',
   label,
@@ -18,16 +32,29 @@ export function FAB({
   label: string;
   onPress: () => void;
 }) {
-  const { colors, reduceMotion } = useAppTheme();
+  const { colors, reduceMotion, lite } = useAppTheme();
+  const focused = useScreenFocus();
   const turn = useSharedValue(0);
   const enter = useSharedValue(reduceMotion ? 1 : 0);
+  const breath = useSharedValue(0);
   useEffect(() => {
-    enter.value = withSpring(1, motion.mola);
+    enter.value = withSpring(1, motion.molaEntrada);
   }, [enter]);
+  useEffect(() => {
+    if (lite || !focused) return;
+    const timer = setInterval(() => {
+      breath.value = withSequence(withTiming(1, { duration: 180 }), withSpring(0, motion.mola));
+    }, BREATH_EVERY);
+    return () => clearInterval(timer);
+  }, [lite, focused, breath]);
   const iconStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value * 45}deg` }] }));
   const wrapStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.6 + 0.4 * enter.value }],
-    opacity: enter.value,
+    transform: [
+      { scale: 0.6 + 0.4 * enter.value },
+      { scaleX: 1 + 0.12 * breath.value },
+      { scaleY: 1 - 0.1 * breath.value },
+    ],
+    opacity: Math.min(enter.value, 1),
   }));
   return (
     <Animated.View style={[styles.wrap, wrapStyle]}>
