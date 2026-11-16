@@ -11,8 +11,10 @@ O app segue a identidade **SynCK** (um produto CK Group). A fonte de verdade é 
 | Ícones de interface (23 do pacote + complementares no mesmo traço) | `app-mobile/src/components/Icon.tsx` |
 | Decoração animada (esfera de vidro, anéis de órbita, Kairo, estrela, névoa) | `app-mobile/src/components/brand/Decor.tsx` |
 | Logo (vertical, horizontal e personagem) | `app-mobile/src/components/brand/Logo.tsx` e `app-mobile/assets/brand/` |
-| Abertura animada (logo, barra de progresso, "um produto CK Group") | `app-mobile/src/components/brand/BrandSplash.tsx` |
-| Microinterações (toque com mola, cascata, alternadores) | `app-mobile/src/components/motion.tsx` |
+| Abertura animada (esfera de vidro que enche com o progresso real, "um produto CK Group") | `app-mobile/src/components/brand/BrandSplash.tsx` |
+| Movimento elástico (toque gelatina, entrada que quica, alternadores) | `app-mobile/src/components/motion.tsx` |
+| Arrastar entre abas, confete, esqueleto das esperas | `components/TabSwipe.tsx`, `components/Confetti.tsx`, `components/Skeleton.tsx` |
+| Regras puras do movimento (achatamento, aba vizinha, etapas da abertura) | `app-mobile/src/utils/motion.ts` |
 | Fonte Titillium Web (licença OFL) | `app-mobile/assets/fonts/` |
 | Ícone do app, ícone adaptativo e monocromático do Android, splash, ícone de notificação | `app-mobile/assets/` e `app-mobile/app.json` |
 | Ícones do site (iPhone e computador) e ícone pequeno das notificações | `app-mobile/public/icons/` |
@@ -58,20 +60,33 @@ O texto acompanha o tamanho de fonte escolhido no aparelho.
 
 - Raios: campos 10, cartões 14, FAB e blocos 22, topo das folhas 28, botões, chips e avatares totalmente arredondados.
 - Sombras curtas tingidas de abismo no tema claro; no escuro a profundidade vem da cor da superfície.
-- Toque: escala 0,975 em botões e 0,99 em linhas, mola com rigidez 520 e amortecimento 36, sem oscilação. Vibração leve no botão principal (só no celular).
-- Entradas: saída suave `cubic-bezier(0.2, 0.8, 0.2, 1)`; listas em cascata de 20 ms (no máximo 5 itens).
-- Pílula das abas e do seletor escorrega até o item novo; o mês desliza na horizontal ao trocar.
-- Com **reduzir movimento** ligado no aparelho, escalas e deslocamentos viram um fade curto e a decoração fica parada.
+- **Direção Elástico.** O app responde ao dedo como um objeto físico: tudo tem mola com balanço.
+- Toque: a largura vai a 0,94 em botões e 0,975 em cartões, e a altura cede 1,5 vez mais. A volta usa a mola `mola` (rigidez 380, amortecimento 11), que passa do ponto e balança até parar. Vibração leve no botão principal (só no celular).
+- Entradas: cada bloco cai de 24 dp, começa em 94% do tamanho e quica no lugar com `molaEntrada` (rigidez 300, amortecimento 15), em cascata de 45 ms (até o 8º bloco).
+- Abas: a pílula estica no sentido do movimento e achata no outro; o ícone da aba nova pula e cai achatado. A tela nova chega do lado da aba escolhida com mola. No celular, arrastar a tela para o lado troca de aba (a tela segue o dedo e resiste nas pontas).
+- Tarefas: arrastar para a direita conclui. Concluir solta confete nas cores das agendas, a caixa pula e a linha balança.
+- Botão "+": entra quicando e respira a cada 6 s com a tela em foco.
+- `molaRapida` (sem quase balanço) para saídas e `molaFirme` (travada) para recortes que não podem passar do limite.
+- Só transformação e opacidade, calculadas na thread de interface; nenhuma mola mexe em largura, altura ou margem.
+- **Modo leve** (`lite` em `useAppTheme()`): ligado com **reduzir movimento** ou em Android com até 3 GB de memória ou de antes de 2017. Brilho, ondas, confete e respiração param; toque, entradas e trocas de tela continuam com mola. Com reduzir movimento, escalas e deslocamentos viram um fade curto.
+
+## Carregamento
+
+- Abertura: depois da vinheta da CK, a esfera de vidro do logo enche conforme cada etapa termina de verdade (fontes, sessão, dados do aparelho). Cheia, ela brilha, achata, cresce até cobrir a tela e revela a primeira tela. Não há tempo mínimo; se a leitura dos dados passar de 4 s, a abertura sai e a tela mostra o próprio esqueleto.
+- Esperas de dados: o esqueleto da própria tela (Hoje, lista, formulário ou só linhas) aparece no lugar do conteúdo, com um brilho que corre pelos blocos. O conteúdo chega com a entrada elástica.
+- Trocas de tela demoradas (mais de 250 ms): uma barra fina corre no topo, sem cobrir nada.
 
 ## Decoração
 
 | Objeto | Onde | Tamanho |
 |---|---|---|
 | Esfera de vidro com névoa girando e satélites | Onboarding | até 60% da largura |
-| Anéis de órbita com satélites | Cabeçalho de Hoje e Agendas, carregamento | 28% a 36% da largura, sangrando pela borda, sem cobrir dados |
+| Anéis de órbita com satélites | Cabeçalho de Hoje e Agendas | 28% a 36% da largura, sangrando pela borda, sem cobrir dados |
 | Kairo (mascote) e símbolo Órbita | Estados vazios ("Dia livre. Que raridade.", "Ninguém na sua órbita ainda") | cerca de 40% da largura |
 | Estrela de quatro pontas | "Vou" no evento | estoura em 6 partículas |
 | Fitas de névoa | Abertura e boas-vindas | rodapé da tela |
+| Esfera de vidro com líquido | Abertura | 42% da largura, até 176 dp |
+| Confete nas cores das agendas | Conclusão de tarefa | 14 partículas, some em 0,9 s |
 
 Regras aplicadas por `useDecorSize()`: proporcional à largura, 15% menor abaixo de 360 dp e no máximo 420 dp em tablets e computador. Só anima com a tela em foco e o app em primeiro plano.
 

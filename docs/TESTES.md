@@ -4,21 +4,21 @@ Este documento explica como o projeto é testado, o que já roda sozinho, como r
 
 ## Resumo em números
 
-Resultado conferido em 24/10/2026 (versão 3.0.0), rodando os comandos abaixo neste repositório:
+Resultado conferido em 16/11/2026 (versão 3.7.0), rodando os comandos abaixo neste repositório:
 
 | O quê | Pasta e comando | Arquivos | Testes | Resultado | Tempo |
 |---|---|---|---|---|---|
-| Testes do banco (integração) | `supabase`: `npm test` | 10 | **92** | 92 passaram, 0 falharam | cerca de 5 min |
-| Testes do app (unitários) | `app-mobile`: `npm test -- --ci` | 20 | **190** | 190 passaram, 0 falharam | poucos segundos |
+| Testes do banco (integração) | `supabase`: `npm test` | 14 | **103** | 103 passaram, 0 falharam | cerca de 5 min |
+| Testes do app (unitários) | `app-mobile`: `npm test -- --ci` | 31 | **253** | 253 passaram, 0 falharam | poucos segundos |
 | Tipos (TypeScript) | `app-mobile`: `npm run typecheck` | | | sem erros | |
 | Lint (ESLint) | `app-mobile`: `npm run lint` | | | sem erros | |
 | Formatação (Prettier) | `app-mobile`: `npm run format:check` | | | "All matched files use Prettier code style!" | |
 | Segredos no repositório | raiz: `bash scripts/verificar-segredos.sh` | | | "OK: nenhum segredo encontrado nos arquivos versionados." | |
-| Testes de tela (versão web: celular, tablet e computador) | `e2e`: `npm run preparar` e `npm test` | 1 | **10** | 10 passaram, 0 falharam | cerca de 40 s (mais 1 a 2 min para gerar a versão web) |
-| Versão instalável (PWA) | `e2e`: `npm run preparar:site` e `npm run test:site` | 1 | **7** | 7 passaram, 0 falharam | cerca de 20 s (mais 1 a 2 min para gerar o site) |
+| Testes de tela (versão web: celular, tablet e computador) | `e2e`: `npm run preparar` e `npm test` | 1 | **18** | 18 passaram, 0 falharam | cerca de 3 min (mais 1 a 2 min para gerar a versão web) |
+| Versão instalável (PWA) | `e2e`: `npm run preparar:site` e `npm run test:site` | 1 | **8** | 8 passaram, 0 falharam | cerca de 20 s (mais 1 a 2 min para gerar o site) |
 | Testes de interface no Android (emulador ou celular) | | 0 | **0** | não automatizados; use o [roteiro manual](#roteiro-de-teste-manual) | |
 
-**Total automatizado: 299 testes** (92 do banco + 190 do app + 10 de tela + 7 da versão instalável). Antes de cada captura, os testes de tela conferem que nenhum elemento ficou com animação de layout presa (o defeito que fazia itens ficarem por cima de outros no navegador). A função de notificações do navegador também passa pela verificação de tipos do Deno (`deno check`) e por uma conferência de que usa a mesma lógica de datas do app.
+**Total automatizado: 382 testes** (103 do banco + 253 do app + 18 de tela + 8 da versão instalável). Os testes de tela também conferem o toque elástico, que nenhuma troca de tela cobre a página e que o esqueleto acompanha a espera de dados e some ao terminar. Antes de cada captura, os testes de tela conferem que nenhum elemento ficou com animação de layout presa (o defeito que fazia itens ficarem por cima de outros no navegador). A função de notificações do navegador também passa pela verificação de tipos do Deno (`deno check`) e por uma conferência de que usa a mesma lógica de datas do app.
 
 > **Importante:** os testes de tela abrem a **versão web** do app (o mesmo código do APK) num navegador com tamanho de celular, ligada a um "Supabase de mentira" que usa o **banco real** do projeto (PGlite com as migrations e os dados de demonstração). Eles não usam um celular Android de verdade, nem o Supabase Auth real, nem as notificações do Android. Isso continua no roteiro manual deste documento.
 
@@ -34,7 +34,7 @@ Pense numa pirâmide com três andares:
         /        \
        /Integração\    Meio: testes do banco de dados
       /------------\   Banco PostgreSQL de verdade, com as regras de acesso.
-     /              \  AQUI: 69 testes em supabase/tests.
+     /              \  AQUI: 103 testes em supabase/tests.
     /   Unitários    \
    /------------------\ Base: testes de funções isoladas
                         Muitos, rápidos (segundos), sem rede e sem celular.

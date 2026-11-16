@@ -270,7 +270,7 @@ Legenda da coluna "Quem acessa": os papéis são Proprietário, Administrador, E
 
 | # | Tela pedida | Rota | Componente | Para que serve | Quem acessa | Status |
 |---|---|---|---|---|---|---|
-| 1 | Splash ou carregamento inicial | Configurada em `app-mobile/app.json` (plugin `expo-splash-screen`) e controlada em `_layout.tsx` | Sem componente próprio | Mostra o ícone sobre `#F7F8FA` (claro) ou `#111318` (escuro) até o app saber se há sessão; depois a Agenda mostra "Carregando..." até ler o cache do aparelho | Todos | Implementada (splash nativa do sistema, não uma tela em React) |
+| 1 | Splash, vinheta e abertura | Splash nativa configurada em `app-mobile/app.json` (plugin `expo-splash-screen`); vinheta e abertura controladas em `_layout.tsx` | `components/brand/vinheta/VinhetaCK.tsx` e `components/brand/BrandSplash.tsx` | Splash nativa até as fontes carregarem; vinheta da CK; esfera de vidro que enche conforme as etapas (fontes, sessão, dados do aparelho) e cresce até revelar a primeira tela. Se os dados do aparelho demorarem mais de 4 s, a tela abre com o próprio esqueleto | Todos | Implementada |
 | 2 | Boas-vindas | `(auth)/welcome.tsx` | `screens/auth/WelcomeScreen.tsx` | Logo, nome do app, a frase "Organize compromissos com quem importa..." e os botões "Criar conta" e "Já tenho conta" | Sem login | Implementada |
 | 3 | Onboarding | `(auth)/onboarding.tsx` (aberta por `(auth)/index.tsx`) | `screens/auth/OnboardingScreen.tsx` | Apresentação em 3 passos, com Pular, Próximo e Começar | Sem login, só na primeira abertura no aparelho | Implementada |
 | 4 | Cadastro | `(auth)/signup.tsx` | `screens/auth/SignupScreen.tsx` | Nome, e-mail, senha e confirmação, com aviso e link para a Política de Privacidade | Sem login | Implementada |
@@ -346,6 +346,8 @@ Exportar .ics fica em Detalhes da agenda (sem tela própria). A Busca agora proc
 
 Só está listado o que foi conferido no código. Os componentes usados são `LoadingState`, `EmptyState` e `ErrorState` (em `components/StateViews.tsx`) e `OfflineBanner` (em `components/OfflineBanner.tsx`).
 
+**Carregando (desde a 3.7.0):** `LoadingState` mostra o esqueleto da própria tela (`components/Skeleton.tsx`: Hoje, lista, formulário ou só linhas dentro de uma tela), nunca uma tela em branco nem um aviso por cima. Trocas de tela que passam de 250 ms mostram uma barra fina no topo (`components/RouteLoading.tsx`).
+
 **Faixa de sem internet:** toda tela montada com o componente `Screen` mostra a faixa automaticamente. Ela também foi colocada à mão na Agenda, no Histórico, em Membros, em Avisos e na Busca. Ela fica desligada nas telas sem login, na Política de Privacidade e em "Servidor não configurado".
 
 **Ações que precisam do servidor:** todas passam por `hooks/useAction.ts`. Sem internet, mostram a mensagem "Esta ação precisa de internet. Conecte-se e tente de novo."; durante o envio, o botão mostra um indicador de carregando; em caso de erro, aparece uma mensagem curta em vermelho na parte de baixo da tela.
@@ -354,7 +356,7 @@ Só está listado o que foi conferido no código. Os componentes usados são `Lo
 
 | Tela | Carregando | Vazio | Erro | Sem internet e sincronização |
 |---|---|---|---|---|
-| Agenda | "Carregando..." até ler o cache do aparelho | Sem agendas: "Nenhuma agenda ainda" com botão "Nova agenda". Lista vazia: "Sua agenda está vazia" ou "Nenhum evento corresponde aos filtros.". Dia vazio: "Nenhum evento neste dia." | Sem estado próprio (os dados vêm do cache; falhas de envio aparecem em Sincronização) | Faixa; ícone de nuvem (sem internet, pendente ou sincronizado); puxar para atualizar; etiquetas "Aguardando envio" e "Conflito de horário" |
+| Agenda | Esqueleto até ler o cache do aparelho | Sem agendas: "Nenhuma agenda ainda" com botão "Nova agenda". Lista vazia: "Sua agenda está vazia" ou "Nenhum evento corresponde aos filtros.". Dia vazio: "Nenhum evento neste dia." | Sem estado próprio (os dados vêm do cache; falhas de envio aparecem em Sincronização) | Faixa; ícone de nuvem (sem internet, pendente ou sincronizado); puxar para atualizar; etiquetas "Aguardando envio" e "Conflito de horário" |
 | Agendas | Não mostra (lista vem do cache); puxar para atualizar | "Nenhuma agenda ainda" com botão "Nova agenda" | Falha ao buscar convites não é mostrada (o contador some) | Faixa; contador de convites só com internet |
 | Detalhes da agenda, Configurações, Convidar, Gerenciar membro | Não | Agenda não encontrada: "Não encontrado. Talvez tenha sido excluído ou você não tenha mais acesso." | Mensagens de `useAction` | Faixa; ações pedem internet |
 | Membros | Indicador quando ainda não há cópia no aparelho | Não | `ErrorState` com "Tentar de novo" quando não há cópia | Faixa; usa a última lista guardada no aparelho |

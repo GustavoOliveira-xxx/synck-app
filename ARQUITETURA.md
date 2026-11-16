@@ -292,6 +292,7 @@ O que já está feito:
 | Anotações e hábitos | `screens/notes/`, `screens/habits/` | Pessoais ou da agenda |
 | Busca | `screens/misc/SearchScreen.tsx`, `utils/search.ts` | Eventos no servidor (ou no aparelho sem internet); o resto no aparelho |
 | Arquivos .ics | `utils/ics.ts`, `screens/ics/`, `services/share.ts` | Exportar e importar sem permissões novas (D38) |
+| Movimento e carregamento (3.7) | `components/motion.tsx`, `TabSwipe.tsx`, `Confetti.tsx`, `Skeleton.tsx`, `RouteLoading.tsx`, `brand/BrandSplash.tsx`, `utils/motion.ts`, `theme/marca.ts` | Molas com balanço, arrastar entre abas, esqueleto nas esperas e modo leve (D41) |
 
 O app tem cinco abas: Hoje, Calendário, Tarefas, Agendas e Perfil. Nas abas Hoje e Calendário, o botão "+" abre "O que você deseja adicionar?" (evento, tarefa, lembrete, anotação ou hábito); na aba Tarefas ele cria uma tarefa direto.
 

@@ -26,7 +26,7 @@ A ação de concluir aparece na lista e em destaque nos detalhes, apenas para qu
 
 ## Carregamento
 
-Ao abrir uma página, voltar ou mudar de aba, o Kairo aparece no centro da tela por 650 ms e cobre também o cabeçalho e a navegação. Se a página precisar de mais tempo para carregar dados, a mesma tela acompanha a espera. Após dois segundos, “Mostrar página” permite acessar os controles já disponíveis enquanto os dados chegam. Tocar na aba atual mantém a tela em repouso. A preferência por movimento reduzido mantém o Kairo estático.
+Ao abrir uma página, voltar ou mudar de aba, a tela nova aparece na hora e recebe toques. Se a troca demorar mais de 250 ms, uma barra fina corre no topo, sem cobrir o cabeçalho nem a navegação. Quando a página carrega dados, o esqueleto dela aparece no lugar do conteúdo e o conteúdo cai no lugar quando chega. Tocar na aba atual mantém a tela em repouso. Com movimento reduzido, a barra e o esqueleto ficam parados.
 
 ## Pesquisa que orientou as decisões
 

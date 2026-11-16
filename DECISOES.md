@@ -42,6 +42,8 @@ Cada decisão segue o formato: **contexto**, **opções**, **decisão**, **motiv
 - [D37 Adição rápida sem inteligência artificial](#d37-adição-rápida-sem-inteligência-artificial)
 - [D38 Arquivos .ics](#d38-arquivos-ics)
 - [D39 Animações no navegador](#d39-animações-no-navegador)
+- [D40 Widgets da tela inicial com react-native-android-widget](#d40-widgets-da-tela-inicial-com-react-native-android-widget)
+- [D41 Movimento elástico e carregamento sem tela de espera](#d41-movimento-elástico-e-carregamento-sem-tela-de-espera)
 
 ---
 
@@ -451,7 +453,7 @@ Formulários e listas têm largura máxima de 720 (leitura confortável) e diál
 
 **Contexto.** Na versão web, as animações de entrada e de layout da biblioteca Reanimated às vezes deixavam o elemento com posição absoluta depois de entrar (principalmente uma animação dentro de outra). O item saía do fluxo da página e o que vinha depois ficava por cima dele.
 
-**Decisão.** Todo componente com entrada, saída ou mudança de layout usa `MotionView` (`components/motion.tsx`). No celular ele é o `Animated.View` de sempre. No navegador, a entrada vira um esmaecer feito só com opacidade e deslocamento visual, que não mexe no layout, e saída e reposicionamento são imediatos.
+**Decisão.** Todo componente com entrada, saída ou mudança de layout usa `MotionView` (`components/motion.tsx`). No celular ele é o `Animated.View` de sempre. No navegador, a entrada é feita pelo próprio `MotionView`, só com opacidade e transformação (a mesma queda elástica do celular desde a 3.7.0, ver D41), que não mexem no layout, e saída e reposicionamento são imediatos.
 
 **Garantia.** Os testes de tela conferem, antes de cada captura, que não há animação de layout presa, e um teste mede na tela Hoje do computador que nenhum título de seção fica por cima de um item.
 
@@ -467,3 +469,20 @@ Formulários e listas têm largura máxima de 720 (leitura confortável) e diál
 **Motivo.** Mantém tudo em TypeScript, com as mesmas cores, fonte e datas do app, sem código nativo próprio para manter. O retrato não leva descrição, local nem pessoas, porque a tela inicial fica à vista de quem pega o celular, e é apagado ao sair da conta.
 
 **Consequência.** A biblioteca usa o WorkManager, que traz a permissão FOREGROUND_SERVICE (ver D22). Ela não aparece para a pessoa e não dá acesso a dados.
+
+
+## D41 Movimento elástico e carregamento sem tela de espera
+
+**Contexto.** O app tinha animação, mas calibrada para quase não aparecer: toque a 0,975 com mola travada (`overshootClamping`), entradas de 18 dp em fade, telas que trocavam sem relação com o que foi tocado e listas que pulavam ao mudar. O carregamento somava a abertura com tempo mínimo de 600 ms, uma barra que ia e voltava sem relação com o progresso, um modal com o Kairo cobrindo a tela inteira nas trocas de página (3.6.2 e 3.6.3) e telas em branco enquanto os dados chegavam. O proprietário achou o app parado e escolheu, entre quatro direções testadas em protótipo (Maré, Profundidade, Cinético e Elástico), a **Elástico**; e, entre quatro carregamentos (Órbita, Kairo, Esfera e Esqueleto vivo), a **abertura da Esfera com o esqueleto nas telas**.
+
+**Decisão.**
+- Molas com balanço em `marca.movimento` (`mola`, `molaEntrada`, `molaRapida`, `molaFirme`). O toque achata e volta como gelatina; blocos caem no lugar quicando; a pílula das abas estica; a tela nova chega pelo lado da aba com mola; arrastar a tela troca de aba (`TabSwipe`) e arrastar a tarefa para a direita conclui, com confete numa camada global (`ConfettiLayer`), que continua mesmo se a linha sair da lista.
+- Abertura (`BrandSplash`): esfera de vidro que enche com as etapas reais (fontes, sessão, dados do aparelho), sem tempo mínimo, com limite de 4 s para os dados.
+- Esperas de dados: `LoadingState` desenha o esqueleto da tela (`Skeleton.tsx`). Trocas de tela demoradas: barra fina no topo (`RouteLoading`). Substitui o Kairo em tela cheia das versões 3.6.2 e 3.6.3.
+- Modo leve (`lite`): com reduzir movimento ou em Android com até 3 GB de memória ou de antes de 2017, os laços decorativos param.
+
+**Motivo.** Movimento com balanço dá resposta física a cada toque e liga uma tela à outra. O esqueleto mostra o formato do que vem e nunca bloqueia o app; a abertura passa a informar o progresso de verdade.
+
+**Desempenho.** Só transformação e opacidade, na thread de interface (Reanimated). Um único valor animado move o brilho de todo o esqueleto e todas as partículas do confete. Laços só rodam com a tela em foco.
+
+**Limitações.** Abrir um evento continua com o deslize nativo da pilha de telas (o cartão não vira a tela, o que exigiria transições compartilhadas ainda experimentais); o conteúdo da tela nova cai quicando. Folhas de criar e editar e o puxar para atualizar continuam nativos.
