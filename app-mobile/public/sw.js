@@ -28,7 +28,13 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      for (const key of await caches.keys()) if (key !== CACHE) await caches.delete(key);
+      // O cache da versão anterior fica: um app aberto antes da atualização
+      // ainda pode pedir as telas dela, e elas não existem mais no servidor.
+      // Só caches mais antigos que esse são apagados.
+      const chaves = await caches.keys();
+      const anteriores = chaves.filter((key) => key.startsWith('synck-') && key !== CACHE);
+      const manter = new Set([CACHE, ...anteriores.slice(-1)]);
+      for (const key of chaves) if (!manter.has(key)) await caches.delete(key);
       await self.clients.claim();
     })(),
   );

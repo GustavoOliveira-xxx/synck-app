@@ -45,6 +45,7 @@ Cada decisão segue o formato: **contexto**, **opções**, **decisão**, **motiv
 - [D40 Widgets da tela inicial com react-native-android-widget](#d40-widgets-da-tela-inicial-com-react-native-android-widget)
 - [D41 Movimento elástico e carregamento sem tela de espera](#d41-movimento-elástico-e-carregamento-sem-tela-de-espera)
 - [D42 Número no ícone do app instalado](#d42-número-no-ícone-do-app-instalado)
+- [D43 Atualização do site com o app aberto](#d43-atualização-do-site-com-o-app-aberto)
 
 ---
 
@@ -498,3 +499,12 @@ Formulários e listas têm largura máxima de 720 (leitura confortável) e diál
 **Motivo.** Resolve o problema sem mandar mais notificações: o ícone fica visível o tempo todo e só diz quanto há, sem mostrar títulos na tela inicial.
 
 **Consequências.** O número só aparece com as notificações do SynCK permitidas e "Indicadores" ligado em Ajustes > Notificações > SynCK. Com o app fechado, ele muda quando chega uma notificação; a virada do dia sem notificação só aparece quando o app abre. Eventos não entram na conta: a maioria não tem conclusão. A migração `20261117100000_numero_no_icone.sql` e a função `enviar-push` precisam ser publicadas no Supabase (GUIA_DE_DEPLOY.md); sem elas, o número continua funcionando com o app aberto.
+
+
+## D43 Atualização do site com o app aberto
+
+**Contexto.** Na versão web cada tela é um arquivo separado, baixado na primeira vez que a tela abre, e cada publicação troca os nomes desses arquivos. Na 3.7.2 o nome do cache do service worker mudou, e o service worker novo apagou o cache anterior assim que assumiu. Quem estava com o app aberto continuou com o código antigo, que pedia telas que já não existiam nem no cache nem no servidor: "Minha rotina", "Tarefas", "Anotações" e outras mostravam "Algo deu errado" até o app ser fechado e aberto de novo.
+
+**Decisão.** (1) O service worker mantém o cache da versão anterior e só apaga os mais antigos que ele (`public/sw.js`). (2) Se mesmo assim uma tela não puder ser baixada, a tela de erro reconhece o caso (`services/appUpdate.ts`) e recarrega a página uma vez, o que traz a versão nova inteira; se o mesmo erro voltar em menos de 30 segundos, mostra a tela de erro normal para não ficar em laço.
+
+**Garantia.** Simulação com dois builds diferentes publicados por baixo de um app aberto (com e sem cache) e testes unitários das regras de reconhecimento e de recarga.

@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 3.7.3
+
+- Corrige "Algo deu errado" ao abrir telas (Minha rotina, Tarefas, Anotações e outras) no site e no app instalado pelo navegador quando o app ficou aberto durante uma atualização. O app guarda as telas da versão anterior e, se alguma faltar, recarrega sozinho com a versão nova.
+
 ## 3.7.2
 
 - Número no ícone do app instalado pelo navegador (iPhone com iOS 16.4 ou mais novo, Android e computador): mostra quantas tarefas e lembretes estão pendentes hoje, atrasados inclusive, igual à visão "Hoje" da aba Tarefas. Atualiza ao concluir ou criar e, com o app fechado, a cada notificação. Some ao sair da conta.

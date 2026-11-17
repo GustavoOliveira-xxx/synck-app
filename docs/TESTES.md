@@ -4,12 +4,12 @@ Este documento explica como o projeto é testado, o que já roda sozinho, como r
 
 ## Resumo em números
 
-Resultado conferido em 17/11/2026 (versão 3.7.2), rodando os comandos abaixo neste repositório:
+Resultado conferido em 17/11/2026 (versão 3.7.3), rodando os comandos abaixo neste repositório:
 
 | O quê | Pasta e comando | Arquivos | Testes | Resultado | Tempo |
 |---|---|---|---|---|---|
 | Testes do banco (integração) | `supabase`: `npm test` | 15 | **104** | 104 passaram, 0 falharam | cerca de 5 min |
-| Testes do app (unitários) | `app-mobile`: `npm test -- --ci` | 31 | **257** | 257 passaram, 0 falharam | poucos segundos |
+| Testes do app (unitários) | `app-mobile`: `npm test -- --ci` | 32 | **260** | 260 passaram, 0 falharam | poucos segundos |
 | Tipos (TypeScript) | `app-mobile`: `npm run typecheck` | | | sem erros | |
 | Lint (ESLint) | `app-mobile`: `npm run lint` | | | sem erros | |
 | Formatação (Prettier) | `app-mobile`: `npm run format:check` | | | "All matched files use Prettier code style!" | |
@@ -18,7 +18,7 @@ Resultado conferido em 17/11/2026 (versão 3.7.2), rodando os comandos abaixo ne
 | Versão instalável (PWA) | `e2e`: `npm run preparar:site` e `npm run test:site` | 1 | **8** | 8 passaram, 0 falharam | cerca de 20 s (mais 1 a 2 min para gerar o site) |
 | Testes de interface no Android (emulador ou celular) | | 0 | **0** | não automatizados; use o [roteiro manual](#roteiro-de-teste-manual) | |
 
-**Total automatizado: 389 testes** (104 do banco + 257 do app + 20 de tela + 8 da versão instalável). Os testes de tela também conferem o toque elástico, que nenhuma troca de tela cobre a página, que a aba entra deslizando ao voltar de uma tela interna, que o número no ícone acompanha as tarefas pendentes de hoje e que o esqueleto acompanha a espera de dados e some ao terminar. Antes de cada captura, os testes de tela conferem que nenhum elemento ficou com animação de layout presa (o defeito que fazia itens ficarem por cima de outros no navegador). A função de notificações do navegador também passa pela verificação de tipos do Deno (`deno check`) e por uma conferência de que usa a mesma lógica de datas do app.
+**Total automatizado: 392 testes** (104 do banco + 260 do app + 20 de tela + 8 da versão instalável). Os testes de tela também conferem o toque elástico, que nenhuma troca de tela cobre a página, que a aba entra deslizando ao voltar de uma tela interna, que o número no ícone acompanha as tarefas pendentes de hoje e que o esqueleto acompanha a espera de dados e some ao terminar. Antes de cada captura, os testes de tela conferem que nenhum elemento ficou com animação de layout presa (o defeito que fazia itens ficarem por cima de outros no navegador). A função de notificações do navegador também passa pela verificação de tipos do Deno (`deno check`) e por uma conferência de que usa a mesma lógica de datas do app.
 
 > **Importante:** os testes de tela abrem a **versão web** do app (o mesmo código do APK) num navegador com tamanho de celular, ligada a um "Supabase de mentira" que usa o **banco real** do projeto (PGlite com as migrations e os dados de demonstração). Eles não usam um celular Android de verdade, nem o Supabase Auth real, nem as notificações do Android. Isso continua no roteiro manual deste documento.
 
