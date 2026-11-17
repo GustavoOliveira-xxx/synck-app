@@ -217,6 +217,24 @@ test('navegar nunca cobre a tela: no máximo uma barra fina no topo', async () =
   }
 });
 
+test('voltar de uma tela interna faz a aba entrar deslizando', async () => {
+  const page = await abrirSessao();
+  try {
+    await entrar(page, 'carla.demo@exemplo.test');
+    await page.getByRole('button', { name: /^Avisos/ }).first().click();
+    await page.waitForURL('**/notifications');
+    await page.getByRole('button', { name: 'Voltar', exact: true }).click();
+    const aba = page.getByTestId('aba-0');
+    await aba.waitFor({ state: 'visible' });
+    const desloc = () => aba.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+    assert.ok((await desloc()) < -2, 'a aba entra da esquerda');
+    await page.waitForTimeout(1500);
+    assert.ok(Math.abs(await desloc()) < 1, 'a aba para no lugar');
+  } finally {
+    await page.context().close();
+  }
+});
+
 test('primeiro acesso: apresentação e tela de login', async () => {
   const page = await abrirSessao();
   await page.goto(base);

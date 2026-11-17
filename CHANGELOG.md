@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 3.7.1
+
+- No site e no app instalado no iPhone, voltar de uma tela interna faz a aba entrar deslizando da esquerda com mola, como no Android.
+
 ## 3.7.0
 
 - Movimento elástico em todo o app: botões e cartões achatam ao tocar e voltam balançando, blocos caem no lugar quicando, a pílula das abas estica no caminho e o ícone da aba pula.

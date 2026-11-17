@@ -63,7 +63,7 @@ O texto acompanha o tamanho de fonte escolhido no aparelho.
 - **Direção Elástico.** O app responde ao dedo como um objeto físico: tudo tem mola com balanço.
 - Toque: a largura vai a 0,94 em botões e 0,975 em cartões, e a altura cede 1,5 vez mais. A volta usa a mola `mola` (rigidez 380, amortecimento 11), que passa do ponto e balança até parar. Vibração leve no botão principal (só no celular).
 - Entradas: cada bloco cai de 24 dp, começa em 94% do tamanho e quica no lugar com `molaEntrada` (rigidez 300, amortecimento 15), em cascata de 45 ms (até o 8º bloco).
-- Abas: a pílula estica no sentido do movimento e achata no outro; o ícone da aba nova pula e cai achatado. A tela nova chega do lado da aba escolhida com mola. No celular, arrastar a tela para o lado troca de aba (a tela segue o dedo e resiste nas pontas).
+- Abas: a pílula estica no sentido do movimento e achata no outro; o ícone da aba nova pula e cai achatado. A tela nova chega do lado da aba escolhida com mola. No celular, arrastar a tela para o lado troca de aba (a tela segue o dedo e resiste nas pontas). No navegador, onde a pilha de telas não tem transição própria, voltar de uma tela interna faz a aba entrar da esquerda com mola.
 - Tarefas: arrastar para a direita conclui. Concluir solta confete nas cores das agendas, a caixa pula e a linha balança.
 - Botão "+": entra quicando e respira a cada 6 s com a tela em foco.
 - `molaRapida` (sem quase balanço) para saídas e `molaFirme` (travada) para recortes que não podem passar do limite.

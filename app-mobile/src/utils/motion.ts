@@ -34,3 +34,16 @@ export function confettiParticles(count: number, colors: number) {
     };
   });
 }
+
+/** Endereço de cada aba (a aba "index" é a raiz). */
+export function tabPath(name: string): string {
+  return name === 'index' ? '/' : `/${name}`;
+}
+
+/**
+ * Voltou de uma tela interna para esta aba? (ex.: de /event/123 para /).
+ * Trocar de uma aba para outra não conta: essa troca já tem animação própria.
+ */
+export function isReturnToTab(previous: string, current: string, tab: string, tabs: string[]): boolean {
+  return previous !== current && current === tab && !tabs.includes(previous);
+}

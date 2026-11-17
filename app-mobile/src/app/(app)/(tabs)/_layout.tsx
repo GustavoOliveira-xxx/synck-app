@@ -9,6 +9,7 @@ import { t } from '@/i18n';
 import { beginNavigation } from '@/stores/navigationLoadingStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { fonte, motion } from '@/theme/tokens';
+import { tabPath } from '@/utils/motion';
 
 const ITEMS: TabItem[] = [
   { name: 'index', label: t('tabs.today'), icon: 'today-outline' },
@@ -17,6 +18,8 @@ const ITEMS: TabItem[] = [
   { name: 'calendars', label: t('tabs.calendars'), icon: 'people-outline' },
   { name: 'profile', label: t('tabs.profile'), icon: 'person-outline' },
 ];
+
+const TAB_PATHS = ITEMS.map((i) => tabPath(i.name));
 
 export default function TabsLayout() {
   const { colors, reduceMotion } = useAppTheme();
@@ -29,6 +32,8 @@ export default function TabsLayout() {
       tabBar={(props) => <SynckTabBar {...props} items={ITEMS} side={sideNav} />}
       screenLayout={({ children, route, navigation }) => (
         <TabSwipe
+          path={tabPath(route.name)}
+          tabPaths={TAB_PATHS}
           enabled={!sideNav}
           index={ITEMS.findIndex((i) => i.name === route.name)}
           count={ITEMS.length}

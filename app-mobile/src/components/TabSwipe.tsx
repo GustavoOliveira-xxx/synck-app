@@ -3,13 +3,18 @@
 // solta, vai para a vizinha ou volta quicando. Listas e calendários que já
 // usam o arrasto lateral têm prioridade: o gesto só chega aqui se ninguém
 // dentro da tela quiser.
-import { useMemo, type ReactNode } from 'react';
-import { PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
+//
+// No navegador (site e app instalado no iPhone) a pilha de telas não tem
+// transição própria: ao voltar de uma tela interna, a aba entra deslizando
+// da esquerda com mola, como o Android faz ao voltar.
+import { usePathname } from 'expo-router';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { PanResponder, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { motion } from '@/theme/tokens';
-import { swipeTarget } from '@/utils/motion';
+import { isReturnToTab, swipeTarget } from '@/utils/motion';
 
 import { tapFeedback } from './motion';
 
@@ -24,16 +29,32 @@ export function TabSwipe({
   count,
   enabled,
   onSwipe,
+  path,
+  tabPaths,
 }: {
   children: ReactNode;
   index: number;
   count: number;
   enabled: boolean;
   onSwipe: (next: number) => void;
+  /** Endereço desta aba. */
+  path: string;
+  /** Endereços de todas as abas. */
+  tabPaths: string[];
 }) {
   const { reduceMotion } = useAppTheme();
   const { width } = useWindowDimensions();
   const x = useSharedValue(0);
+  const pathname = usePathname();
+  const previous = useRef(pathname);
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = pathname;
+    if (Platform.OS !== 'web' || reduceMotion) return;
+    if (!isReturnToTab(was, pathname, path, tabPaths)) return;
+    x.set(-Math.min(width, 520) * 0.3);
+    x.set(withSpring(0, motion.molaEntrada));
+  }, [pathname, path, tabPaths, reduceMotion, width, x]);
   const responder = useMemo(
     () =>
       PanResponder.create({
@@ -60,7 +81,7 @@ export function TabSwipe({
   );
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
-    <Animated.View style={[styles.fill, style]} {...responder.panHandlers}>
+    <Animated.View testID={`aba-${index}`} style={[styles.fill, style]} {...responder.panHandlers}>
       {children}
     </Animated.View>
   );

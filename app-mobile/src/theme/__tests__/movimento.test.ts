@@ -1,6 +1,6 @@
 // Regras do movimento elástico e da abertura: quando o modo leve liga, para
 // onde o arrasto leva, como o toque achata e o que a abertura diz em cada etapa.
-import { confettiParticles, openingStage, squash, swipeTarget } from '@/utils/motion';
+import { confettiParticles, isReturnToTab, openingStage, squash, swipeTarget, tabPath } from '@/utils/motion';
 
 import { marca } from '../marca';
 import { isModestDevice } from '../ThemeProvider';
@@ -56,5 +56,18 @@ describe('abertura', () => {
     expect(openingStage(0.34)).toBe('Abrindo o SynCK');
     expect(openingStage(0.67)).toBe('Conferindo sua sessão');
     expect(openingStage(1)).toBe('Carregando suas agendas');
+  });
+});
+
+describe('voltar para uma aba no navegador', () => {
+  const tabs = ['index', 'month', 'tasks', 'calendars', 'profile'].map(tabPath);
+  it('anima quando volta de uma tela interna para a aba', () => {
+    expect(isReturnToTab('/event/123', '/', '/', tabs)).toBe(true);
+    expect(isReturnToTab('/task/9', '/tasks', '/tasks', tabs)).toBe(true);
+  });
+  it('não anima na troca entre abas nem nas outras abas', () => {
+    expect(isReturnToTab('/month', '/', '/', tabs)).toBe(false);
+    expect(isReturnToTab('/event/123', '/', '/tasks', tabs)).toBe(false);
+    expect(isReturnToTab('/', '/', '/', tabs)).toBe(false);
   });
 });
