@@ -1,6 +1,7 @@
 import {
   activeTaskFilterCount,
   alertBase,
+  badgeCount,
   checklistProgress,
   DEFAULT_TASK_FILTERS,
   describeDue,
@@ -161,5 +162,24 @@ describe('filtros e ordenação', () => {
     expect(positionBetween(null, 2)).toBe(1);
     expect(positionBetween(5, null)).toBe(6);
     expect(tagsInUse([a, makeTask({ tags: ['casa', 'mercado'] })])).toEqual(['casa', 'mercado']);
+  });
+});
+
+describe('número no ícone', () => {
+  it('conta abertas com prazo até hoje, atrasadas, lembretes e planejadas para hoje', () => {
+    const tasks = [
+      makeTask({ id: 'a', due_date: today }),
+      makeTask({ id: 'b', due_date: '2026-10-20' }),
+      makeTask({ id: 'c', item_type: 'reminder', due_date: today }),
+      makeTask({ id: 'd', due_date: '2026-10-30', plan_day: today }),
+      makeTask({ id: 'e', due_date: '2026-10-24' }),
+      makeTask({ id: 'f' }),
+      makeTask({ id: 'g', due_date: today, status: 'done' }),
+      makeTask({ id: 'h', due_date: today, status: 'cancelled' }),
+    ];
+    expect(badgeCount(tasks, today)).toBe(4);
+  });
+  it('sem pendências o número some', () => {
+    expect(badgeCount([], today)).toBe(0);
   });
 });

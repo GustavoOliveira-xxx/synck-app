@@ -21,6 +21,7 @@ import { signOutThisDevice } from './auth';
 import { logError } from './errorLog';
 import { cancelAllReminders, rescheduleReminders } from './localNotifications';
 import { startRealtime, stopRealtime } from './realtime';
+import { setAppBadge } from './appBadge';
 import { forgetWebPush } from './webPush';
 
 let activeUser: string | null = null;
@@ -132,8 +133,9 @@ async function doEndSession(): Promise<void> {
   await cancelAllReminders();
   await forgetWebPush();
   if (userId) await clearUserData(userId);
-  // Widgets da tela inicial (Android) voltam a ficar vazios.
+  // Widgets da tela inicial (Android) voltam a ficar vazios e o número no ícone some.
   await clearWidgets();
+  await setAppBadge(0);
   useDataStore.getState().reset();
   useSyncStore.getState().reset();
   useAuthStore.getState().setAccount(null);

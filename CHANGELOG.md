@@ -1,5 +1,9 @@
 # Histórico de versões
 
+## 3.7.2
+
+- Número no ícone do app instalado pelo navegador (iPhone com iOS 16.4 ou mais novo, Android e computador): mostra quantas tarefas e lembretes estão pendentes hoje, atrasados inclusive, igual à visão "Hoje" da aba Tarefas. Atualiza ao concluir ou criar e, com o app fechado, a cada notificação. Some ao sair da conta.
+
 ## 3.7.1
 
 - No site e no app instalado no iPhone, voltar de uma tela interna faz a aba entrar deslizando da esquerda com mola, como no Android.

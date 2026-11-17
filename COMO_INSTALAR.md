@@ -145,6 +145,7 @@ Se você instalou pelo APK de testes, será preciso desinstalar antes de instala
 4. Confira o nome ("SynCK") e toque em **Adicionar**.
 5. Abra pelo novo ícone **SynCK** na tela de início (não pelo Safari) e crie sua conta ou entre.
 6. Para receber lembretes (iOS 16.4 ou mais novo): **Perfil > Notificações > Notificações neste navegador** e toque em **Permitir**.
+7. Para ver no ícone quantas tarefas e lembretes estão pendentes hoje: **Ajustes > Notificações > SynCK** e ligue **Indicadores**. O número é o mesmo da visão "Hoje" da aba Tarefas e some quando tudo está concluído.
 
 ### No Android (sem instalar o APK)
 

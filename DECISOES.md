@@ -44,6 +44,7 @@ Cada decisão segue o formato: **contexto**, **opções**, **decisão**, **motiv
 - [D39 Animações no navegador](#d39-animações-no-navegador)
 - [D40 Widgets da tela inicial com react-native-android-widget](#d40-widgets-da-tela-inicial-com-react-native-android-widget)
 - [D41 Movimento elástico e carregamento sem tela de espera](#d41-movimento-elástico-e-carregamento-sem-tela-de-espera)
+- [D42 Número no ícone do app instalado](#d42-número-no-ícone-do-app-instalado)
 
 ---
 
@@ -486,3 +487,14 @@ Formulários e listas têm largura máxima de 720 (leitura confortável) e diál
 **Desempenho.** Só transformação e opacidade, na thread de interface (Reanimated). Um único valor animado move o brilho de todo o esqueleto e todas as partículas do confete. Laços só rodam com a tela em foco.
 
 **Limitações.** Abrir um evento continua com o deslize nativo da pilha de telas (o cartão não vira a tela, o que exigiria transições compartilhadas ainda experimentais); o conteúdo da tela nova cai quicando. Folhas de criar e editar e o puxar para atualizar continuam nativos.
+
+
+## D42 Número no ícone do app instalado
+
+**Contexto.** No iPhone, o proprietário usa o SynCK instalado pelo navegador e não percebia notificações pendentes: sem o número no ícone, nada lembra que há algo para fazer depois que o aviso some. Entre as alternativas discutidas (número no ícone, modo insistência com avisos repetidos, resumo de pendências duas vezes ao dia e ajustes do próprio iPhone), ele escolheu começar pelo número no ícone.
+
+**Decisão.** O ícone mostra quantas tarefas e lembretes estão abertos na visão "Hoje" da aba Tarefas (prazo até hoje, atrasados inclusive, ou planejados para hoje), pela API de indicadores do navegador (`navigator.setAppBadge`, iOS 16.4 ou mais novo para apps na tela de início). Com o app aberto, `useAppBadge` recalcula a cada mudança e na virada do dia (`badgeCount` em `utils/tasks.ts`). Com o app fechado, a função `enviar-push` manda o número junto de cada notificação, contado por `private.badge_count` com as mesmas regras de acesso de `list_my_items`, e o service worker atualiza o ícone. Sair da conta apaga o número.
+
+**Motivo.** Resolve o problema sem mandar mais notificações: o ícone fica visível o tempo todo e só diz quanto há, sem mostrar títulos na tela inicial.
+
+**Consequências.** O número só aparece com as notificações do SynCK permitidas e "Indicadores" ligado em Ajustes > Notificações > SynCK. Com o app fechado, ele muda quando chega uma notificação; a virada do dia sem notificação só aparece quando o app abre. Eventos não entram na conta: a maioria não tem conclusão. A migração `20261117100000_numero_no_icone.sql` e a função `enviar-push` precisam ser publicadas no Supabase (GUIA_DE_DEPLOY.md); sem elas, o número continua funcionando com o app aberto.

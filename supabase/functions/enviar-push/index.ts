@@ -4,6 +4,8 @@
 // - os lembretes de eventos que vencem desde a última rodada (mesma regra do app Android);
 // - os alertas de tarefas e lembretes avulsos (prazo, ou 9h do dia sem horário);
 // - os avisos novos (evento criado, alterado, convite, comentário, tarefa, enquete...).
+// Cada notificação leva junto o número do ícone do app (tarefas e lembretes
+// pendentes hoje), para o ícone ficar certo mesmo com o app fechado.
 //
 // As chaves VAPID são criadas aqui na primeira rodada e ficam só no banco
 // (private.web_push_config). Quem chama precisa mandar o segredo do agendamento.
@@ -209,9 +211,24 @@ async function notices(from: Date, to: Date): Promise<Push[]> {
   }));
 }
 
+/** Número no ícone de cada pessoa, no dia de hoje do fuso dela (private.badge_count). */
+async function badges(users: string[]): Promise<Map<string, number>> {
+  try {
+    const rows = await sql<{ user_id: string; n: number }[]>`
+      select up.user_id, private.badge_count(up.user_id, (now() at time zone up.timezone)::date) as n
+      from public.user_preferences up where up.user_id = any(${users})`;
+    return new Map(rows.map((r) => [r.user_id, r.n]));
+  } catch (error) {
+    // Sem o número, a notificação sai assim mesmo e o ícone fica como estava.
+    console.error('falha ao contar pendências', (error as Error).message);
+    return new Map();
+  }
+}
+
 async function send(pushes: Push[]): Promise<{ sent: number; removed: number }> {
   if (!pushes.length) return { sent: 0, removed: 0 };
   const users = [...new Set(pushes.map((p) => p.userId))];
+  const badge = await badges(users);
   const subs = await sql<Subscription[]>`
     select id, user_id, endpoint, p256dh, auth from public.push_subscriptions where user_id = any(${users})`;
   let sent = 0;
@@ -224,7 +241,14 @@ async function send(pushes: Push[]): Promise<{ sent: number; removed: number }> 
           try {
             await webpush.sendNotification(
               { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-              JSON.stringify({ title: push.title, body: push.body, path: push.path, tag: push.tag, silent: push.silent }),
+              JSON.stringify({
+                title: push.title,
+                body: push.body,
+                path: push.path,
+                tag: push.tag,
+                silent: push.silent,
+                badge: badge.get(push.userId),
+              }),
               { TTL: 3600, urgency: 'high' },
             );
             sent++;

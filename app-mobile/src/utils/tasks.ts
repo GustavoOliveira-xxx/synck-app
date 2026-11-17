@@ -303,6 +303,16 @@ export function tagsInUse(tasks: Task[]): string[] {
   return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([t]) => t);
 }
 
+/**
+ * Número no ícone do app: tarefas e lembretes abertos da visão "Hoje" (prazo
+ * até hoje, atrasados inclusive, ou planejados para hoje). O servidor conta
+ * igual em private.badge_count.
+ */
+export function badgeCount(tasks: Task[], today: DateKey): number {
+  const ctx: ViewContext = { today, now: new Date(), userId: null, weekStartsOn: 0 };
+  return tasks.filter((t) => inView(t, 'today', ctx)).length;
+}
+
 /** Quantas tarefas abertas em cada visão (para os contadores). */
 export function viewCounts(tasks: Task[], ctx: ViewContext): Record<SmartView, number> {
   const counts = Object.fromEntries(SMART_VIEWS.map((v) => [v, 0])) as Record<SmartView, number>;

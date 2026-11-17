@@ -235,6 +235,31 @@ test('voltar de uma tela interna faz a aba entrar deslizando', async () => {
   }
 });
 
+test('número no ícone acompanha as tarefas pendentes de hoje', async () => {
+  const page = await abrirSessao();
+  try {
+    // Simula o número no ícone do app instalado (iPhone e Android).
+    await page.addInitScript(() => {
+      window.__icone = [];
+      navigator.setAppBadge = async (n) => { window.__icone.push(n ?? 0); };
+      navigator.clearAppBadge = async () => { window.__icone.push(0); };
+    });
+    await entrar(page, 'carla.demo@exemplo.test');
+    const ultimo = () => page.evaluate(() => window.__icone.at(-1));
+    await page.waitForFunction(() => window.__icone.length > 0);
+    const antes = await ultimo();
+    await page.getByRole('tab', { name: 'Tarefas', exact: true }).click();
+    const campo = page.getByPlaceholder(/Adicionar tarefa/);
+    await campo.fill('Conferir o número no ícone hoje');
+    await campo.press('Enter');
+    await page.waitForFunction((n) => window.__icone.at(-1) === n + 1, antes);
+    await page.getByRole('checkbox', { name: /^Concluir: Conferir o número no ícone/ }).first().click();
+    await page.waitForFunction((n) => window.__icone.at(-1) === n, antes);
+  } finally {
+    await page.context().close();
+  }
+});
+
 test('primeiro acesso: apresentação e tela de login', async () => {
   const page = await abrirSessao();
   await page.goto(base);

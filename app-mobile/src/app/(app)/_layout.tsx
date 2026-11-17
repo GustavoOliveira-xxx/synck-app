@@ -12,6 +12,7 @@ import { parentRoute, pathFromRoute, setCurrentPath } from '@/services/navigatio
 import { useDataStore } from '@/stores/dataStore';
 import { IconButton } from '@/components/IconButton';
 import { useAvailableUpdate } from '@/hooks/useAvailableUpdate';
+import { useAppBadge } from '@/hooks/useAppBadge';
 import { useWidgetSync } from '@/hooks/useWidgetSync';
 import { t } from '@/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -109,6 +110,7 @@ export default function AppLayout() {
   useOpenEventFromNotification();
   useUpdateNotice();
   useWidgetSync();
+  useAppBadge();
   return (
     <>
       <RoutineGuard />

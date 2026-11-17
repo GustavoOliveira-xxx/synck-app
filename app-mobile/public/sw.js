@@ -1,7 +1,7 @@
 // Service worker: guarda os arquivos do app no aparelho para que ele abra
 // mesmo sem internet (os dados vêm do armazenamento do próprio app).
 // Chamadas ao servidor (Supabase) nunca passam por aqui: vão direto para a rede.
-const CACHE = 'synck-v2';
+const CACHE = 'synck-v3';
 const SHELL = new URL('./', self.location).href;
 
 // Na instalação guarda a página e todos os arquivos JavaScript do app
@@ -83,17 +83,33 @@ self.addEventListener('push', (event) => {
     data = { title: 'SynCK', body: event.data ? event.data.text() : '' };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || 'SynCK', {
-      body: data.body || '',
-      icon: new URL('icons/icon-192.png', SHELL).href,
-      badge: new URL('icons/badge-96.png', SHELL).href,
-      tag: data.tag,
-      silent: !!data.silent,
-      data: { path: data.path || '' },
-      actions: [{ action: 'abrir', title: 'Abrir' }],
-    }),
+    Promise.all([
+      self.registration.showNotification(data.title || 'SynCK', {
+        body: data.body || '',
+        icon: new URL('icons/icon-192.png', SHELL).href,
+        badge: new URL('icons/badge-96.png', SHELL).href,
+        tag: data.tag,
+        silent: !!data.silent,
+        data: { path: data.path || '' },
+        actions: [{ action: 'abrir', title: 'Abrir' }],
+      }),
+      marcarIcone(data.badge),
+    ]),
   );
 });
+
+// Número no ícone do app (tarefas e lembretes pendentes hoje), mandado pelo
+// servidor junto de cada notificação. Zero apaga o número.
+async function marcarIcone(numero) {
+  if (typeof numero !== 'number' || typeof self.navigator.setAppBadge !== 'function') return;
+  try {
+    if (numero > 0) await self.navigator.setAppBadge(numero);
+    else if (typeof self.navigator.clearAppBadge === 'function') await self.navigator.clearAppBadge();
+    else await self.navigator.setAppBadge(0);
+  } catch {
+    // Sistema sem suporte ou indicadores desligados nos ajustes: nada a fazer.
+  }
+}
 
 // Ao tocar: volta para o SynCK aberto (se houver) ou abre uma janela nova.
 self.addEventListener('notificationclick', (event) => {
